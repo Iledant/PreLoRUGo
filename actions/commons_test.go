@@ -36,6 +36,7 @@ type TestCase struct {
 func TestAll(t *testing.T) {
 	cfg := initializeTests(t)
 	testUser(t, cfg)
+	testCopro(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -66,7 +67,7 @@ func initializeTests(t *testing.T) *TestContext {
 
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, copros, users, imported_commitment, 
-	commitment, imported_payment, payment, report, budget_action, beneficiary `); err != nil {
+	commitment, imported_payment, payment, report, budget_action, beneficiary, temp_copro `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -87,7 +88,15 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			zip_code int NOT NULL,
 			label_date date,
 			budget bigint
-			);`, // 1 : copros
+			);`, // 1 : copro
+		`CREATE TABLE temp_copro (
+			reference varchar(150) NOT NULL,
+			name varchar(150) NOT NULL,
+			address varchar(200) NOT NULL,
+			zip_code int NOT NULL,
+			label_date date,
+			budget bigint
+			);`, // 2 : temp_copro
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {

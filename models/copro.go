@@ -56,7 +56,7 @@ func (c *Copro) Create(db *sql.DB) (err error) {
 // Update modifies the copro fields whose ID is given
 func (c *Copro) Update(db *sql.DB) (err error) {
 	res, err := db.Exec(`UPDATE copro SET reference=$1, name=$2,
-	address=$3, zip_code=$3, label_date=$4, budget=$5 WHERE id = $6`,
+	address=$3, zip_code=$4, label_date=$5, budget=$6 WHERE id = $7`,
 		c.Reference, c.Name, c.Address, c.ZipCode, c.LabelDate, c.Budget, c.ID)
 	if err != nil {
 		return err
@@ -122,12 +122,16 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 	}
 	stmt, err := tx.Prepare(`INSERT INTO temp_copro 
 	(reference,name,address,zip_code,label_date,budget) 
-	VALUES ($1,$2,$3,$4,$5,$6`)
+	VALUES ($1,$2,$3,$4,$5,$6)`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
+		if r.Reference == "" || r.Name == "" || r.Address == "" || r.ZipCode == 0 {
+			tx.Rollback()
+			return errors.New("Champs incorrects")
+		}
 		if _, err = stmt.Exec(r.Reference, r.Name, r.Address, r.ZipCode,
 			r.LabelDate, r.Budget); err != nil {
 			tx.Rollback()
@@ -135,13 +139,13 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 		}
 	}
 	_, err = tx.Exec(`UPDATE copro SET name=t.name, address=t.address, zip_code=t.zip_code,
-	label=t.label,budget=t.budget FROM temp_copro t WHERE t.reference = copro.reference`)
+	label_date=t.label_date,budget=t.budget FROM temp_copro t WHERE t.reference = copro.reference`)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	_, err = tx.Exec(`INSERT INTO copro (reference name,address,zip_code,label,budget)
-	SELECT reference,name,address,zip_code,label,budget from temp_copro 
+	_, err = tx.Exec(`INSERT INTO copro (reference, name,address,zip_code,label_date,budget)
+	SELECT reference,name,address,zip_code,label_date,budget from temp_copro 
 	  WHERE reference NOT IN (SELECT reference from copro)`)
 	if err != nil {
 		tx.Rollback()

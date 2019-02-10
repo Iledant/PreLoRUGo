@@ -13,8 +13,8 @@ func GetCopros(ctx iris.Context) {
 	var resp models.Copros
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetAll(db); err != nil {
-		ctx.JSON(jsonError{"Liste des copropriétés : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des copropriétés : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
@@ -30,46 +30,46 @@ type coproReq struct {
 func CreateCopro(ctx iris.Context) {
 	var c coproReq
 	if err := ctx.ReadJSON(&c); err != nil {
-		ctx.JSON(jsonError{"Création de copropriété, décodage : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Création de copropriété, décodage : " + err.Error()})
 		return
 	}
 	if err := c.Copro.Validate(); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
 		ctx.JSON(jsonError{"Création de copropriété : " + err.Error()})
-		ctx.StatusCode(http.StatusInternalServerError)
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := c.Copro.Create(db); err != nil {
-		ctx.JSON(jsonError{"Création de copropriété, requête : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Création de copropriété, requête : " + err.Error()})
 		return
 	}
+	ctx.StatusCode(http.StatusCreated)
 	ctx.JSON(c)
-	ctx.StatusCode(http.StatusOK)
 }
 
 // ModifyCopro handles the put request to modify a copro
 func ModifyCopro(ctx iris.Context) {
 	var c coproReq
 	if err := ctx.ReadJSON(&c); err != nil {
-		ctx.JSON(jsonError{"Modification de copropriété, décodage : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de copropriété, décodage : " + err.Error()})
 		return
 	}
 	if err := c.Copro.Validate(); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
 		ctx.JSON(jsonError{"Modification de copropriété : " + err.Error()})
-		ctx.StatusCode(http.StatusInternalServerError)
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := c.Copro.Update(db); err != nil {
-		ctx.JSON(jsonError{"Modification de copropriété, requête : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de copropriété, requête : " + err.Error()})
 		return
 	}
-	ctx.JSON(c)
 	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(c)
 }
 
 // DeleteCopro handles the delete request to remove a copro from database
@@ -77,34 +77,34 @@ func DeleteCopro(ctx iris.Context) {
 	var c models.Copro
 	var err error
 	if c.ID, err = ctx.Params().GetInt64("CoproID"); err != nil {
-		ctx.JSON(jsonError{"Suppression de copropriété, paramètre : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Suppression de copropriété, paramètre : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err = c.Delete(db); err != nil {
-		ctx.JSON(jsonError{"Modification de copropriété, requête : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de copropriété, requête : " + err.Error()})
 		return
 	}
-	ctx.JSON(jsonMessage{"Copropriété supprimée"})
 	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Copropriété supprimée"})
 }
 
 // BatchCopros handle the post request to update and insert a batch of copros into the database
 func BatchCopros(ctx iris.Context) {
 	var c models.CoproBatch
 	if err := ctx.ReadJSON(&c); err != nil {
-		ctx.JSON(jsonError{"Batch de copropriétés, décodage : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de copropriétés, décodage : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := c.Save(db); err != nil {
-		ctx.JSON(jsonError{"Batch de copropriétés, requête : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de copropriétés, requête : " + err.Error()})
 		return
 	}
-	ctx.JSON(jsonMessage{"Batch de copropriétés importé"})
 	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Batch de copropriétés importé"})
 }
