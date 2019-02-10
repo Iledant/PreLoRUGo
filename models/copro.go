@@ -1,0 +1,152 @@
+package models
+
+import (
+	"database/sql"
+	"errors"
+)
+
+// Copro is the model for a labelled condominium
+type Copro struct {
+	ID        int64     `json:"ID"`
+	Reference string    `json:"Reference"`
+	Name      string    `json:"Name"`
+	Address   string    `json:"Address"`
+	ZipCode   int       `json:"ZipCode"`
+	LabelDate NullTime  `json:"LabelDate"`
+	Budget    NullInt64 `json:"Budget"`
+}
+
+// Copros embeddes an array of Copro for JSON export
+type Copros struct {
+	Copros []Copro `json:"Copro"`
+}
+
+// CoproLine is used to decode a line of copro batch
+type CoproLine struct {
+	Reference string    `json:"Reference"`
+	Name      string    `json:"Name"`
+	Address   string    `json:"Address"`
+	ZipCode   int       `json:"ZipCode"`
+	LabelDate NullTime  `json:"LabelDate"`
+	Budget    NullInt64 `json:"Budget"`
+}
+
+// CoproBatch embeddes an array of CoproLine for batch import
+type CoproBatch struct {
+	Lines []CoproLine `json:"Copro"`
+}
+
+// Validate checks copro's fields and return an error if they don't
+// fit with database constraints
+func (c *Copro) Validate() error {
+	if c.Reference == "" || c.Name == "" || c.Address == "" || c.ZipCode == 0 {
+		return errors.New("Champ reference, name, address ou zipcode vide")
+	}
+	return nil
+}
+
+// Create a new copro entry according to fields and returning id
+func (c *Copro) Create(db *sql.DB) (err error) {
+	err = db.QueryRow(`INSERT INTO copro (reference,name,address,
+		zip_code,label_date,budget) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`,
+		c.Reference, c.Name, c.Address, c.ZipCode, c.LabelDate, c.Budget).Scan(&c.ID)
+	return err
+}
+
+// Update modifies the copro fields whose ID is given
+func (c *Copro) Update(db *sql.DB) (err error) {
+	res, err := db.Exec(`UPDATE copro SET reference=$1, name=$2,
+	address=$3, zip_code=$3, label_date=$4, budget=$5 WHERE id = $6`,
+		c.Reference, c.Name, c.Address, c.ZipCode, c.LabelDate, c.Budget, c.ID)
+	if err != nil {
+		return err
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return errors.New("Copro introuvable")
+	}
+	return err
+}
+
+// Delete removes the copro whose ID is given
+func (c *Copro) Delete(db *sql.DB) (err error) {
+	res, err := db.Exec("DELETE FROM copro WHERE id = $1", c.ID)
+	if err != nil {
+		return err
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if count != 1 {
+		return errors.New("Copro introuvable")
+	}
+	return nil
+}
+
+// Get fetches the copro whose ID is given
+func (c *Copro) Get(ID int, db *sql.DB) (err error) {
+	err = db.QueryRow(`SELECT id,reference,name,address,zip_code,label_date,budget 
+	FROM copro WHERE id = $1`, ID).Scan(&c.ID, &c.Reference, &c.Name, &c.Address,
+		&c.ZipCode, &c.LabelDate, &c.Budget)
+	return err
+}
+
+// GetAll fetches all Copros from database
+func (c *Copros) GetAll(db *sql.DB) (err error) {
+	rows, err := db.Query(`SELECT id,reference,name,address,zip_code,label_date,budget FROM copro`)
+	if err != nil {
+		return err
+	}
+	var r Copro
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&r.ID, &r.Reference, &r.Name, &r.Address, &r.ZipCode,
+			&r.LabelDate, &r.Budget); err != nil {
+			return err
+		}
+		c.Copros = append(c.Copros, r)
+	}
+	err = rows.Err()
+	return err
+}
+
+// Save insert a batch of CoproLine into database
+func (c *CoproBatch) Save(db *sql.DB) (err error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(`INSERT INTO temp_copro 
+	(reference,name,address,zip_code,label_date,budget) 
+	VALUES ($1,$2,$3,$4,$5,$6`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, r := range c.Lines {
+		if _, err = stmt.Exec(r.Reference, r.Name, r.Address, r.ZipCode,
+			r.LabelDate, r.Budget); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	_, err = tx.Exec(`UPDATE copro SET name=t.name, address=t.address, zip_code=t.zip_code,
+	label=t.label,budget=t.budget FROM temp_copro t WHERE t.reference = copro.reference`)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	_, err = tx.Exec(`INSERT INTO copro (reference name,address,zip_code,label,budget)
+	SELECT reference,name,address,zip_code,label,budget from temp_copro 
+	  WHERE reference NOT IN (SELECT reference from copro)`)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
+}
