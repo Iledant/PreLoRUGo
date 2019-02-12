@@ -58,6 +58,9 @@ CREATE table budget_action (
 	code varchar(12) NOT NULL,
 	name varchar(250) NOT NULL,
 	sector_id int
+  CONSTRAINT budget_action_sector_id_fkey FOREIGN KEY (sector_id)
+	  REFERENCES sector (id) MATCH SIMPLE
+	  ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 CREATE table beneficiary (

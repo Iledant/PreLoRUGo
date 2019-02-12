@@ -31,6 +31,9 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Put("/copro", ModifyCopro)
 	adminParty.Delete("/copro/{CoproID:int64}", DeleteCopro)
 	adminParty.Post("/copros", BatchCopros)
+	adminParty.Post("/budget_action", CreateBudgetAction)
+	adminParty.Put("/budget_action", UpdateBudgetAction)
+	adminParty.Delete("/budget_action/{baID}", DeleteBudgetAction)
 
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)

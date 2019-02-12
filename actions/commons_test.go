@@ -37,6 +37,7 @@ func TestAll(t *testing.T) {
 	cfg := initializeTests(t)
 	testUser(t, cfg)
 	testCopro(t, cfg)
+	testBudgetAction(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -97,6 +98,12 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			label_date date,
 			budget bigint
 			);`, // 2 : temp_copro
+		`CREATE table budget_action (
+			id SERIAL PRIMARY KEY,
+			code varchar(12) NOT NULL,
+			name varchar(250) NOT NULL,
+			sector_id int
+			);`, // 3 : budget_action
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
