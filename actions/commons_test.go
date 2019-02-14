@@ -38,6 +38,7 @@ func TestAll(t *testing.T) {
 	testUser(t, cfg)
 	testCopro(t, cfg)
 	testBudgetAction(t, cfg)
+	testRenewProject(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -67,8 +68,9 @@ func initializeTests(t *testing.T) *TestContext {
 }
 
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
-	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, copros, users, imported_commitment, 
-	commitment, imported_payment, payment, report, budget_action, beneficiary, temp_copro `); err != nil {
+	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
+	commitment, imported_payment, payment, report, budget_action, beneficiary, 
+	temp_copro, renew_project, temp_renew_project `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -83,7 +85,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 		);`, // 0 : users
 		`CREATE TABLE copro (
 			id SERIAL PRIMARY KEY,
-			reference varchar(150) NOT NULL,
+			reference varchar(15) NOT NULL,
 			name varchar(150) NOT NULL,
 			address varchar(200) NOT NULL,
 			zip_code int NOT NULL,
@@ -104,6 +106,21 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			name varchar(250) NOT NULL,
 			sector_id int
 			);`, // 3 : budget_action
+		`CREATE table renew_project (
+			id SERIAL PRIMARY KEY,
+			reference varchar(15) NOT NULL UNIQUE,
+			name varchar(150) NOT NULL,
+			budget bigint NOT NULL,
+			population int,
+			composite_index int
+			);`, // 4 : renew_project
+		`CREATE table temp_renew_project (
+			reference varchar(15) NOT NULL UNIQUE,
+			name varchar(150) NOT NULL,
+			budget bigint NOT NULL,	
+			population int,
+			composite_index int
+			);`, // 5 : temp_renew_project
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
