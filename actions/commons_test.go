@@ -39,6 +39,7 @@ func TestAll(t *testing.T) {
 	testCopro(t, cfg)
 	testBudgetAction(t, cfg)
 	testRenewProject(t, cfg)
+	testHousing(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -70,7 +71,7 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -121,6 +122,16 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			population int,
 			composite_index int
 			);`, // 5 : temp_renew_project
+		`CREATE table housing (
+			ID SERIAL PRIMARY KEY,
+			reference varchar(120) NOT NULL,
+			address varchar(150),
+			zip_code int,
+			plai int NOT NULL,
+			plus int NOT NULL,
+			pls int NOT NULL,
+			anru boolean NOT NULL
+			);`, // 6 : housing
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
