@@ -37,6 +37,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Post("/renew_project", CreateRenewProject)
 	adminParty.Put("/renew_project", UpdateRenewProject)
 	adminParty.Delete("/renew_project/{rpID}", DeleteRenewProject)
+	adminParty.Post("/housing", CreateHousing)
 
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
