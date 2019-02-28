@@ -71,7 +71,7 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project, housing `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -123,15 +123,24 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			composite_index int
 		);`, // 5 : temp_renew_project
 		`CREATE TABLE housing (
-			ID SERIAL PRIMARY KEY,
-			reference varchar(120) NOT NULL,
-			address varchar(150),
-			zip_code int,
-			plai int NOT NULL,
-			plus int NOT NULL,
-			pls int NOT NULL,
-			anru boolean NOT NULL
-		);`, // 6 : housing
+	    id SERIAL PRIMARY KEY,
+	    reference varchar(100) NOT NULL,
+	    address varchar(150),
+	    zip_code int,
+	    plai int NOT NULL,
+	    plus int NOT NULL,
+	    pls int NOT NULL,
+	    anru boolean NOT NULL
+		);`, // 7 : housing
+		`CREATE TABLE temp_housing (
+	    reference varchar(100) NOT NULL,
+	    address varchar(150),
+	    zip_code int,
+	    plai int NOT NULL,
+	    plus int NOT NULL,
+	    pls int NOT NULL,
+	    anru boolean NOT NULL
+		);`, // 8 : temp_housing
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
