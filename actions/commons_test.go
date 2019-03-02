@@ -71,7 +71,7 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project, housing `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -92,7 +92,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			zip_code int NOT NULL,
 			label_date date,
 			budget bigint
-			);`, // 1 : copro
+		);`, // 1 : copro
 		`CREATE TABLE temp_copro (
 			reference varchar(150) NOT NULL,
 			name varchar(150) NOT NULL,
@@ -100,38 +100,47 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			zip_code int NOT NULL,
 			label_date date,
 			budget bigint
-			);`, // 2 : temp_copro
-		`CREATE table budget_action (
+		);`, // 2 : temp_copro
+		`CREATE TABLE budget_action (
 			id SERIAL PRIMARY KEY,
 			code varchar(12) NOT NULL,
 			name varchar(250) NOT NULL,
 			sector_id int
-			);`, // 3 : budget_action
-		`CREATE table renew_project (
+		);`, // 3 : budget_action
+		`CREATE TABLE renew_project (
 			id SERIAL PRIMARY KEY,
 			reference varchar(15) NOT NULL UNIQUE,
 			name varchar(150) NOT NULL,
 			budget bigint NOT NULL,
 			population int,
 			composite_index int
-			);`, // 4 : renew_project
-		`CREATE table temp_renew_project (
+		);`, // 4 : renew_project
+		`CREATE TABLE temp_renew_project (
 			reference varchar(15) NOT NULL UNIQUE,
 			name varchar(150) NOT NULL,
 			budget bigint NOT NULL,	
 			population int,
 			composite_index int
-			);`, // 5 : temp_renew_project
-		`CREATE table housing (
-			ID SERIAL PRIMARY KEY,
-			reference varchar(120) NOT NULL,
-			address varchar(150),
-			zip_code int,
-			plai int NOT NULL,
-			plus int NOT NULL,
-			pls int NOT NULL,
-			anru boolean NOT NULL
-			);`, // 6 : housing
+		);`, // 5 : temp_renew_project
+		`CREATE TABLE housing (
+	    id SERIAL PRIMARY KEY,
+	    reference varchar(100) NOT NULL,
+	    address varchar(150),
+	    zip_code int,
+	    plai int NOT NULL,
+	    plus int NOT NULL,
+	    pls int NOT NULL,
+	    anru boolean NOT NULL
+		);`, // 7 : housing
+		`CREATE TABLE temp_housing (
+	    reference varchar(100) NOT NULL,
+	    address varchar(150),
+	    zip_code int,
+	    plai int NOT NULL,
+	    plus int NOT NULL,
+	    pls int NOT NULL,
+	    anru boolean NOT NULL
+		);`, // 8 : temp_housing
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {

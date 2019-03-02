@@ -38,15 +38,19 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Put("/renew_project", UpdateRenewProject)
 	adminParty.Delete("/renew_project/{rpID}", DeleteRenewProject)
 	adminParty.Post("/housing", CreateHousing)
-	adminParty.Put("/housing", UpdateHousing)
-	adminParty.Delete("/housing/{hID}", DeleteHousing)
 
-	userParty := api.Party("", ActiveMiddleware)
+  adminParty.Post("/housing", CreateHousing)
+	adminParty.Put("/housing", UpdateHousing)
+	adminParty.Delete("/housing/{ID}", DeleteHousing)
+	adminParty.Post("/housings", BatchHousings)
+
+  userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
 	userParty.Get("/user/logout", Logout)
 	userParty.Get("/budget_actions", GetBudgetActions)
 	userParty.Get("/copro", GetCopros)
 	userParty.Get("/renew_projects", GetRenewProjects)
+
 	userParty.Get("/housings", GetHousings)
 }
 

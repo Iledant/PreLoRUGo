@@ -73,7 +73,7 @@ func GetHousings(ctx iris.Context) {
 
 // DeleteHousing handles the get request to fetch all housings
 func DeleteHousing(ctx iris.Context) {
-	ID, err := ctx.Params().GetInt64("hID")
+	ID, err := ctx.Params().GetInt64("ID")
 	if err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Suppression de logement, paramètre : " + err.Error()})
@@ -88,4 +88,22 @@ func DeleteHousing(ctx iris.Context) {
 	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Logement supprimé"})
+}
+
+// BatchHousings handle the post request to update and insert a batch of housings into the database
+func BatchHousings(ctx iris.Context) {
+	var b models.HousingBatch
+	if err := ctx.ReadJSON(&b); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de Logements, décodage : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := b.Save(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de Logements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Batch de Logements importé"})
 }
