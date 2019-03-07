@@ -40,6 +40,8 @@ func TestAll(t *testing.T) {
 	testBudgetAction(t, cfg)
 	testRenewProject(t, cfg)
 	testHousing(t, cfg)
+	testCommitment(t, cfg)
+	testBeneficiary(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -71,7 +73,7 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project, housing, temp_housing `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -141,6 +143,37 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    pls int NOT NULL,
 	    anru boolean NOT NULL
 		);`, // 8 : temp_housing
+		`CREATE TABLE commitment (
+	    id SERIAL PRIMARY KEY,
+	    year int NOT NULL,
+	    code varchar(5) NOT NULL,
+	    number int NOT NULL,
+	    line int NOT NULL,
+	    creation_date date NOT NULL,
+	    modification_date date NOT NULL,
+	    name varchar(150) NOT NULL,
+	    value bigint NOT NULL,
+	    beneficiary_id int NOT NULL,
+	    iris_code varchar(20)
+		);`, // 8 : commitment
+		`CREATE TABLE temp_commitment (
+	    year int NOT NULL,
+	    code varchar(5) NOT NULL,
+	    number int NOT NULL,
+	    line int NOT NULL,
+	    creation_date int NOT NULL,
+	    modification_date int NOT NULL,
+	    name varchar(150) NOT NULL,
+	    value bigint NOT NULL,
+	    beneficiary_code int NOT NULL,
+	    beneficiary_name varchar(150) NOT NULL,
+	    iris_code varchar(20)
+		);`, // 9 : temp_commitment
+		`CREATE TABLE beneficiary (
+	    id SERIAL PRIMARY KEY,
+	    code int NOT NULL,
+	    name varchar(120) NOT NULL
+		);`, // 10 : beneficiary
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
