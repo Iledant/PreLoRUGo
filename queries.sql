@@ -1,17 +1,35 @@
+-- Suppression des tables
+DROP TABLE imported_commitment;
+
 CREATE TABLE imported_commitment (
-	report varchar(12),
-	"action" varchar(255),
-	iris_code varchar(50),
-	coriolis_year integer,
-	coriolis_egt_code varchar(30),
-	coriolis_egt_num varchar(8),
-	coriolis_egt_line varchar(3),
-	name varchar(200),
-	beneficiary varchar(120),
-	beneficiary_code int,
-	"date" date, 
-	"value" bigint,
-	lapse_date date
+YEAR int,
+CODE varchar(5),
+NUM int,
+LIG int,
+CREATION int,
+MODIFICATION int,
+NAME varchar(50),
+VALUE bigint,
+BENEFICIARY_CODE int,
+BENEFICIARY_NAME varchar(40),
+IRIS_CODE varchar(20)
+);
+
+CREATE TABLE commitment (
+  ID SERIAL PRIMARY KEY,
+  YEAR int NOT NULL,
+  CODE varchar(5) NOT NULL,
+  NUM int NOT NULL,
+  LIG INT NOT NULL,
+  CREATION date,
+  MODIFICATION date,
+  NAME varchar(60),
+  VALUE bigint,
+  BENEFICIARY_ID int,
+  IRIS_CODE varchar(20),
+  CONSTRAINT commitment_beneficiary_id_fkey FOREIGN KEY (beneficiary_id)
+	  REFERENCES beneficiary (id) MATCH SIMPLE
+	  ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 
 CREATE table imported_payment (
@@ -116,49 +134,26 @@ budget bigint
 -- Import des engagements
 COPY imported_commitment FROM E'C:\\Users\\chris\\go\\src\\github.com\\Iledant\\PreLoRUGo\\assets\\20190129 AP PreLoRU.csv' DELIMITER ';' CSV HEADER;
 
--- Création des actions budgétaires à partir de l'import des engagements
-WITH 
- ba AS (SELECT DISTINCT substring(action from '^[0-9]+') AS code, ltrim(substring(action from '- .+'),'- ') AS name 
-		FROM imported_commitment)
-INSERT INTO budget_action (code,name) SELECT ba.code,ba.name FROM ba WHERE ba.code NOT IN (SELECT code FROM budget_action)
+-- Import ou mise à jour des bénéficiaires à partir de l'import des engagements
+insert into beneficiary (code, name) 
+	select distinct beneficiary_code, beneficiary_name 
+		from imported_commitment 
+		where beneficiary_code not in (select code from beneficiary);
+		
+update beneficiary set name = t.beneficiary_name from
+	(select distinct beneficiary_code, beneficiary_name
+		from imported_commitment) t
+	where t.beneficiary_code not in (select code from beneficiary);
 
--- Création des bénéficiaires à partir de l'import des engagements
-INSERT INTO beneficiary (code,name) 
-  SELECT DISTINCT beneficiary_code,beneficiary FROM imported_commitment 
-    WHERE beneficiary_code NOT IN (SELECT DISTINCT code from beneficiary)
-
--- Création des imports à partir de l'import des engagements	
-INSERT INTO report (name) SELECT DISTINCT report from imported_commitment WHERE report NOT IN (SELECT DISTINCT name FROM report)
-
--- Requête de mise à jour de la table commitment à partir des imports
--- Mise à jour des lignes communes puis ajout des lignes non présentes
-UPDATE commitment SET action_id=q.ba_id, value=q.value, name=q.name, report_id=q.re_id,
-lapse_date=q.lapse_date, iris_code=q.iris_code, lapse_date=q.lapse_date, beneficiary_id=q.be_id FROM
-(SELECT ic.date, ic.value, ic.name, ic.lapse_date,ic.iris_code,ic.coriolis_year,
-ic.coriolis_egt_code, ic.coriolis_egt_num,ic.coriolis_egt_line, ba.id AS ba_id, be.id AS be_id, re.id AS re_id
-FROM imported_commitment ic, budget_action ba, report re, beneficiary be
-WHERE ic.action LIKE ba.code||' -%'  AND re.name = ic.report AND be.code = ic.beneficiary_code) q
-WHERE commitment.coriolis_year=q.coriolis_year AND commitment.coriolis_egt_code=q.coriolis_egt_code AND 
-commitment.coriolis_egt_line=q.coriolis_egt_line AND commitment.coriolis_egt_num=q.coriolis_egt_num;
-
-INSERT INTO commitment (date, value, name, lapse_date, iris_code,coriolis_year, 
-coriolis_egt_code, coriolis_egt_num,coriolis_egt_line, action_id, beneficiary_id, report_id)
-SELECT ic.date, ic.value, ic.name, ic.lapse_date,ic.iris_code,ic.coriolis_year,
-ic.coriolis_egt_code, ic.coriolis_egt_num,ic.coriolis_egt_line, ba.id, be.id, re.id
-FROM imported_commitment ic, budget_action ba, report re, beneficiary be
-WHERE ic.action LIKE ba.code||' -%'  AND re.name = ic.report AND be.code = ic.beneficiary_code;
+-- Mise à jour de la table des engagements
+INSERT INTO commitment (year,code,num,lig,creation,modification,name,value,beneficiary_id,iris_code)
+  (SELECT ic.year,ic.code,ic.num,ic.lig,make_date(ic.creation/10000,(ic.creation/100)%100,ic.creation%100),
+    make_date(ic.modification/10000,(ic.modification/100)%100,ic.modification%100),ic.name,ic.value,b.id,ic.iris_code
+  FROM imported_commitment ic
+  JOIN beneficiary b on ic.beneficiary_code=b.code
+  WHERE (ic.year,ic.code,ic.num,ic.lig,make_date(ic.creation/10000,(ic.creation/100)%100,ic.creation%100),
+    make_date(ic.modification/10000,(ic.modification/100)%100,ic.modification%100),ic.name, ic.value) 
+    NOT IN (select year,code,num,lig,creation,modification,name,value FROM commitment));
 
 -- Lecture du fichier des paiements
 COPY imported_payment	FROM E'C:\\Users\\chris\\go\\src\\github.com\\Iledant\\PreLoRUGo\\assets\\20190123 Mandats PreLoRU.csv' DELIMITER ';' CSV HEADER;
-
--- Requête de mise à jour de la table payment à parti des imports
--- Mise à jour des lignes communes puis ajout des lignes non présentes
-
-INSERT INTO payment (coriolis_year,coriolis_egt_code,coriolis_egt_num,coriolis_egt_line,commitment_id,
-date,number,value,cancelled_value,beneficiary_code,beneficiary_id)
-SELECT ip.coriolis_year, ip.coriolis_egt_code, ip.coriolis_egt_num, ip.coriolis_egt_line, co.id, 
-  ip.date, ip.number,ip.value,ip.cancelled_value,ip.beneficiary_code,be.id
-FROM imported_payment ip
-LEFT OUTER JOIN commitment co ON ip.coriolis_year = co.coriolis_year, ip.coriolis_egt_code = co.coriolis_egt_code,
-  ip.coriolis_egt_line = co.coriolis_egt_line, ip.coriolis_egt_num = co.coriolis_egt_num
-LEFT OUTER JOIN beneficiary be ON ip.beneficiary_code = be.code
