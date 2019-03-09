@@ -1,0 +1,34 @@
+{
+  "Payment": [
+    {
+      "CommitmentYear":2012,
+      "CommitmentCode":"IRIS ",
+      "CommitmentNumber":392543,
+      "CommitmentLine":1,
+      "Year":2014,
+      "CreationDate":20140129,
+      "ModificationDate":20140210,
+      "Value":12648324
+    },
+    {
+      "CommitmentYear":2015,
+      "CommitmentCode":"IRIS ",
+      "CommitmentNumber":474048,
+      "CommitmentLine":1,
+      "Year":2016,
+      "CreationDate":20161108,
+      "ModificationDate":20161117,
+      "Value":1630705           
+    },
+    {
+      "CommitmentYear":2017,
+      "CommitmentCode":"IRIS ",
+      "CommitmentNumber":525554,
+      "CommitmentLine":1,
+      "Year":2018,
+      "CreationDate":20180219,
+      "ModificationDate":20180219,
+      "Value":3147322
+    }
+  ]
+}

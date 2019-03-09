@@ -60,9 +60,11 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
+			// cSpell: disable
 			RespContains: []string{`"Commitment"`, `"Year":2009,"Code":"AE   ","Number":244923,"Line":1,"CreationDate":"2012-01-26T00:00:00Z","ModificationDate":"2012-01-26T00:00:00Z","Name":"TRAITEMENT DE CADUCITE","Value":-15371500,"BeneficiaryID":2,"IrisCode":null`},
-			Count:        4,
-			StatusCode:   http.StatusOK}, // 1 : ok
+			// cSpell: enable
+			Count:      4,
+			StatusCode: http.StatusOK}, // 1 : ok
 	}
 	for i, tc := range tcc {
 		response := c.E.GET("/api/commitments").

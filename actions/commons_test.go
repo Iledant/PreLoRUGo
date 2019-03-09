@@ -42,6 +42,8 @@ func TestAll(t *testing.T) {
 	testHousing(t, cfg)
 	testCommitment(t, cfg)
 	testBeneficiary(t, cfg)
+
+	testPayment(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -73,7 +75,7 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary, payment , temp_payment `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -174,6 +176,31 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    code int NOT NULL,
 	    name varchar(120) NOT NULL
 		);`, // 10 : beneficiary
+		`CREATE TABLE payment (
+	    id SERIAL PRIMARY KEY,
+	    commitment_id int,
+	    commitment_year int NOT NULL,
+	    commitment_code varchar(5) NOT NULL,
+	    commitment_number int NOT NULL,
+	    commitment_line int NOT NULL,
+	    year int NOT NULL,
+	    creation_date date NOT NULL,
+	    modification_date date NOT NULL,
+			value bigint NOT NULL,
+			CONSTRAINT payment_commitment_id_fkey FOREIGN KEY (commitment_id)
+			REFERENCES commitment (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
+				);`, // 11 : payment
+		`CREATE TABLE temp_payment (
+	    commitment_year int NOT NULL,
+	    commitment_code varchar(5) NOT NULL,
+	    commitment_number int NOT NULL,
+	    commitment_line int NOT NULL,
+	    year int NOT NULL,
+	    creation_date date NOT NULL,
+	    modification_date date NOT NULL,
+	    value bigint NOT NULL
+		);`, // 12 : temp_payment
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
