@@ -83,7 +83,7 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 	VALUES ($1,$2,$3,$4,make_date($5,$6,$7),make_date($8,$9,$10),$11,$12,$13,$14,
 	$15,$16,$17,$18)`)
 	if err != nil {
-		return err
+		return errors.New("Statement creation " + err.Error())
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
@@ -99,20 +99,29 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			r.Value, r.BeneficiaryCode, strings.TrimSpace(r.BeneficiaryName), r.IrisCode,
 			strings.TrimSpace(r.Sector), r.ActionCode, r.ActionName.TrimSpace()); err != nil {
 			tx.Rollback()
-			return err
+			return errors.New("Statement execution " + err.Error())
 		}
 	}
 	_, err = tx.Exec(`INSERT INTO beneficiary (code,name) SELECT DISTINCT beneficiary_code,beneficiary_name 
 		FROM temp_commitment WHERE beneficiary_code not in (SELECT code from beneficiary)`)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return errors.New("Beneficiary insertion " + err.Error())
 	}
-	_, err = tx.Exec(`INSERT INTO budget_action (code,name) SELECT DISTINCT action_code,action_name 
-		FROM temp_commitment WHERE action_code not in (SELECT code from budget_action)`)
+	_, err = tx.Exec(`INSERT INTO budget_sector (name) SELECT DISTINCT sector
+	FROM temp_commitment WHERE sector not in (SELECT name from budget_sector)`)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return errors.New("Budget sector insertion " + err.Error())
+	}
+	_, err = tx.Exec(`INSERT INTO budget_action (code,name,sector_id) 
+		SELECT DISTINCT ic.action_code,ic.action_name, s.id
+		FROM temp_commitment ic
+		LEFT JOIN budget_sector s ON ic.sector = s.name
+		WHERE action_code not in (SELECT code from budget_action)`)
+	if err != nil {
+		tx.Rollback()
+		return errors.New("Budget action insertion " + err.Error())
 	}
 	_, err = tx.Exec(`INSERT INTO commitment (year,code,number,line,creation_date,modification_date,
 		name,value,beneficiary_id,iris_code,action_id)
@@ -125,7 +134,7 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
     NOT IN (select year,code,number,line,creation_date,modification_date,name,value FROM commitment));`)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return errors.New("Commitment insertion " + err.Error())
 	}
 	tx.Commit()
 	return nil

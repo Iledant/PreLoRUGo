@@ -42,8 +42,8 @@ func TestAll(t *testing.T) {
 	testHousing(t, cfg)
 	testCommitment(t, cfg)
 	testBeneficiary(t, cfg)
-
 	testPayment(t, cfg)
+	testBudgetSector(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -75,7 +75,7 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary, payment , temp_payment, action `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary, payment , temp_payment, action, budget_sector `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -105,12 +105,17 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			label_date date,
 			budget bigint
 		);`, // 2 : temp_copro
+		`CREATE TABLE budget_sector (
+			id SERIAL PRIMARY KEY,
+			name varchar(20) NOT NULL,
+	    full_name varchar(150)
+		);`, // 3 : budget_sector
 		`CREATE TABLE budget_action (
 			id SERIAL PRIMARY KEY,
 			code bigint NOT NULL,
 			name varchar(250) NOT NULL,
 			sector_id int
-		);`, // 3 : budget_action
+		);`, // 4 : budget_action
 		`CREATE TABLE renew_project (
 			id SERIAL PRIMARY KEY,
 			reference varchar(15) NOT NULL UNIQUE,
@@ -118,14 +123,14 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			budget bigint NOT NULL,
 			population int,
 			composite_index int
-		);`, // 4 : renew_project
+		);`, // 5 : renew_project
 		`CREATE TABLE temp_renew_project (
 			reference varchar(15) NOT NULL UNIQUE,
 			name varchar(150) NOT NULL,
 			budget bigint NOT NULL,	
 			population int,
 			composite_index int
-		);`, // 5 : temp_renew_project
+		);`, // 6 : temp_renew_project
 		`CREATE TABLE housing (
 	    id SERIAL PRIMARY KEY,
 	    reference varchar(100) NOT NULL,
