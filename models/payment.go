@@ -12,7 +12,7 @@ type Payment struct {
 	CommitmentID     NullInt64 `json:"CommitmentID"`
 	CommitmentYear   int64     `json:"CommitmentYear"`
 	CommitmentCode   string    `json:"CommitmentCode"`
-	CommitmentNumber    int64     `json:"CommitmentNumber"`
+	CommitmentNumber int64     `json:"CommitmentNumber"`
 	CommitmentLine   int64     `json:"CommitmentLine"`
 	Year             int64     `json:"Year"`
 	CreationDate     time.Time `json:"CreationDate"`
@@ -29,7 +29,7 @@ type Payments struct {
 type PaymentLine struct {
 	CommitmentYear   int64  `json:"CommitmentYear"`
 	CommitmentCode   string `json:"CommitmentCode"`
-	CommitmentNumber    int64  `json:"CommitmentNumber"`
+	CommitmentNumber int64  `json:"CommitmentNumber"`
 	CommitmentLine   int64  `json:"CommitmentLine"`
 	Year             int64  `json:"Year"`
 	CreationDate     int    `json:"CreationDate"`

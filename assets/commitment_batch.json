@@ -7,11 +7,14 @@
       "Line":1,
       "Creation":20120126,
       "Modification":20120126,
-      "Name":"TRAITEMENT DE CADUCITE",
+      "Name":"TRAITEMENT DE CADUCITE 2011",
       "Value":-15371500,
       "BeneficiaryCode":5019,
       "BeneficiaryName":"ESSONNE HABITAT                       ",
-      "IrisCode":null
+      "IrisCode":null,
+      "Sector":"LO                  ",
+      "ActionCode":15400203,
+      "ActionName":"Aide à la création de logements locatifs très sociaux"
     },
     {
       "Year":2013,
@@ -24,7 +27,10 @@
       "Value":-10,
       "BeneficiaryCode":30953,
       "BeneficiaryName":"FONCIA MARCEAU                        ",
-      "IrisCode":"13005692"
+      "IrisCode":"13005692",
+      "Sector":"LO                  ",
+      "ActionCode":15400801,
+      "ActionName":"Lutte contre la précarité énergétique"
     },
     {
       "Year":2017,
@@ -37,7 +43,10 @@
       "Value":-22802200,
       "BeneficiaryCode":6850,
       "BeneficiaryName":"SA D HLM LOGIREP                      ",
-      "IrisCode":"16006934"
+      "IrisCode":"16006934",
+      "Sector":"LO                  ",
+      "ActionCode":15400202,
+      "ActionName":"Aide à la création de logements locatifs sociaux"
     },
     {
       "Year":2018,
@@ -50,7 +59,10 @@
       "Value":103200000,
       "BeneficiaryCode":29364,
       "BeneficiaryName":"OPH MANTES YVELINES HABITAT           ",
-      "IrisCode":"EX02851"
+      "IrisCode":"EX02851",
+      "Sector":"LO                  ",
+      "ActionCode":15400505,
+      "ActionName":"Logement des étudiants, des jeunes et des apprentis"
     }
   ]
 }

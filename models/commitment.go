@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -39,6 +40,9 @@ type CommitmentLine struct {
 	BeneficiaryCode  int64      `json:"BeneficiaryCode"`
 	BeneficiaryName  string     `json:"BeneficiaryName"`
 	IrisCode         NullString `json:"IrisCode"`
+	Sector           string     `json:"Sector"`
+	ActionCode       NullInt64  `json:"ActionCode"`
+	ActionName       NullString `json:"ActionName"`
 }
 
 // CommitmentBatch embeddes an array of CommitmentLine for json export
@@ -74,8 +78,10 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		return err
 	}
 	stmt, err := tx.Prepare(`INSERT INTO temp_commitment (year,code,number,line,
-		creation_date,modification_date,name,value,beneficiary_code,beneficiary_name,iris_code) 
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`)
+		creation_date,modification_date,name,value,beneficiary_code,beneficiary_name,
+		iris_code,sector,action_code,action_name)
+	VALUES ($1,$2,$3,$4,make_date($5,$6,$7),make_date($8,$9,$10),$11,$12,$13,$14,
+	$15,$16,$17,$18)`)
 	if err != nil {
 		return err
 	}
@@ -83,13 +89,15 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 	for _, r := range c.Lines {
 		if r.Year < 2009 || r.Number == 0 || r.Line == 0 || r.CreationDate < 20090101 ||
 			r.ModificationDate < 20090101 || r.Name == "" || r.BeneficiaryCode == 0 ||
-			r.BeneficiaryName == "" {
+			r.BeneficiaryName == "" || r.Sector == "" {
 			tx.Rollback()
 			return errors.New("Champs incorrects")
 		}
-		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, r.CreationDate,
-			r.ModificationDate, r.Name, r.Value, r.BeneficiaryCode, r.BeneficiaryName,
-			r.IrisCode); err != nil {
+		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, r.CreationDate/10000,
+			r.CreationDate/100%100, r.CreationDate%100, r.ModificationDate/10000,
+			r.ModificationDate/100%100, r.ModificationDate%100, strings.TrimSpace(r.Name),
+			r.Value, r.BeneficiaryCode, strings.TrimSpace(r.BeneficiaryName), r.IrisCode,
+			strings.TrimSpace(r.Sector), r.ActionCode, r.ActionName.TrimSpace()); err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -100,15 +108,20 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		tx.Rollback()
 		return err
 	}
+	_, err = tx.Exec(`INSERT INTO budget_action (code,name) SELECT DISTINCT action_code,action_name 
+		FROM temp_commitment WHERE action_code not in (SELECT code from budget_action)`)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 	_, err = tx.Exec(`INSERT INTO commitment (year,code,number,line,creation_date,modification_date,
-		name,value,beneficiary_id,iris_code)
-  	(SELECT ic.year,ic.code,ic.number,ic.line,make_date(ic.creation_date/10000,(ic.creation_date/100)%100,ic.creation_date%100),
-			make_date(ic.modification_date/10000,(ic.modification_date/100)%100,ic.modification_date%100),
-			ic.name,ic.value,b.id,ic.iris_code
+		name,value,beneficiary_id,iris_code,action_id)
+  	(SELECT ic.year,ic.code,ic.number,ic.line,ic.creation_date,ic.modification_date,
+			ic.name,ic.value,b.id,ic.iris_code,a.id
   	FROM temp_commitment ic
-  	JOIN beneficiary b on ic.beneficiary_code=b.code
-  	WHERE (ic.year,ic.code,ic.number,ic.line,make_date(ic.creation_date/10000,(ic.creation_date/100)%100,ic.creation_date%100),
-    make_date(ic.modification_date/10000,(ic.modification_date/100)%100,ic.modification_date%100),ic.name, ic.value) 
+		JOIN beneficiary b on ic.beneficiary_code=b.code
+		LEFT JOIN budget_action a on ic.action_code = a.code
+  	WHERE (ic.year,ic.code,ic.number,ic.line,ic.creation_date,ic.modification_date,ic.name, ic.value) 
     NOT IN (select year,code,number,line,creation_date,modification_date,name,value FROM commitment));`)
 	if err != nil {
 		tx.Rollback()

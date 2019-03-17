@@ -21,12 +21,12 @@ func testGetBeneficiaries(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"Beneficiary"`, `"Code":5019,"Name":"ESSONNE HABITAT                       "`,
+			RespContains: []string{`"Beneficiary"`, `"Code":5019,"Name":"ESSONNE HABITAT"`,
 				// cSpell: disable
-				`"Code":30953,"Name":"FONCIA MARCEAU                        "`,
-				`"Code":6850,"Name":"SA D HLM LOGIREP                      "`,
+				`"Code":30953,"Name":"FONCIA MARCEAU"`,
+				`"Code":6850,"Name":"SA D HLM LOGIREP"`,
 				//cSpell: enable
-				`"Code":29364,"Name":"OPH MANTES YVELINES HABITAT           "`},
+				`"Code":29364,"Name":"OPH MANTES YVELINES HABITAT"`},
 			Count:      4,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}

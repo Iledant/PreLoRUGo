@@ -8,7 +8,7 @@ import (
 //BudgetAction model
 type BudgetAction struct {
 	ID       int64     `json:"ID"`
-	Code     string    `json:"Code"`
+	Code     int64     `json:"Code"`
 	Name     string    `json:"Name"`
 	SectorID NullInt64 `json:"SectorID"`
 }
@@ -20,7 +20,7 @@ type BudgetActions struct {
 
 // Validate checks if the fields of a budget action are correctly filled
 func (b *BudgetAction) Validate() error {
-	if b.Code == "" || b.Name == "" {
+	if b.Code == 0 || b.Name == "" {
 		return errors.New("Champ code ou name incorrect")
 	}
 	return nil

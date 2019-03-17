@@ -61,7 +61,7 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			// cSpell: disable
-			RespContains: []string{`"Commitment"`, `"Year":2009,"Code":"AE   ","Number":244923,"Line":1,"CreationDate":"2012-01-26T00:00:00Z","ModificationDate":"2012-01-26T00:00:00Z","Name":"TRAITEMENT DE CADUCITE","Value":-15371500,"BeneficiaryID":2,"IrisCode":null`},
+			RespContains: []string{`"Commitment"`, `"Year":2009,"Code":"AE   ","Number":244923,"Line":1,"CreationDate":"2012-01-26T00:00:00Z","ModificationDate":"2012-01-26T00:00:00Z","Name":"TRAITEMENT DE CADUCITE 2011","Value":-15371500,"BeneficiaryID":3,"IrisCode":null`},
 			// cSpell: enable
 			Count:      4,
 			StatusCode: http.StatusOK}, // 1 : ok

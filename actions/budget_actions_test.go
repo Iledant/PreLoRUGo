@@ -35,17 +35,17 @@ func testCreateBudgetAction(t *testing.T, c *TestContext) (ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'action budgétaire, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : code empty
-		{Sent: []byte(`{"BudgetAction":{"Code":"","Name":"Action"}}`),
+		{Sent: []byte(`{"BudgetAction":{"Code":0,"Name":"Action"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
-		{Sent: []byte(`{"BudgetAction":{"Code":"1234567890","Name":""}}`),
+		{Sent: []byte(`{"BudgetAction":{"Code":1234567890,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"BudgetAction":{"Code":"1234567890","Name":"Action"}}`),
+		{Sent: []byte(`{"BudgetAction":{"Code":1234567890,"Name":"Action"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"BudgetAction"`, `"Code":"1234567890","Name":"Action"`},
+			RespContains: []string{`"BudgetAction"`, `"Code":1234567890,"Name":"Action"`},
 			StatusCode:   http.StatusCreated}, // 4 : ok
 	}
 	for i, tc := range tcc {
@@ -113,21 +113,21 @@ func testUpdateBudgetAction(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : code empty
-		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":"","Name":"Action"}}`),
+		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":0,"Name":"Action"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire : Champ code ou name incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 2 : code empty
-		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":"1234567890","Name":""}}`),
+			StatusCode:   http.StatusBadRequest}, // 2 : code zero
+		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":1234567890,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"BudgetAction":{"ID":0,"Code":"1234567890","Name":""}}`),
+		{Sent: []byte(`{"BudgetAction":{"ID":0,"Code":1234567890,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : name empty
-		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":"0123456789","Name":"Action modifiée"}}`),
+		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":23456789,"Name":"Action modifiée"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":"0123456789","Name":"Action modifiée","SectorID":null}}`},
+			RespContains: []string{`"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":23456789,"Name":"Action modifiée","SectorID":null}}`},
 			StatusCode:   http.StatusOK}, // 5 : name empty
 	}
 	for i, tc := range tcc {

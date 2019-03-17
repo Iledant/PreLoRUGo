@@ -75,7 +75,7 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary, payment , temp_payment `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary, payment , temp_payment, action `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -107,7 +107,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 		);`, // 2 : temp_copro
 		`CREATE TABLE budget_action (
 			id SERIAL PRIMARY KEY,
-			code varchar(12) NOT NULL,
+			code bigint NOT NULL,
 			name varchar(250) NOT NULL,
 			sector_id int
 		);`, // 3 : budget_action
@@ -145,6 +145,11 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    pls int NOT NULL,
 	    anru boolean NOT NULL
 		);`, // 8 : temp_housing
+		`CREATE TABLE beneficiary (
+	    id SERIAL PRIMARY KEY,
+	    code int NOT NULL,
+	    name varchar(120) NOT NULL
+		);`, // 9 : beneficiary
 		`CREATE TABLE commitment (
 	    id SERIAL PRIMARY KEY,
 	    year int NOT NULL,
@@ -156,26 +161,29 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    name varchar(150) NOT NULL,
 	    value bigint NOT NULL,
 	    beneficiary_id int NOT NULL,
-	    iris_code varchar(20)
-		);`, // 8 : commitment
+			iris_code varchar(20),
+			action_id int,
+			CONSTRAINT beneficiary_id_fkey FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(id) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+			CONSTRAINT action_id_fkey FOREIGN KEY (action_id) REFERENCES budget_action(id) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
+		);`, // 10 : commitment
 		`CREATE TABLE temp_commitment (
 	    year int NOT NULL,
 	    code varchar(5) NOT NULL,
 	    number int NOT NULL,
 	    line int NOT NULL,
-	    creation_date int NOT NULL,
-	    modification_date int NOT NULL,
+	    creation_date date NOT NULL,
+	    modification_date date NOT NULL,
 	    name varchar(150) NOT NULL,
 	    value bigint NOT NULL,
 	    beneficiary_code int NOT NULL,
 	    beneficiary_name varchar(150) NOT NULL,
-	    iris_code varchar(20)
-		);`, // 9 : temp_commitment
-		`CREATE TABLE beneficiary (
-	    id SERIAL PRIMARY KEY,
-	    code int NOT NULL,
-	    name varchar(120) NOT NULL
-		);`, // 10 : beneficiary
+			iris_code varchar(20),
+			sector varchar(5) NOT NULL,
+			action_code bigint,
+			action_name varchar(150)
+		);`, // 11 : temp_commitment
 		`CREATE TABLE payment (
 	    id SERIAL PRIMARY KEY,
 	    commitment_id int,
@@ -190,7 +198,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			CONSTRAINT payment_commitment_id_fkey FOREIGN KEY (commitment_id)
 			REFERENCES commitment (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
-				);`, // 11 : payment
+				);`, // 12 : payment
 		`CREATE TABLE temp_payment (
 	    commitment_year int NOT NULL,
 	    commitment_code varchar(5) NOT NULL,
@@ -200,7 +208,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    creation_date date NOT NULL,
 	    modification_date date NOT NULL,
 	    value bigint NOT NULL
-		);`, // 12 : temp_payment
+		);`, // 13 : temp_payment
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {

@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -212,6 +213,14 @@ func (ns NullString) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return ns.String, nil
+}
+
+// TrimSpace removes leading and trailing spaces if value is not null
+func (ns *NullString) TrimSpace() NullString {
+	if !ns.Valid {
+		return *ns
+	}
+	return NullString{Valid: true, String: strings.TrimSpace(ns.String)}
 }
 
 // NullFloat64 uses alias in order to mashall and un marshall correctly
