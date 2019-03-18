@@ -198,7 +198,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    commitment_line int NOT NULL,
 	    year int NOT NULL,
 	    creation_date date NOT NULL,
-	    modification_date date NOT NULL,
+			modification_date date NOT NULL,
+			number int NOT NULL,
 			value bigint NOT NULL,
 			CONSTRAINT payment_commitment_id_fkey FOREIGN KEY (commitment_id)
 			REFERENCES commitment (id) MATCH SIMPLE
@@ -211,7 +212,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    commitment_line int NOT NULL,
 	    year int NOT NULL,
 	    creation_date date NOT NULL,
-	    modification_date date NOT NULL,
+			modification_date date NOT NULL,
+			number int NOT NULL,
 	    value bigint NOT NULL
 		);`, // 13 : temp_payment
 	}

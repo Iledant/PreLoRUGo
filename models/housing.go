@@ -120,7 +120,6 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 	}
 	defer stmt.Close()
 	for _, r := range h.Lines {
-		// TODO : fields validation
 		if r.Reference == "" {
 			tx.Rollback()
 			return errors.New("Champ Reference incorrect")

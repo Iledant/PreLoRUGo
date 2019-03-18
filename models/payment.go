@@ -17,6 +17,7 @@ type Payment struct {
 	Year             int64     `json:"Year"`
 	CreationDate     time.Time `json:"CreationDate"`
 	ModificationDate time.Time `json:"ModificationDate"`
+	Number           int64     `json:"Number"`
 	Value            int64     `json:"Value"`
 }
 
@@ -35,6 +36,7 @@ type PaymentLine struct {
 	CreationDate     int    `json:"CreationDate"`
 	ModificationDate int    `json:"ModificationDate"`
 	Value            int64  `json:"Value"`
+	Number           int64  `json:"Number"`
 }
 
 // PaymentBatch embeddes an array of PaymentLine for json export
@@ -45,7 +47,8 @@ type PaymentBatch struct {
 // GetAll fetches all Payments from database
 func (p *Payments) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,commitment_id,commitment_year,commitment_code,
-	commitment_number,commitment_line,year,creation_date,modification_date,value FROM payment`)
+	commitment_number,commitment_line,year,creation_date,modification_date,
+	number, value FROM payment`)
 	if err != nil {
 		return err
 	}
@@ -54,7 +57,7 @@ func (p *Payments) GetAll(db *sql.DB) (err error) {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.CommitmentID, &row.CommitmentYear,
 			&row.CommitmentCode, &row.CommitmentNumber, &row.CommitmentLine, &row.Year,
-			&row.CreationDate, &row.ModificationDate, &row.Value); err != nil {
+			&row.CreationDate, &row.ModificationDate, &row.Number, &row.Value); err != nil {
 			return err
 		}
 		p.Payments = append(p.Payments, row)
@@ -70,8 +73,8 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 		return err
 	}
 	stmt, err := tx.Prepare(`INSERT INTO temp_payment (commitment_year,commitment_code,
-		commitment_number,commitment_line,year,creation_date,modification_date,value)
-		VALUES ($1,$2,$3,$4,$5,make_date($6,$7,$8),make_date($9,$10,$11),$12)`)
+		commitment_number,commitment_line,year,creation_date,modification_date,number, value)
+		VALUES ($1,$2,$3,$4,$5,make_date($6,$7,$8),make_date($9,$10,$11),$12,$13)`)
 	if err != nil {
 		return err
 	}
@@ -79,14 +82,14 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 	for _, r := range p.Lines {
 		if r.CommitmentYear == 0 || r.CommitmentCode == "" || r.CommitmentNumber == 0 ||
 			r.CommitmentLine == 0 || r.Year == 0 || r.CreationDate < 20090101 ||
-			r.ModificationDate < 20090101 {
+			r.ModificationDate < 20090101 || r.Number == 0 {
 			tx.Rollback()
 			return errors.New("Champs incorrects")
 		}
 		if _, err = stmt.Exec(r.CommitmentYear, r.CommitmentCode, r.CommitmentNumber,
 			r.CommitmentLine, r.Year, r.CreationDate/10000, (r.CreationDate/100)%100,
 			r.CreationDate%100, r.ModificationDate/10000, (r.ModificationDate/100)%100,
-			r.ModificationDate%100, r.Value); err != nil {
+			r.ModificationDate%100, r.Number, r.Value); err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -96,15 +99,16 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 		t.commitment_code=payment.commitment_code AND
 		t.commitment_number=payment.commitment_number AND
 		t.commitment_line=payment.commitment_line AND t.year=payment.year AND 
-		t.creation_date=payment.creation_date`)
+		t.creation_date=payment.creation_date AND
+		t.number=payment.number`)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
 	_, err = tx.Exec(`INSERT INTO payment (commitment_id,commitment_year,commitment_code,
-		commitment_number,commitment_line,year,creation_date,modification_date,value)
+		commitment_number,commitment_line,year,creation_date,modification_date,number, value)
 	SELECT c.id,t.commitment_year,t.commitment_code,t.commitment_number,
-		t.commitment_line,t.year,t.creation_date,t.modification_date,t.value 
+		t.commitment_line,t.year,t.creation_date,t.modification_date,t.number,t.value 
 		FROM temp_payment t
 		LEFT JOIN commitment c ON t.commitment_year=c.year AND t.commitment_code=c.code
 			AND t.commitment_number=c.number AND t.commitment_line=c.line

@@ -80,7 +80,7 @@ func testUpdateHousing(t *testing.T, c *TestContext, ID int) {
 		{Sent: []byte(`{"Housing":{"ID":` + strconv.Itoa(ID) + `,"Reference":"","Address":null,"ZipCode":null,"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de logement : Champ Reference incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 2 : TODO validation check
+			StatusCode:   http.StatusBadRequest}, // 2 : reference empty
 		{Sent: []byte(`{"Housing":{"ID":0,"Reference":"Essai2","Address":null,"ZipCode":null,"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de logement, requête : `},

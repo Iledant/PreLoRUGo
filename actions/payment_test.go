@@ -61,9 +61,10 @@ func testGetPayments(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"CommitmentYear":2012,"CommitmentCode":"IRIS ","CommitmentNumber":392543,"CommitmentLine":1,"Year":2014,"CreationDate":"2014-01-29T00:00:00Z","ModificationDate":"2014-02-10T00:00:00Z","Value":12648324`},
-			Count:        3,
-			StatusCode:   http.StatusOK}, // 1 : ok
+			RespContains: []string{`"CommitmentYear":2012,"CommitmentCode":"IRIS ","CommitmentNumber":392543,"CommitmentLine":1,"Year":2014,"CreationDate":"2014-01-29T00:00:00Z","ModificationDate":"2014-02-10T00:00:00Z","Number":104030,"Value":12648324`,
+				`"ID":3,"CommitmentID":2,"CommitmentYear":2017,"CommitmentCode":"IRIS ","CommitmentNumber":525554,"CommitmentLine":1,"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","ModificationDate":"2018-02-19T00:00:00Z","Number":104983,"Value":3147322`},
+			Count:      3,
+			StatusCode: http.StatusOK}, // 1 : ok
 	}
 	for i, tc := range tcc {
 		response := c.E.GET("/api/payments").
