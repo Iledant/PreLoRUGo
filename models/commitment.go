@@ -20,6 +20,9 @@ type Commitment struct {
 	Value            int64      `json:"Value"`
 	BeneficiaryID    int64      `json:"BeneficiaryID"`
 	IrisCode         NullString `json:"IrisCode"`
+	HousingID        NullInt64  `json:"HousingID"`
+	CoproID          NullInt64  `json:"CoproID"`
+	RenewProjectID   NullInt64  `json:"RenewProjectID"`
 }
 
 // Commitments embeddes an array of Commitment for json export

@@ -44,6 +44,7 @@ func TestAll(t *testing.T) {
 	testBeneficiary(t, cfg)
 	testPayment(t, cfg)
 	testBudgetSector(t, cfg)
+	testCommitmentLink(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -75,7 +76,8 @@ func initializeTests(t *testing.T) *TestContext {
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
-	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , temp_commitment, beneficiary, payment , temp_payment, action, budget_sector `); err != nil {
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
+	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -168,7 +170,16 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    beneficiary_id int NOT NULL,
 			iris_code varchar(20),
 			action_id int,
+			housing_id int,
+			copro_id int,
+			renew_project_id int,
 			CONSTRAINT beneficiary_id_fkey FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(id) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+			CONSTRAINT housing_id_fkey FOREIGN KEY (housing_id) REFERENCES housing(id) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+			CONSTRAINT copro_id_fkey FOREIGN KEY (copro_id) REFERENCES copro(id) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+			CONSTRAINT renew_project_id_fkey FOREIGN KEY (renew_project_id) REFERENCES renew_project(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
 			CONSTRAINT action_id_fkey FOREIGN KEY (action_id) REFERENCES budget_action(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION

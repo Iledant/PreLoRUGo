@@ -45,6 +45,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Post("/housings", BatchHousings)
 
 	adminParty.Post("/commitments", BatchCommitments)
+	adminParty.Post("/commitments/link", SetCommitmentLink)
 
 	adminParty.Post("/payments", BatchPayments)
 
