@@ -46,6 +46,7 @@ func TestAll(t *testing.T) {
 	testBudgetSector(t, cfg)
 	testCommitmentLink(t, cfg)
 	testCommission(t, cfg)
+	testCommunity(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -78,7 +79,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
-	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission `); err != nil {
+	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
+	community , temp_community `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -233,6 +235,15 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    name varchar(140) NOT NULL,
 	    date date
 		);`, // 14 : commission
+		`CREATE TABLE community (
+	    id SERIAL PRIMARY KEY,
+	    code varchar(15) NOT NULL,
+	    name varchar(150) NOT NULL
+		);`, // 15 : community
+		`CREATE TABLE temp_community (
+	    code varchar(15) NOT NULL,
+	    name varchar(150) NOT NULL
+		);`, // 16 : temp_community
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {

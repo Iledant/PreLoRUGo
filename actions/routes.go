@@ -56,6 +56,11 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Post("/commission", CreateCommission)
 	adminParty.Put("/commission", UpdateCommission)
 	adminParty.Delete("/commission/{ID}", DeleteCommission)
+	adminParty.Post("/community", CreateCommunity)
+	adminParty.Put("/community", UpdateCommunity)
+	adminParty.Delete("/community/{ID}", DeleteCommunity)
+	adminParty.Post("/communities", BatchCommunities)
+
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
 	userParty.Get("/user/logout", Logout)
@@ -73,6 +78,8 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	userParty.Get("/budget_sectors", GetBudgetSectors)
 	userParty.Get("/budget_sector/{ID}", GetBudgetSector)
+	userParty.Get("/community/{ID}", GetCommunity)
+	userParty.Get("/communities", GetCommunities)
 
 	userParty.Get("/commission/{ID}", GetCommission)
 	userParty.Get("/commissions", GetCommissions)
