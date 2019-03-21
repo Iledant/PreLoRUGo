@@ -47,6 +47,8 @@ func TestAll(t *testing.T) {
 	testCommitmentLink(t, cfg)
 	testCommission(t, cfg)
 	testCommunity(t, cfg)
+
+	testCity(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -80,7 +82,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
 	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
-	community , temp_community `); err != nil {
+	community , temp_community, city , temp_city `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -244,6 +246,19 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    code varchar(15) NOT NULL,
 	    name varchar(150) NOT NULL
 		);`, // 16 : temp_community
+		`CREATE TABLE city (
+	    insee_code int NOT NULL PRIMARY KEY,
+	    name varchar(50) NOT NULL,
+			community_id int,
+			CONSTRAINT city_community_id_fkey FOREIGN KEY (community_id)
+			REFERENCES community (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
+		);`, // 17 : city
+		`CREATE TABLE temp_city (
+	    insee_code int NOT NULL UNIQUE,
+	    name varchar(50) NOT NULL,
+	    community_code varchar(15)
+		);`, // 18 : temp_city
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
