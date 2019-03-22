@@ -14,10 +14,12 @@ import (
 
 // TestContext contains all items for units tests in API.
 type TestContext struct {
-	DB     *sql.DB
-	App    *iris.Application
-	E      *httpexpect.Expect
-	Config *config.PreLoRuGoConf
+	DB             *sql.DB
+	App            *iris.Application
+	E              *httpexpect.Expect
+	Config         *config.PreLoRuGoConf
+	CommissionID   int64
+	RenewProjectID int64
 }
 
 // TestCase is used as common structure for all request tests
@@ -49,6 +51,8 @@ func TestAll(t *testing.T) {
 	testCommunity(t, cfg)
 
 	testCity(t, cfg)
+
+	testRenewProjectForecast(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -82,7 +86,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
 	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
-	community , temp_community, city , temp_city `); err != nil {
+	community , temp_community, city , temp_city, renew_project_forecast , temp_renew_project_forecast `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -259,6 +263,20 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    name varchar(50) NOT NULL,
 	    community_code varchar(15)
 		);`, // 18 : temp_city
+		`CREATE TABLE renew_project_forecast (
+	    id SERIAL PRIMARY KEY,
+	    commission_id int NOT NULL,
+	    value bigint NOT NULL,
+	    comment text,
+	    renew_project_id int NOT NULL
+		);`, // 19 : renew_project_forecast
+		`CREATE TABLE temp_renew_project_forecast (
+			id int NOT NULL,
+			commission_id int NOT NULL,
+	    value bigint NOT NULL,
+	    comment text,
+	    renew_project_id int NOT NULL
+		);`, // 20 : temp_renew_project_forecast
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {

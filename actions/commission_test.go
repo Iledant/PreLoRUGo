@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/Iledant/PreLoRUGo/models"
 )
 
 // testCommission is the entry point for testing all renew projet requests
@@ -21,6 +24,17 @@ func testCommission(t *testing.T, c *TestContext) {
 		testGetCommission(t, c, ID)
 		testGetCommissions(t, c)
 		testDeleteCommission(t, c, ID)
+
+		// Create a commission for other tests and store it's ID in context
+		com := models.Commission{Name: "Commission test",
+			Date: models.NullTime{Valid: true,
+				Time: time.Date(2018, time.March, 1, 0, 0, 0, 0, time.UTC)}}
+		if err := com.Create(c.DB); err != nil {
+			t.Error("Impossible de créer la commission test : " + err.Error())
+			t.FailNow()
+			return
+		}
+		c.CommissionID = com.ID
 	})
 }
 

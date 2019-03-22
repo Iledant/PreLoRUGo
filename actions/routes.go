@@ -66,6 +66,11 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Delete("/city/{ID}", DeleteCity)
 	adminParty.Post("/cities", BatchCities)
 
+	adminParty.Post("/renew_project_forecast", CreateRenewProjectForecast)
+	adminParty.Put("/renew_project_forecast", UpdateRenewProjectForecast)
+	adminParty.Delete("/renew_project_forecast/{ID}", DeleteRenewProjectForecast)
+	adminParty.Post("/renew_project_forecasts", BatchRenewProjectForecasts)
+
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
 	userParty.Get("/user/logout", Logout)
@@ -91,6 +96,9 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	userParty.Get("/city/{ID}", GetCity)
 	userParty.Get("/cities", GetCities)
+
+	userParty.Get("/renew_project_forecast/{ID}", GetRenewProjectForecast)
+	userParty.Get("/renew_project_forecasts", GetRenewProjectForecasts)
 }
 
 // setDBMiddleware return a middleware to add db to context values

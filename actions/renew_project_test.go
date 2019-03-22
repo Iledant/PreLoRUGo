@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Iledant/PreLoRUGo/models"
 )
 
 // testRenewProject is the entry point for testing all renew projet requests
@@ -20,6 +22,17 @@ func testRenewProject(t *testing.T, c *TestContext) {
 		testUpdateRenewProject(t, c, ID)
 		testGetRenewProjects(t, c)
 		testDeleteRenewProject(t, c, ID)
+		rp := models.RenewProject{Reference: "RP_TEST",
+			Name:           "Projet RU test",
+			Budget:         250000000,
+			Population:     models.NullInt64{Valid: false},
+			CompositeIndex: models.NullInt64{Valid: false}}
+		if err := rp.Create(c.DB); err != nil {
+			t.Error("Impossible de créer le projet de renouvellement de test")
+			t.FailNow()
+			return
+		}
+		c.RenewProjectID = rp.ID
 	})
 }
 
