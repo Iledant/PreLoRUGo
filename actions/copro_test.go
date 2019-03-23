@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/Iledant/PreLoRUGo/models"
 )
 
 // testCopro is the entry point for testing all copro routes
@@ -21,6 +23,18 @@ func testCopro(t *testing.T, c *TestContext) {
 		testGetCopros(t, c)
 		testDeleteCopro(t, c, ID)
 		testBatchCopros(t, c)
+		copro := models.Copro{Reference: "RefCoproTest",
+			Name:      "Copro Test",
+			Address:   "Adresse de test",
+			ZipCode:   75001,
+			LabelDate: models.NullTime{Valid: false},
+			Budget:    models.NullInt64{Valid: false}}
+		if err := copro.Create(c.DB); err != nil {
+			t.Error("Impossible de créer la copropriété de test")
+			t.FailNow()
+			return
+		}
+		c.CoproID = copro.ID
 	})
 }
 

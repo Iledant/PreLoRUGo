@@ -20,6 +20,7 @@ type TestContext struct {
 	Config         *config.PreLoRuGoConf
 	CommissionID   int64
 	RenewProjectID int64
+	CoproID        int64
 }
 
 // TestCase is used as common structure for all request tests
@@ -49,10 +50,9 @@ func TestAll(t *testing.T) {
 	testCommitmentLink(t, cfg)
 	testCommission(t, cfg)
 	testCommunity(t, cfg)
-
 	testCity(t, cfg)
-
 	testRenewProjectForecast(t, cfg)
+	testCoproForecast(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -86,7 +86,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
 	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
-	community , temp_community, city , temp_city, renew_project_forecast , temp_renew_project_forecast `); err != nil {
+	community , temp_community, city , temp_city, renew_project_forecast , 
+	temp_renew_project_forecast, copro_forecast, temp_copro_forecast `); err != nil {
 		t.Error("Suppression des tables : " + err.Error())
 		t.FailNow()
 		return
@@ -268,7 +269,10 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    commission_id int NOT NULL,
 	    value bigint NOT NULL,
 	    comment text,
-	    renew_project_id int NOT NULL
+	    renew_project_id int NOT NULL,
+			CONSTRAINT renew_project_forecast_renew_project_id_fkey FOREIGN KEY (renew_project_id)
+			REFERENCES renew_project (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 19 : renew_project_forecast
 		`CREATE TABLE temp_renew_project_forecast (
 			id int NOT NULL,
@@ -277,6 +281,23 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    comment text,
 	    renew_project_id int NOT NULL
 		);`, // 20 : temp_renew_project_forecast
+		`CREATE TABLE copro_forecast (
+	    id SERIAL PRIMARY KEY,
+	    commission_id int NOT NULL,
+	    value bigint NOT NULL,
+	    comment text,
+	    copro_id int NOT NULL,
+			CONSTRAINT copro_forecast_copro_id_fkey FOREIGN KEY (copro_id)
+			REFERENCES copro (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
+		);`, // 21 : copro_forecast
+		`CREATE TABLE temp_copro_forecast (
+			id int NOT NULL,
+			commission_id int NOT NULL,
+	    value bigint NOT NULL,
+	    comment text,
+	    copro_id int NOT NULL
+		);`, // 22 : temp_copro_forecast
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
