@@ -30,7 +30,7 @@ func testUser(t *testing.T, c *TestContext) {
 // testCreateUser checks route is protected and user correctly created
 func testCreateUser(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Role":"USER","Active":false}`),
+		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : User unauthorized
@@ -38,34 +38,30 @@ func testCreateUser(t *testing.T, c *TestContext) (ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad JSON
-		{Sent: []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Role":"USER","Active":false}`),
+		{Sent: []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création d'utilisateur : Champ manquant ou incorrect`},
+			RespContains: []string{`Création d'utilisateur : Champ name vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Name":"essai","Email":"","Password":"toto","Role":"USER","Active":false}`),
+		{Sent: []byte(`{"Name":"essai","Email":"","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création d'utilisateur : Champ manquant ou incorrect`},
+			RespContains: []string{`Création d'utilisateur : Champ email vide`},
 			StatusCode:   http.StatusBadRequest}, // 3 : email empty
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"","Role":"USER","Active":false}`),
+		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création d'utilisateur : Champ manquant ou incorrect`},
+			RespContains: []string{`Création d'utilisateur : Champ password vide`},
 			StatusCode:   http.StatusBadRequest}, // 4 : password empty
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Role":"US","Active":false}`),
-			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création d'utilisateur : Champ manquant ou incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 5 : incorrect role
-		{Sent: []byte(`{"Name":"Utilisateur","Email":"toto@iledefrance.fr","Password":"toto","Role":"USER","Active":false}`),
+		{Sent: []byte(`{"Name":"Utilisateur","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur : Utilisateur existant`},
-			StatusCode:   http.StatusBadRequest}, // 6 : name already exists
-		{Sent: []byte(`{"Name":"essai","Email":"` + c.Config.Users.User.Email + `","Password":"toto","Role":"USER","Active":false}`),
+			StatusCode:   http.StatusBadRequest}, // 5 : name already exists
+		{Sent: []byte(`{"Name":"essai","Email":"` + c.Config.Users.User.Email + `","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur : Utilisateur existant`},
-			StatusCode:   http.StatusBadRequest}, // 7 : email already exists
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Role":"USER","Active":false}`),
+			StatusCode:   http.StatusBadRequest}, // 6 : email already exists
+		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Role":"USER","Active":false`},
-			StatusCode:   http.StatusCreated}, // 8 : correct test case
+			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Rights":0`},
+			StatusCode:   http.StatusCreated}, // 7 : correct test case
 	}
 	for i, tc := range tcc {
 		response := c.E.POST("/api/user").WithBytes(tc.Sent).
@@ -116,31 +112,26 @@ func testLogout(t *testing.T, c *TestContext, ID int) {
 // testUpdateUser checks route is protected and user correctly modified
 func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Role":"OBSERVER","Active":true}`),
+		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
 			Token:        c.Config.Users.User.Token,
 			ID:           ID,
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Role":"OBSERVER","Active":true}`),
+		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
 			Token:        c.Config.Users.Admin.Token,
 			ID:           0,
 			RespContains: []string{`Modification d'utilisateur, get`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : ID doesn't exist
-		{Sent: []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Role":"OBSERVER","Active":true}`),
+		{Sent: []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
 			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
-			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Role":"OBSERVER","Active":true`},
+			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Rights":1`},
 			StatusCode:   http.StatusOK}, // 2 : name and email unchanged
-		{Sent: []byte(`{"Name":"","Email":"","Password":"toto","Role":"OBS","Active":true}`),
+		{Sent: []byte(`{"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":1}`),
 			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
-			RespContains: []string{`Modification d'utilisateur, rôle incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 4 : rôle incorrect
-		{Sent: []byte(`{"Name":"essai2","Email":"toto2@iledefrance.fr","Password":"toto","Role":"OBSERVER","Active":true}`),
-			Token:        c.Config.Users.Admin.Token,
-			ID:           ID,
-			RespContains: []string{`"Name":"essai2","Email":"toto2@iledefrance.fr","Role":"OBSERVER","Active":true`},
-			StatusCode:   http.StatusOK},
+			RespContains: []string{`"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":1`},
+			StatusCode:   http.StatusOK}, // 3 : ok
 	}
 	for i, tc := range tcc {
 		response := c.E.PUT("/api/user/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).

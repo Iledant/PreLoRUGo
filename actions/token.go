@@ -18,14 +18,12 @@ import (
 
 // UserClaims hold token user fields to avoid fetching database
 type UserClaims struct {
-	Role   string
-	Active bool
+	Rights int64
 }
 
 // customClaims add role and active to token to avoid fetching database
 type customClaims struct {
-	Role   string `json:"rol"`
-	Active bool   `json:"act"`
+	Rights int64 `json:"rig"`
 	jwt.StandardClaims
 }
 
@@ -63,8 +61,7 @@ func getTokenString(claims *customClaims) (tokenString string, err error) {
 func setToken(u *models.User) (string, error) {
 	t := time.Now()
 	claims := customClaims{
-		Role:   u.Role,
-		Active: u.Active,
+		Rights: u.Rights,
 		StandardClaims: jwt.StandardClaims{
 			Subject:   strconv.FormatInt(u.ID, 10),
 			ExpiresAt: t.Add(expireDelay).Unix(),
@@ -132,7 +129,7 @@ func bearerToUser(ctx iris.Context) (claims *customClaims, err error) {
 		err = refreshToken(ctx, claims)
 	}
 	ctx.Values().Set("userID", userID)
-	ctx.Values().Set("role", claims.Role)
+	ctx.Values().Set("rights", claims.Rights)
 	return claims, err
 }
 
@@ -143,7 +140,31 @@ func isActive(ctx iris.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return u.Active, nil
+	return u.Rights&models.ActiveBit != 0 || u.Rights&models.SuperAdminBit != 0, nil
+}
+
+// isCopro check an existing token in header and, if succeed,
+// check if user is admin, superadmin or has copro rights
+func isCopro(ctx iris.Context) (bool, error) {
+	u, err := bearerToUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	return u.Rights&models.ActiveCoproMask == models.ActiveCoproMask ||
+		u.Rights&models.ActiveAdminMask != models.ActiveAdminMask ||
+		u.Rights&models.SuperAdminBit != 0, nil
+}
+
+// isRenewProject check an existing token in header and, if succeed,
+// check if user is admin, superadmin or has renew project rights
+func isRenewProject(ctx iris.Context) (bool, error) {
+	u, err := bearerToUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	return u.Rights&models.ActiveRenewProjectMask == models.ActiveRenewProjectMask ||
+		u.Rights&models.ActiveAdminMask != models.ActiveAdminMask ||
+		u.Rights&models.SuperAdminBit != 0, nil
 }
 
 // isAdmin check an existing token in header and, if succeed,
@@ -153,7 +174,8 @@ func isAdmin(ctx iris.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return u.Active && u.Role == models.AdminRole, nil
+	return (u.Rights&models.ActiveAdminMask == models.ActiveAdminMask) ||
+		u.Rights&models.SuperAdminBit != 0, nil
 }
 
 // isObserver check an existing token in header and, if succeed,
@@ -163,7 +185,7 @@ func isObserver(ctx iris.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return u.Active && u.Role == models.ObserverRole, nil
+	return u.Rights&models.ActiveObserverMask == models.ActiveObserverMask, nil
 }
 
 // AdminMiddleware checks if there's a token and if it belongs to admin user
@@ -197,6 +219,44 @@ func ActiveMiddleware(ctx iris.Context) {
 	if !active {
 		ctx.StatusCode(http.StatusUnauthorized)
 		ctx.JSON(jsonError{"Connexion requise"})
+		ctx.StopExecution()
+		return
+	}
+	ctx.Next()
+}
+
+// CoproMiddleware checks if there's a valid token and user is active and has
+// copro rights otherwise prompt error
+func CoproMiddleware(ctx iris.Context) {
+	copro, err := isCopro(ctx)
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{err.Error()})
+		ctx.StopExecution()
+		return
+	}
+	if !copro {
+		ctx.StatusCode(http.StatusUnauthorized)
+		ctx.JSON(jsonError{"Droits sur les copropriétés requis"})
+		ctx.StopExecution()
+		return
+	}
+	ctx.Next()
+}
+
+// RenewProjectMiddleware checks if there's a valid token and user is active and
+// has rights on renew projects otherwise prompt error
+func RenewProjectMiddleware(ctx iris.Context) {
+	renewProject, err := isActive(ctx)
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{err.Error()})
+		ctx.StopExecution()
+		return
+	}
+	if !renewProject {
+		ctx.StatusCode(http.StatusUnauthorized)
+		ctx.JSON(jsonError{"Droits sur les projets RU requis"})
 		ctx.StopExecution()
 		return
 	}

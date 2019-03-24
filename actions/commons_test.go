@@ -97,8 +97,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 		name varchar(50) NOT NULL,
 		email varchar(120) NOT NULL,
 		password varchar(120) NOT NULL,
-		role varchar(15) NOT NULL,
-		active boolean NOT NULL
+		rights int NOT NULL
 		);`, // 0 : users
 		`CREATE TABLE copro (
 			id SERIAL PRIMARY KEY,
@@ -309,8 +308,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	admin := models.User{Name: "Christophe Saintillan",
 		Email:    cfg.Users.Admin.Email,
 		Password: cfg.Users.Admin.Password,
-		Role:     models.AdminRole,
-		Active:   true}
+		Rights:   models.AdminBit | models.ActiveBit}
 	if err := admin.CryptPwd(); err != nil {
 		t.Error("Cryptage mot de passe admin : " + err.Error())
 		t.FailNow()
@@ -324,8 +322,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	user := models.User{Name: "Utilisateur",
 		Email:    cfg.Users.User.Email,
 		Password: cfg.Users.User.Password,
-		Role:     models.UserRole,
-		Active:   true}
+		Rights:   models.ActiveBit | models.CoproBit | models.RenewProjectBit}
 	if err := user.CryptPwd(); err != nil {
 		t.Error("Cryptage mot de passe user : " + err.Error())
 		t.FailNow()

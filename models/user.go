@@ -13,8 +13,7 @@ type User struct {
 	Name     string `json:"Name"`
 	Email    string `json:"Email"`
 	Password string `json:"-"`
-	Role     string `json:"Role"`
-	Active   bool   `json:"Active"`
+	Rights   int64  `json:"Rights"`
 }
 
 // Users embeddes an array of User for json export.
@@ -23,19 +22,50 @@ type Users struct {
 }
 
 const (
-	// AdminRole defines value of role row in users table for an admin
-	AdminRole = "ADMIN"
-	// ObserverRole defines value of role row in users table for an observer
-	ObserverRole = "OBSERVER"
-	// UserRole defines value of role row in users table for an usual user
-	UserRole = "USER"
+	// ActiveBit of user's rights field specifies the user is active
+	ActiveBit = 1
+	// SuperAdminBit of user's rights field specifies super user rights, used
+	// at the beginning of the program and for admin purposes
+	SuperAdminBit = 1 << 1
+	// AdminBit of user's rights field specifies the user has access to all functions
+	AdminBit = 1 << 2
+	// CoproBit of user's rights field specifies the user has access to copro functions
+	CoproBit = 1 << 3
+	// RenewProjectBit of user's rights field specifies the user has access to renew project functions
+	RenewProjectBit = 1 << 4
+	// ObserverBit of user's rights field specifies the user has read access to functions
+	ObserverBit = 1 << 5
+	// RightsMask is used to check if user's rights field are correctly filled
+	RightsMask = ActiveBit | SuperAdminBit | AdminBit | CoproBit | RenewProjectBit | ObserverBit
+	// ActiveAdminMask is used to check if a user is an active admin
+	ActiveAdminMask = ActiveBit | AdminBit
+	// ActiveObserverMask is used to check if a user is an active observer
+	ActiveObserverMask = ActiveBit | ObserverBit
+	// ActiveCoproMask is used to check is a user is active and has copro rights
+	ActiveCoproMask = ActiveBit | CoproBit
+	// ActiveRenewProjectMask is used to check is a user is active and has renew project rights
+	ActiveRenewProjectMask = ActiveBit | RenewProjectBit
 )
+
+// Validate checks if field are correctly filled for database constraints
+func (u *User) Validate() error {
+	if u.Name == "" {
+		return errors.New("Champ name vide")
+	}
+	if u.Email == "" {
+		return errors.New("Champ email vide")
+	}
+	if u.Password == "" {
+		return errors.New("Champ password vide")
+	}
+	return nil
+}
 
 // GetByID fetches a user from database using ID.
 func (u *User) GetByID(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT id, name, email, role, password, active 
+	err = db.QueryRow(`SELECT id, name, email, password, rights 
 	FROM users WHERE id = $1 LIMIT 1`, u.ID).Scan(&u.ID,
-		&u.Name, &u.Email, &u.Role, &u.Password, &u.Active)
+		&u.Name, &u.Email, &u.Password, &u.Rights)
 	return err
 }
 
@@ -56,36 +86,14 @@ func (u *User) ValidatePwd(pwd string) error {
 
 // GetAll fetches all users from database.
 func (users *Users) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id, name, email, role, active FROM users`)
+	rows, err := db.Query(`SELECT id, name, email, rights FROM users`)
 	if err != nil {
 		return err
 	}
 	var r User
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&r.ID, &r.Name, &r.Email, &r.Role, &r.Active); err != nil {
-			return err
-		}
-		users.Users = append(users.Users, r)
-	}
-	err = rows.Err()
-	if len(users.Users) == 0 {
-		users.Users = []User{}
-	}
-	return err
-}
-
-//GetRole fetches all users according to a role.
-func (users *Users) GetRole(role string, db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id, name, email, role, active 
-	FROM users WHERE role = $1`, role)
-	if err != nil {
-		return err
-	}
-	var r User
-	defer rows.Close()
-	for rows.Next() {
-		if err = rows.Scan(&r.ID, &r.Name, &r.Email, &r.Role, &r.Active); err != nil {
+		if err = rows.Scan(&r.ID, &r.Name, &r.Email, &r.Rights); err != nil {
 			return err
 		}
 		users.Users = append(users.Users, r)
@@ -99,9 +107,9 @@ func (users *Users) GetRole(role string, db *sql.DB) (err error) {
 
 // GetByEmail fetches an user by email.
 func (u *User) GetByEmail(email string, db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT id, name, email, role, 
-	password, active FROM users WHERE email = $1 LIMIT 1`, email).Scan(&u.ID,
-		&u.Name, &u.Email, &u.Role, &u.Password, &u.Active)
+	err = db.QueryRow(`SELECT id, name, email, password, rights 
+	FROM users WHERE email = $1 LIMIT 1`, email).Scan(&u.ID,
+		&u.Name, &u.Email, &u.Password, &u.Rights)
 	return err
 }
 
@@ -121,16 +129,15 @@ func (u *User) Exists(db *sql.DB) error {
 // Create insert a new user into database updating time fields.
 func (u *User) Create(db *sql.DB) (err error) {
 	err = db.QueryRow(`INSERT INTO users (name, email, 
-		password, role, active) VALUES($1,$2,$3,$4,$5) RETURNING id`,
-		u.Name, u.Email, u.Password, u.Role, u.Active).Scan(&u.ID)
+		password, rights) VALUES($1,$2,$3,$4) RETURNING id`,
+		u.Name, u.Email, u.Password, u.Rights).Scan(&u.ID)
 	return err
 }
 
 // Update modifies a user into database.
 func (u *User) Update(db *sql.DB) (err error) {
-	res, err := db.Exec(`UPDATE users SET name=$1, email=$2, 
-	password=$3, role=$4, active=$5 WHERE id=$6 `, u.Name, u.Email, u.Password,
-		u.Role, u.Active, u.ID)
+	res, err := db.Exec(`UPDATE users SET name=$1, email=$2, password=$3, 
+	rights=$4 WHERE id=$5 `, u.Name, u.Email, u.Password, u.Rights, u.ID)
 	if err != nil {
 		return err
 	}

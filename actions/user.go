@@ -19,13 +19,13 @@ type userResp struct {
 	User models.User `json:"User"`
 }
 
-// sentUser is used to create or update an user
+// sentUser is used to create or update an user taking into account that
+// models.User doesn't JSON export the password
 type sentUser struct {
 	Name     string `json:"Name"`
 	Email    string `json:"Email"`
 	Password string `json:"Password"`
-	Role     string `json:"Role"`
-	Active   bool   `json:"Active"`
+	Rights   int64  `json:"Rights"`
 }
 
 // credentials is used to decode user login payload
@@ -102,14 +102,14 @@ func CreateUser(ctx iris.Context) {
 		ctx.JSON(jsonError{"Création d'utilisateur, décodage : " + err.Error()})
 		return
 	}
-	if req.Name == "" || req.Email == "" || req.Password == "" ||
-		(req.Role != models.UserRole && req.Role != models.AdminRole && req.Role != models.ObserverRole) {
+	user := models.User{Name: req.Name, Email: req.Email, Password: req.Password,
+		Rights: req.Rights}
+	if err := user.Validate(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Création d'utilisateur : Champ manquant ou incorrect"})
+		ctx.JSON(jsonError{"Création d'utilisateur : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	user := models.User{Name: req.Name, Email: req.Email, Active: req.Active, Role: req.Role, Password: req.Password}
 	if err := user.Exists(db); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.JSON(jsonError{"Création d'utilisateur : " + err.Error()})
@@ -155,15 +155,6 @@ func UpdateUser(ctx iris.Context) {
 	if req.Name != "" {
 		user.Name = req.Name
 	}
-	user.Active = req.Active
-	if req.Role != "" {
-		if req.Role != models.AdminRole && req.Role != models.UserRole && req.Role != models.ObserverRole {
-			ctx.StatusCode(http.StatusBadRequest)
-			ctx.JSON(jsonError{"Modification d'utilisateur, rôle incorrect"})
-			return
-		}
-		user.Role = req.Role
-	}
 	if req.Password != "" {
 		user.Password = req.Password
 		if err = user.CryptPwd(); err != nil {
@@ -172,6 +163,7 @@ func UpdateUser(ctx iris.Context) {
 			return
 		}
 	}
+	user.Rights = req.Rights
 	if err = user.Update(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Modification d'utilisateur, requête : " + err.Error()})
@@ -222,8 +214,6 @@ func SignUp(ctx iris.Context) {
 	db := ctx.Values().Get("db").(*sql.DB)
 	user := models.User{Name: req.Name,
 		Email:    req.Email,
-		Role:     models.UserRole,
-		Active:   false,
 		Password: req.Password}
 	if err := user.Exists(db); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
@@ -298,12 +288,13 @@ func ChangeUserPwd(ctx iris.Context) {
 // getUserRoleAndID fetch user role and ID with the token
 func getUserID(ctx iris.Context) (uID int64, err error) {
 	u := ctx.Values().Get("userID")
-	role := ctx.Values().Get("role")
-	if u == nil || role == nil {
+	r := ctx.Values().Get("rights")
+	if u == nil || r == nil {
 		return 0, errors.New("Utilisateur non enregistré")
 	}
 	uID = int64(u.(int))
-	if role.(string) == models.AdminRole {
+	rights := r.(int64)
+	if rights&models.SuperAdminBit != 0 || rights&models.AdminBit != 0 {
 		uID = 0
 	}
 	return uID, nil
