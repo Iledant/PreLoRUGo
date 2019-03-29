@@ -1,159 +1,219 @@
 -- Suppression des tables
-DROP TABLE imported_commitment;
+DROP TABLE IF EXISTS copro, users, imported_commitment, 
+	commitment, imported_payment, payment, report, budget_action, beneficiary, 
+	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
+	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
+	community , temp_community, city , temp_city, renew_project_forecast , 
+	temp_renew_project_forecast, copro_forecast, temp_copro_forecast;
 
-CREATE TABLE imported_commitment (
-YEAR int,
-CODE varchar(5),
-NUM int,
-LIG int,
-CREATION int,
-MODIFICATION int,
-NAME varchar(50),
-VALUE bigint,
-BENEFICIARY_CODE int,
-BENEFICIARY_NAME varchar(40),
-IRIS_CODE varchar(20)
-);
-
-CREATE TABLE commitment (
-  ID SERIAL PRIMARY KEY,
-  YEAR int NOT NULL,
-  CODE varchar(5) NOT NULL,
-  NUM int NOT NULL,
-  LIG INT NOT NULL,
-  CREATION date,
-  MODIFICATION date,
-  NAME varchar(60),
-  VALUE bigint,
-  BENEFICIARY_ID int,
-  IRIS_CODE varchar(20),
-  CONSTRAINT commitment_beneficiary_id_fkey FOREIGN KEY (beneficiary_id)
-	  REFERENCES beneficiary (id) MATCH SIMPLE
-	  ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-CREATE table imported_payment (
-  coriolis_year int NOT NULL,
-  coriolis_egt_code varchar(30),
-	coriolis_egt_num varchar(8),
-	coriolis_egt_line varchar(3),
-  date date,
-  number int,
-  value bigint,
-  cancelled_value bigint,
-  beneficiary_code int
-);
-
-CREATE table payment (
+-- Création des tables
+CREATE TABLE users (
   id SERIAL PRIMARY KEY,
-  coriolis_year int NOT NULL,
-  coriolis_egt_code varchar(30) NOT NULL,
-	coriolis_egt_num varchar(8) NOT NULL,
-	coriolis_egt_line varchar(3) NOT NULL,
-  commitment_id integer,
-  date date NOT NULL,
+  name varchar(50) NOT NULL,
+  email varchar(120) NOT NULL,
+  password varchar(120) NOT NULL,
+  rights int NOT NULL);
+		 
+CREATE TABLE copro (
+  id SERIAL PRIMARY KEY,
+  reference varchar(15) NOT NULL,
+  name varchar(150) NOT NULL,
+  address varchar(200) NOT NULL,
+  zip_code int NOT NULL,
+  label_date date,
+  budget bigint);
+  
+CREATE TABLE temp_copro (
+  reference varchar(150) NOT NULL,
+  name varchar(150) NOT NULL,
+  address varchar(200) NOT NULL,
+  zip_code int NOT NULL,
+  label_date date,
+  budget bigint);
+  
+CREATE TABLE budget_sector (
+  id SERIAL PRIMARY KEY,
+  name varchar(20) NOT NULL,
+  full_name varchar(150));
+  
+CREATE TABLE budget_action (
+  id SERIAL PRIMARY KEY,
+  code bigint NOT NULL,
+  name varchar(250) NOT NULL,
+  sector_id int,
+  FOREIGN KEY (sector_id) REFERENCES budget_sector(id) 
+  ON UPDATE NO ACTION ON DELETE NO ACTION
+  );
+  
+CREATE TABLE renew_project (
+  id SERIAL PRIMARY KEY,
+  reference varchar(15) NOT NULL UNIQUE,
+  name varchar(150) NOT NULL,
+  budget bigint NOT NULL,
+  population int,
+  composite_index int);
+  
+CREATE TABLE temp_renew_project (
+  reference varchar(15) NOT NULL UNIQUE,
+  name varchar(150) NOT NULL,
+  budget bigint NOT NULL,	
+  population int,
+  composite_index int);
+  
+CREATE TABLE housing (
+  id SERIAL PRIMARY KEY,
+  reference varchar(100) NOT NULL,
+  address varchar(150),
+  zip_code int,
+  plai int NOT NULL,
+  plus int NOT NULL,
+  pls int NOT NULL,
+  anru boolean NOT NULL);
+  
+CREATE TABLE temp_housing (
+  reference varchar(100) NOT NULL,
+  address varchar(150),
+  zip_code int,
+  plai int NOT NULL,
+  plus int NOT NULL,
+  pls int NOT NULL,
+  anru boolean NOT NULL);
+  
+CREATE TABLE beneficiary (
+  id SERIAL PRIMARY KEY,
+  code int NOT NULL,
+  name varchar(120) NOT NULL);
+  
+CREATE TABLE commitment (
+  id SERIAL PRIMARY KEY,
+  year int NOT NULL,
+  code varchar(5) NOT NULL,
+  number int NOT NULL,
+  line int NOT NULL,
+  creation_date date NOT NULL,
+  modification_date date NOT NULL,
+  name varchar(150) NOT NULL,
+  value bigint NOT NULL,
+  beneficiary_id int NOT NULL,
+  iris_code varchar(20),
+  action_id int,
+  housing_id int,
+  copro_id int,
+  renew_project_id int,
+  FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(id) 
+  MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  FOREIGN KEY (housing_id) REFERENCES housing(id) 
+  MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  FOREIGN KEY (copro_id) REFERENCES copro(id) 
+  MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  FOREIGN KEY (renew_project_id) REFERENCES renew_project(id) 
+  MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+  FOREIGN KEY (action_id) REFERENCES budget_action(id) 
+  MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION);
+  
+CREATE TABLE temp_commitment (
+  year int NOT NULL,
+  code varchar(5) NOT NULL,
+  number int NOT NULL,
+  line int NOT NULL,
+  creation_date date NOT NULL,
+  modification_date date NOT NULL,
+  name varchar(150) NOT NULL,
+  value bigint NOT NULL,
+  beneficiary_code int NOT NULL,
+  beneficiary_name varchar(150) NOT NULL,
+  iris_code varchar(20),
+  sector varchar(5) NOT NULL,
+  action_code bigint,
+  action_name varchar(150));
+  
+CREATE TABLE payment (
+  id SERIAL PRIMARY KEY,
+  commitment_id int,
+  commitment_year int NOT NULL,
+  commitment_code varchar(5) NOT NULL,
+  commitment_number int NOT NULL,
+  commitment_line int NOT NULL,
+  year int NOT NULL,
+  creation_date date NOT NULL,
+  modification_date date NOT NULL,
   number int NOT NULL,
   value bigint NOT NULL,
-  cancelled_value bigint NOT NULL,
-  beneficiary_code int NOT NULL,
-  beneficiary_id integer,
-  CONSTRAINT payment_commitment_id_fkey FOREIGN KEY (commitment_id)
-	  REFERENCES commitment (id) MATCH SIMPLE
-	  ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT payment_beneficiary_id_fkey FOREIGN KEY (beneficiary_id)
-	  REFERENCES beneficiary (id) MATCH SIMPLE
-	  ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-CREATE table report (
-	id SERIAL PRIMARY KEY,
-	name varchar(8),
-	date date
-);
-
-CREATE table budget_action (
-	id SERIAL PRIMARY KEY,
-	code varchar(12) NOT NULL,
-	name varchar(250) NOT NULL,
-	sector_id int
-  CONSTRAINT budget_action_sector_id_fkey FOREIGN KEY (sector_id)
-	  REFERENCES sector (id) MATCH SIMPLE
-	  ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-CREATE table beneficiary (
-	id SERIAL PRIMARY KEY,
-	code int NOT NULL,
-	name varchar(120) NOT NULL
-);
-
-CREATE TABLE commitment (
-id SERIAL PRIMARY KEY,
-action_id integer NOT NULL,
-date date NOT NULL,
-value bigint NOT NULL,
-name varchar(200) NOT NULL,
-report_id integer NOT NULL,
-lapse_date date,
-	iris_code varchar(50) NOT NULL,
-	coriolis_year integer NOT NULL,
-	coriolis_egt_code varchar(30) NOT NULL,
-	coriolis_egt_num varchar(8) NOT NULL,
-	coriolis_egt_line varchar(3) NOT NULL,
-beneficiary_id integer NOT NULL,
-CONSTRAINT commitment_action_id_fkey FOREIGN KEY (action_id)
-	REFERENCES budget_action (id) MATCH SIMPLE
-	ON UPDATE NO ACTION ON DELETE NO ACTION,
-CONSTRAINT commitment_beneficiary_id_fkey FOREIGN KEY (beneficiary_id)
-	REFERENCES beneficiary (id) MATCH SIMPLE
-	ON UPDATE NO ACTION ON DELETE NO ACTION,
-CONSTRAINT commitment_report_id_fkey FOREIGN KEY (report_id)
-	REFERENCES report (id) MATCH SIMPLE
-	ON UPDATE NO ACTION ON DELETE NO ACTION
-);
-
-CREATE TABLE users (
-id SERIAL PRIMARY KEY,
-name varchar(50) NOT NULL,
-email varchar(120) NOT NULL,
-password varchar(120) NOT NULL,
-role varchar(15) NOT NULL,
-active boolean NOT NULL
-);
-
-CREATE TABLE copros (
-id SERIAL PRIMARY KEY,
-reference varchar(150) NOT NULL,
-name varchar(150) NOT NULL,
-address varchar(200) NOT NULL,
-zip_code int NOT NULL,
-label_date date,
-budget bigint
-);
-
--- Import des engagements
-COPY imported_commitment FROM E'C:\\Users\\chris\\go\\src\\github.com\\Iledant\\PreLoRUGo\\assets\\20190129 AP PreLoRU.csv' DELIMITER ';' CSV HEADER;
-
--- Import ou mise à jour des bénéficiaires à partir de l'import des engagements
-insert into beneficiary (code, name) 
-	select distinct beneficiary_code, beneficiary_name 
-		from imported_commitment 
-		where beneficiary_code not in (select code from beneficiary);
-		
-update beneficiary set name = t.beneficiary_name from
-	(select distinct beneficiary_code, beneficiary_name
-		from imported_commitment) t
-	where t.beneficiary_code not in (select code from beneficiary);
-
--- Mise à jour de la table des engagements
-INSERT INTO commitment (year,code,num,lig,creation,modification,name,value,beneficiary_id,iris_code)
-  (SELECT ic.year,ic.code,ic.num,ic.lig,make_date(ic.creation/10000,(ic.creation/100)%100,ic.creation%100),
-    make_date(ic.modification/10000,(ic.modification/100)%100,ic.modification%100),ic.name,ic.value,b.id,ic.iris_code
-  FROM imported_commitment ic
-  JOIN beneficiary b on ic.beneficiary_code=b.code
-  WHERE (ic.year,ic.code,ic.num,ic.lig,make_date(ic.creation/10000,(ic.creation/100)%100,ic.creation%100),
-    make_date(ic.modification/10000,(ic.modification/100)%100,ic.modification%100),ic.name, ic.value) 
-    NOT IN (select year,code,num,lig,creation,modification,name,value FROM commitment));
-
--- Lecture du fichier des paiements
-COPY imported_payment	FROM E'C:\\Users\\chris\\go\\src\\github.com\\Iledant\\PreLoRUGo\\assets\\20190123 Mandats PreLoRU.csv' DELIMITER ';' CSV HEADER;
+  FOREIGN KEY (commitment_id) REFERENCES commitment(id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION);
+      
+CREATE TABLE temp_payment (
+  commitment_year int NOT NULL,
+  commitment_code varchar(5) NOT NULL,
+  commitment_number int NOT NULL,
+  commitment_line int NOT NULL,
+  year int NOT NULL,
+  creation_date date NOT NULL,
+  modification_date date NOT NULL,
+  number int NOT NULL,
+  value bigint NOT NULL);
+  
+CREATE TABLE commission (
+  id SERIAL PRIMARY KEY,
+  name varchar(140) NOT NULL,
+  date date);
+  
+CREATE TABLE community (
+  id SERIAL PRIMARY KEY,
+  code varchar(15) NOT NULL,
+  name varchar(150) NOT NULL);
+  
+CREATE TABLE temp_community (
+  code varchar(15) NOT NULL,
+  name varchar(150) NOT NULL);
+  
+CREATE TABLE city (
+  insee_code int NOT NULL PRIMARY KEY,
+  name varchar(50) NOT NULL,
+  community_id int,
+  FOREIGN KEY (community_id) REFERENCES community(id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION);
+  
+CREATE TABLE temp_city (
+  insee_code int NOT NULL UNIQUE,
+  name varchar(50) NOT NULL,
+  community_code varchar(15));
+  
+CREATE TABLE renew_project_forecast (
+  id SERIAL PRIMARY KEY,
+  commission_id int NOT NULL,
+  value bigint NOT NULL,
+  comment text,
+  renew_project_id int NOT NULL,
+  FOREIGN KEY (renew_project_id) REFERENCES renew_project(id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION);
+  
+CREATE TABLE temp_renew_project_forecast (
+  id int NOT NULL,
+  commission_id int NOT NULL,
+  value bigint NOT NULL,
+  comment text,
+  renew_project_id int NOT NULL);
+  
+CREATE TABLE copro_forecast (
+  id SERIAL PRIMARY KEY,
+  commission_id int NOT NULL,
+  value bigint NOT NULL,
+  comment text,
+  copro_id int NOT NULL,
+  FOREIGN KEY (copro_id) REFERENCES copro (id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE NO ACTION);
+  
+CREATE TABLE temp_copro_forecast (
+  id int NOT NULL,
+  commission_id int NOT NULL,
+  value bigint NOT NULL,
+  comment text,
+  copro_id int NOT NULL);
+		 
+-- Insertion des utilisateurs
+INSERT INTO users (name,email,password,rights) VALUES
+('Administrateur','cs@if.fr','$2a$10$bQ1G2K8UeH8mTwERhwe2XerDeQtVLN02GDz4HD4WP/N9X/7S.MhbO',5),
+-- cSpell: disable
+('Utilisateur','user@if.fr','$2a$10$tMrZWq5yIgPI8tBwFge/B.aZ.4FyahEhd21Qdgwfc9TYCZhQbILAC',1);
+-- cSpell: enable

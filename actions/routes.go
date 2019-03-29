@@ -78,7 +78,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
-	userParty.Get("/user/logout", Logout)
+	userParty.Post("/user/logout", Logout)
 	userParty.Get("/budget_actions", GetBudgetActions)
 	userParty.Get("/copro", GetCopros)
 	userParty.Get("/renew_projects", GetRenewProjects)

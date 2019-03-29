@@ -85,7 +85,7 @@ func testCreateUser(t *testing.T, c *TestContext) (ID int) {
 
 // testLogout check if logout works
 func testLogout(t *testing.T, c *TestContext, ID int) {
-	response := c.E.GET("/api/user/logout").
+	response := c.E.POST("/api/user/logout").
 		WithHeader("Authorization", "Bearer "+c.Config.Users.User.Token).Expect()
 	body := string(response.Content)
 	r := "Utilisateur déconnecté"

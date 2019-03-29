@@ -182,15 +182,15 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			housing_id int,
 			copro_id int,
 			renew_project_id int,
-			CONSTRAINT beneficiary_id_fkey FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(id) 
+			FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
-			CONSTRAINT housing_id_fkey FOREIGN KEY (housing_id) REFERENCES housing(id) 
+			FOREIGN KEY (housing_id) REFERENCES housing(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
-			CONSTRAINT copro_id_fkey FOREIGN KEY (copro_id) REFERENCES copro(id) 
+			FOREIGN KEY (copro_id) REFERENCES copro(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
-			CONSTRAINT renew_project_id_fkey FOREIGN KEY (renew_project_id) REFERENCES renew_project(id) 
+			FOREIGN KEY (renew_project_id) REFERENCES renew_project(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
-			CONSTRAINT action_id_fkey FOREIGN KEY (action_id) REFERENCES budget_action(id) 
+			FOREIGN KEY (action_id) REFERENCES budget_action(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 10 : commitment
 		`CREATE TABLE temp_commitment (
@@ -221,8 +221,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			modification_date date NOT NULL,
 			number int NOT NULL,
 			value bigint NOT NULL,
-			CONSTRAINT payment_commitment_id_fkey FOREIGN KEY (commitment_id)
-			REFERENCES commitment (id) MATCH SIMPLE
+			FOREIGN KEY (commitment_id) REFERENCES commitment (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
 				);`, // 12 : payment
 		`CREATE TABLE temp_payment (
@@ -254,8 +253,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    insee_code int NOT NULL PRIMARY KEY,
 	    name varchar(50) NOT NULL,
 			community_id int,
-			CONSTRAINT city_community_id_fkey FOREIGN KEY (community_id)
-			REFERENCES community (id) MATCH SIMPLE
+			FOREIGN KEY (community_id) REFERENCES community (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 17 : city
 		`CREATE TABLE temp_city (
@@ -269,8 +267,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    value bigint NOT NULL,
 	    comment text,
 	    renew_project_id int NOT NULL,
-			CONSTRAINT renew_project_forecast_renew_project_id_fkey FOREIGN KEY (renew_project_id)
-			REFERENCES renew_project (id) MATCH SIMPLE
+			FOREIGN KEY (renew_project_id) REFERENCES renew_project (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 19 : renew_project_forecast
 		`CREATE TABLE temp_renew_project_forecast (
@@ -286,8 +283,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    value bigint NOT NULL,
 	    comment text,
 	    copro_id int NOT NULL,
-			CONSTRAINT copro_forecast_copro_id_fkey FOREIGN KEY (copro_id)
-			REFERENCES copro (id) MATCH SIMPLE
+			FOREIGN KEY (copro_id) REFERENCES copro (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 21 : copro_forecast
 		`CREATE TABLE temp_copro_forecast (
