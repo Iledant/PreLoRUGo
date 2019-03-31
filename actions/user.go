@@ -187,13 +187,14 @@ func UpdateUsers(ctx iris.Context) {
 		ctx.JSON(jsonError{"Modification d'utilisateurs, requête : " + err.Error()})
 		return
 	}
-	if err := req.GetAll(db); err != nil {
+	var resp models.Users
+	if err := resp.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Modification d'utilisateurs, décodage : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(req)
+	ctx.JSON(resp)
 }
 
 // DeleteUser handles the deleting by admin of an existing user.
