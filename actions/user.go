@@ -173,6 +173,29 @@ func UpdateUser(ctx iris.Context) {
 	ctx.JSON(userResp{user})
 }
 
+// UpdateUsers handles the post request to update a batch of users
+func UpdateUsers(ctx iris.Context) {
+	var req models.Users
+	if err := ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification d'utilisateurs, décodage : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := req.Update(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification d'utilisateurs, requête : " + err.Error()})
+		return
+	}
+	if err := req.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification d'utilisateurs, décodage : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(req)
+}
+
 // DeleteUser handles the deleting by admin of an existing user.
 func DeleteUser(ctx iris.Context) {
 	userID, err := ctx.Params().GetInt64("userID")

@@ -22,6 +22,7 @@ func testUser(t *testing.T, c *TestContext) {
 		testLogout(t, c, ID)
 		testChangeUserPwd(t, c)
 		testGetUsers(t, c)
+		testUpdateUsers(t, c, ID)
 		testDeleteUser(t, c, ID)
 		testSignUp(t, c)
 	})
@@ -145,6 +146,46 @@ func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 		status := response.Raw().StatusCode
 		if status != tc.StatusCode {
 			t.Errorf("UpdateUser[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		}
+	}
+}
+
+// testUpdateUsers checks route is protected and user correctly modified
+func testUpdateUsers(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
+			Token:        c.Config.Users.User.Token,
+			RespContains: []string{`Droits administrateur requis`},
+			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		{Sent: []byte(`{"User":[{"ID":` + strconv.Itoa(ID) + `,"Name":"","Email":"toto3@iledefrance.fr","Rights":9}]}`),
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`Modification d'utilisateurs, requête : Champ incorrect`},
+			StatusCode:   http.StatusInternalServerError}, // 1 : name empty
+		{Sent: []byte(`{"User":[{"ID":` + strconv.Itoa(ID) + `,"Name":"essai3","Email":"","Rights":9}]}`),
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`Modification d'utilisateurs, requête : Champ incorrect`},
+			StatusCode:   http.StatusInternalServerError}, // 2 : email empty
+		{Sent: []byte(`{"User":[{"ID":0,"Name":"essai3","Email":"","Rights":9}]}`),
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`Modification d'utilisateurs, requête :`},
+			StatusCode:   http.StatusInternalServerError}, // 3 : name and email unchanged
+		{Sent: []byte(`{"User":[{"ID":` + strconv.Itoa(ID) + `,"Name":"essai3","Email":"toto3@iledefrance.fr","Rights":9}]}`),
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`{"ID":` + strconv.Itoa(ID) + `,"Name":"essai3","Email":"toto3@iledefrance.fr","Rights":9}`},
+			StatusCode:   http.StatusOK}, // 4 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.PUT("/api/users").WithBytes(tc.Sent).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("UpdateUsers[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("UpdateUsers[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
 		}
 	}
 }

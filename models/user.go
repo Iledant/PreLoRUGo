@@ -105,6 +105,42 @@ func (users *Users) GetAll(db *sql.DB) (err error) {
 	return err
 }
 
+// Update modifies the database user name and rights with the users array
+func (users *Users) Update(db *sql.DB) (err error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(`UPDATE users SET name=$1, rights=$2, email=$3 WHERE id=$4`)
+	if err != nil {
+		tx.Rollback()
+		return
+	}
+	var count int64
+	var res sql.Result
+	for _, u := range users.Users {
+		if u.Name == "" || u.ID == 0 || u.Email == "" {
+			tx.Rollback()
+			return errors.New("Champ incorrect")
+		}
+		if res, err = stmt.Exec(u.Name, u.Rights, u.Email, u.ID); err != nil {
+			tx.Rollback()
+			return
+		}
+		count, err = res.RowsAffected()
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		if count != 1 {
+			tx.Rollback()
+			return errors.New("Impossible de mettre à jour l'utilisateur " + u.Name)
+		}
+	}
+	tx.Commit()
+	return nil
+}
+
 // GetByEmail fetches an user by email.
 func (u *User) GetByEmail(email string, db *sql.DB) (err error) {
 	err = db.QueryRow(`SELECT id, name, email, password, rights 

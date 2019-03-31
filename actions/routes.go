@@ -27,6 +27,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Put("/user/{userID}", UpdateUser)
 	adminParty.Delete("/user/{userID}", DeleteUser)
 	adminParty.Get("/users", GetUsers)
+	adminParty.Put("/users", UpdateUsers)
 	adminParty.Post("/copro", CreateCopro)
 	adminParty.Put("/copro", ModifyCopro)
 	adminParty.Delete("/copro/{CoproID:int64}", DeleteCopro)
