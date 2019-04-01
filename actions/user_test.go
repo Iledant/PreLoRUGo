@@ -23,6 +23,7 @@ func testUser(t *testing.T, c *TestContext) {
 		testChangeUserPwd(t, c)
 		testGetUsers(t, c)
 		testUpdateUsers(t, c, ID)
+		testSetPwd(t, c, ID)
 		testDeleteUser(t, c, ID)
 		testSignUp(t, c)
 	})
@@ -263,6 +264,46 @@ func testGetUsers(t *testing.T, c *TestContext) {
 			if count != tc.Count {
 				t.Errorf("GetUsers[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
+		}
+	}
+}
+
+// testSetPwd checks route is protected and user correctly modified
+func testSetPwd(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		{Sent: []byte(`{"Password":"mdp"}`),
+			Token:        c.Config.Users.User.Token,
+			ID:           ID,
+			RespContains: []string{`Droits administrateur requis`},
+			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		{Sent: []byte(`{"Password":"mdp"}`),
+			Token:        c.Config.Users.Admin.Token,
+			ID:           0,
+			RespContains: []string{`Modification de mot de passe, get`},
+			StatusCode:   http.StatusInternalServerError}, // 1 : ID doesn't exist
+		{Sent: []byte(`{"Password":""}`),
+			Token:        c.Config.Users.Admin.Token,
+			ID:           ID,
+			RespContains: []string{`Modification de mot de passe, mot de passe vide`},
+			StatusCode:   http.StatusBadRequest}, // 2 : password empty
+		{Sent: []byte(`{"Password":"mdp"}`),
+			Token:        c.Config.Users.Admin.Token,
+			ID:           ID,
+			RespContains: []string{`"User":{"ID":3,"Name":"essai3","Email":"toto3@iledefrance.fr","Rights":9}`},
+			StatusCode:   http.StatusOK}, // 3 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.PUT("/api/users/pwd/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("SetPwd[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("SetPwd[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
 		}
 	}
 }

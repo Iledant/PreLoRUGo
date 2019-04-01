@@ -323,3 +323,47 @@ func getUserID(ctx iris.Context) (uID int64, err error) {
 	}
 	return uID, nil
 }
+
+type setPwdReq struct {
+	Password string `json:"Password"`
+}
+
+// SetPwd handles the put request used by an admin to change a user's password
+func SetPwd(ctx iris.Context) {
+	userID, err := ctx.Params().GetInt64("userID")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Modification de mot de passe, paramètre : " + err.Error()})
+		return
+	}
+	db, user := ctx.Values().Get("db").(*sql.DB), models.User{ID: userID}
+	if err = user.GetByID(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de mot de passe, get : " + err.Error()})
+		return
+	}
+	var req setPwdReq
+	if err = ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de mot de passe, décodage : " + err.Error()})
+		return
+	}
+	if req.Password == "" {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Modification de mot de passe, mot de passe vide"})
+		return
+	}
+	user.Password = req.Password
+	if err = user.CryptPwd(); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de mot de passe, mot de passe : " + err.Error()})
+		return
+	}
+	if err = user.Update(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de mot de passe, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(userResp{user})
+}
