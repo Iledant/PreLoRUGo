@@ -31,5 +31,8 @@ func (b *Beneficiaries) GetAll(db *sql.DB) (err error) {
 		b.Beneficiaries = append(b.Beneficiaries, row)
 	}
 	err = rows.Err()
+	if len(b.Beneficiaries) == 0 {
+		b.Beneficiaries = []Beneficiary{}
+	}
 	return err
 }

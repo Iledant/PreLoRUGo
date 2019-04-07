@@ -111,6 +111,9 @@ func (c *Copros) GetAll(db *sql.DB) (err error) {
 		c.Copros = append(c.Copros, r)
 	}
 	err = rows.Err()
+	if len(c.Copros) == 0 {
+		c.Copros = []Copro{}
+	}
 	return err
 }
 

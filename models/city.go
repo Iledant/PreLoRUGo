@@ -96,6 +96,9 @@ func (c *Cities) GetAll(db *sql.DB) (err error) {
 		c.Cities = append(c.Cities, row)
 	}
 	err = rows.Err()
+	if len(c.Cities) == 0 {
+		c.Cities = []City{}
+	}
 	return err
 }
 

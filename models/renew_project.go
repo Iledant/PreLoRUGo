@@ -70,6 +70,9 @@ func (r *RenewProjects) GetAll(db *sql.DB) (err error) {
 		r.RenewProjects = append(r.RenewProjects, row)
 	}
 	err = rows.Err()
+	if len(r.RenewProjects) == 0 {
+		r.RenewProjects = []RenewProject{}
+	}
 	return err
 }
 

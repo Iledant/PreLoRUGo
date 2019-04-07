@@ -71,6 +71,9 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 		c.Commitments = append(c.Commitments, row)
 	}
 	err = rows.Err()
+	if len(c.Commitments) == 0 {
+		c.Commitments = []Commitment{}
+	}
 	return err
 }
 

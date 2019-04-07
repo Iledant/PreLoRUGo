@@ -65,6 +65,9 @@ func (b *BudgetActions) GetAll(db *sql.DB) (err error) {
 		b.BudgetActions = append(b.BudgetActions, r)
 	}
 	err = rows.Err()
+	if len(b.BudgetActions) == 0 {
+		b.BudgetActions = []BudgetAction{}
+	}
 	return err
 }
 

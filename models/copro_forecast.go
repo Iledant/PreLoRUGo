@@ -96,6 +96,9 @@ func (r *CoproForecasts) GetAll(db *sql.DB) (err error) {
 		r.CoproForecasts = append(r.CoproForecasts, row)
 	}
 	err = rows.Err()
+	if len(r.CoproForecasts) == 0 {
+		r.CoproForecasts = []CoproForecast{}
+	}
 	return err
 }
 

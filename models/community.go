@@ -85,6 +85,9 @@ func (c *Communities) GetAll(db *sql.DB) (err error) {
 		c.Communities = append(c.Communities, row)
 	}
 	err = rows.Err()
+	if len(c.Communities) == 0 {
+		c.Communities = []Community{}
+	}
 	return err
 }
 

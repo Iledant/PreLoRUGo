@@ -60,7 +60,7 @@ func UpdateHousing(ctx iris.Context) {
 
 // GetHousings handles the get request to fetch all housings
 func GetHousings(ctx iris.Context) {
-	var resp models.Housings
+	resp := models.Housings{}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)

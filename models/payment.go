@@ -63,6 +63,9 @@ func (p *Payments) GetAll(db *sql.DB) (err error) {
 		p.Payments = append(p.Payments, row)
 	}
 	err = rows.Err()
+	if len(p.Payments) == 0 {
+		p.Payments = []Payment{}
+	}
 	return err
 }
 

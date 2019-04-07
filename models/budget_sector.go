@@ -74,6 +74,9 @@ func (b *BudgetSectors) GetAll(db *sql.DB) (err error) {
 		b.BudgetSectors = append(b.BudgetSectors, row)
 	}
 	err = rows.Err()
+	if len(b.BudgetSectors) == 0 {
+		b.BudgetSectors = []BudgetSector{}
+	}
 	return err
 }
 

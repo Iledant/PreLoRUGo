@@ -88,6 +88,9 @@ func (h *Housings) GetAll(db *sql.DB) (err error) {
 		h.Housings = append(h.Housings, row)
 	}
 	err = rows.Err()
+	if len(h.Housings) == 0 {
+		h.Housings = []Housing{}
+	}
 	return err
 }
 
