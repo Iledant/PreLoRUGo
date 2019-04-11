@@ -53,6 +53,7 @@ func TestAll(t *testing.T) {
 	testCity(t, cfg)
 	testRenewProjectForecast(t, cfg)
 	testCoproForecast(t, cfg)
+	testSettings(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
