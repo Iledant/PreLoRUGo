@@ -21,8 +21,8 @@ func testGetSettings(t *testing.T, c *TestContext) {
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"BudgetSector"`, `"BudgetAction"`},
-			Count:        5,
+			RespContains: []string{`"BudgetSector"`, `"BudgetAction"`, `"Commission"`},
+			Count:        6,
 			StatusCode:   http.StatusOK}, // 1 : bad request
 	}
 	for i, tc := range tcc {
