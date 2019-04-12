@@ -12,6 +12,8 @@ type settingsResp struct {
 	models.BudgetSectors
 	models.BudgetActions
 	models.Commissions
+	models.Cities
+	models.Communities
 }
 
 // GetSettings handles the get requests to give all datats in one batch
@@ -31,6 +33,16 @@ func GetSettings(ctx iris.Context) {
 	if err := resp.Commissions.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Administration, commissions : " + err.Error()})
+		return
+	}
+	if err := resp.Cities.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration, villes : " + err.Error()})
+		return
+	}
+	if err := resp.Communities.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration, interco : " + err.Error()})
 		return
 	}
 	ctx.JSON(resp)
