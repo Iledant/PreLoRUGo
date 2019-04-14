@@ -12,7 +12,7 @@ import (
 var b = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
 
 type jsonError struct {
-	Erreur string `json:"Erreur"`
+	Erreur string `json:"error"`
 }
 
 // ExcelDate is used for batch imports to decode an integer and transform it
