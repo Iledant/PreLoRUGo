@@ -125,6 +125,12 @@ func BatchCommunities(ctx iris.Context) {
 		ctx.JSON(jsonError{"Batch de Intercos, requête : " + err.Error()})
 		return
 	}
+	var resp models.Communities
+	if err := resp.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de Intercos, get all : " + err.Error()})
+		return
+	}
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(jsonMessage{"Batch de Intercos importé"})
+	ctx.JSON(resp)
 }

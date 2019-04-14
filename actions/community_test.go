@@ -227,7 +227,8 @@ func testBatchCommunities(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Community":[{"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"},
 			{"Code":"217500016","Name":"VILLE DE PARIS (EPT1)"},{"Code":"200058519.78","Name":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)"}]}`),
-			RespContains: []string{"Batch de Intercos importé"},
+			Count:        3,
+			RespContains: []string{"Community", `"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
 	for i, tc := range tcc {
@@ -244,15 +245,9 @@ func testBatchCommunities(t *testing.T, c *TestContext) {
 			t.Errorf("BatchCommunity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
 		}
 		if status == http.StatusOK {
-			response = c.E.GET("/api/communities").
-				WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-			body = string(response.Content)
-			for _, j := range []string{`"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"`,
-				`"Code":"217500016","Name":"VILLE DE PARIS (EPT1)"`,
-				`"Code":"200058519.78","Name":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)"`} {
-				if !strings.Contains(body, j) {
-					t.Errorf("BatchCommunity[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
-				}
+			count := strings.Count(body, `"ID"`)
+			if count != tc.Count {
+				t.Errorf("BatchCommunity[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}
