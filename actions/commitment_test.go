@@ -12,6 +12,7 @@ func testCommitment(t *testing.T, c *TestContext) {
 	t.Run("Commitment", func(t *testing.T) {
 		testBatchCommitments(t, c)
 		testGetCommitments(t, c)
+		testGetPaginatedCommitments(t, c)
 	})
 }
 
@@ -83,6 +84,50 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 			count := strings.Count(body, `"ID"`)
 			if count != tc.Count {
 				t.Errorf("GetCommitments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
+			}
+		}
+	}
+}
+
+// testGetPaginatedCommitments checks if route is user protected and paginated
+// commitments correctly sent back
+func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: "",
+			Sent:         []byte(`{"Page":1,"Year":2008,"Search":""}`),
+			RespContains: []string{`Token absent`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			Sent:         []byte(`"Page":1,"Year":2008,"Search":""}`),
+			RespContains: []string{`Page d'engagements, décodage :`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad params query
+		{Token: c.Config.Users.User.Token,
+			Sent: []byte(`{"Page":1,"Year":2009,"Search":""}`),
+			// cSpell: disable
+			RespContains: []string{`"Commitment"`, `"Year":2009,"Code":"AE   ","Number":244923,"Line":1,"CreationDate":"2012-01-26T00:00:00Z","ModificationDate":"2012-01-26T00:00:00Z","Name":"TRAITEMENT DE CADUCITE 2011","Value":-15371500,"BeneficiaryID":3,"IrisCode":null`},
+			// cSpell: enable
+			Count:      4,
+			StatusCode: http.StatusOK}, // 1 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.GET("/api/commitments/paginated").WithBytes(tc.Sent).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("GetPaginatedCommitments[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("GetPaginatedCommitments[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		}
+		if status == http.StatusOK {
+			count := strings.Count(body, `"ID"`)
+			if count != tc.Count {
+				t.Errorf("GetPaginatedCommitments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}

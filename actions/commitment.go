@@ -8,10 +8,6 @@ import (
 	"github.com/kataras/iris"
 )
 
-// type commitmentReq struct {
-// 	Commitment models.Commitment `json:"Commitment"`
-// }
-
 // GetCommitments handles the get request to fetch all commitments
 func GetCommitments(ctx iris.Context) {
 	var resp models.Commitments
@@ -19,6 +15,27 @@ func GetCommitments(ctx iris.Context) {
 	if err := resp.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liste des engagements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
+// GetPaginatedCommitments handles the get request to fetch all commitments that
+// match the given pattern and return a paginated struct with commitments, page number
+// and total page count
+func GetPaginatedCommitments(ctx iris.Context) {
+	var req models.CommitmentQuery
+	if err := ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page d'engagements, décodage : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.PaginatedCommitments
+	if err := resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page d'engagements, requête : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

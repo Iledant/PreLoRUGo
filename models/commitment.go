@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -51,6 +52,58 @@ type CommitmentLine struct {
 // CommitmentBatch embeddes an array of CommitmentLine for json export
 type CommitmentBatch struct {
 	Lines []CommitmentLine `json:"Commitment"`
+}
+
+// CommitmentQuery embeddes the request to fetch some commitments from database
+// according to the given pattern
+type CommitmentQuery struct {
+	Page   int64  `json:"Page"`
+	Year   int64  `json:"Year"`
+	Search string `json:"Search"`
+}
+
+// PaginatedCommitments embeddes the query results of a CommitmentQuery
+type PaginatedCommitments struct {
+	Commitments
+	Page       int64 `json:"Page"`
+	PagesCount int64 `json:"PagesCount"`
+}
+
+// Get fetches the results of a paginated commitment query
+func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
+	var count int64
+	if err := db.QueryRow(`SELECT count(1) FROM commitment WHERE year >= $1 AND
+		(name ILIKE $2 OR code ILIKE $2)`, c.Year, "%"+c.Search+"%").
+		Scan(&count); err != nil {
+		return errors.New("count query failed " + err.Error())
+	}
+	offset, newPage, lastPage := GetPaginateParams(c.Page, count)
+
+	rows, err := db.Query(`SELECT id,year,code,number,line,creation_date,
+	modification_date,name,value,beneficiary_id,iris_code FROM commitment
+	WHERE year >= $1 AND (name ILIKE $2 OR code ILIKE $2)
+	ORDER BY 2,6,7,3,4,5 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+		c.Year, "%"+c.Search+"%", offset)
+	if err != nil {
+		return err
+	}
+	var row Commitment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
+			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
+			&row.BeneficiaryID, &row.IrisCode); err != nil {
+			return err
+		}
+		p.Commitments.Commitments = append(p.Commitments.Commitments, row)
+	}
+	err = rows.Err()
+	if len(p.Commitments.Commitments) == 0 {
+		p.Commitments.Commitments = []Commitment{}
+	}
+	p.Page = newPage
+	p.PagesCount = lastPage
+	return err
 }
 
 // GetAll fetches all Commitments from database

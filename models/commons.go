@@ -11,6 +11,27 @@ import (
 
 var b = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
 
+// PageSize defines the number of row of a paginated query
+const PageSize = 10
+
+// GetPaginateParams returns the correct offset and page according to total number of rows.
+func GetPaginateParams(page int64, count int64) (offset int64, newPage int64, lastPage int64) {
+	if count == 0 {
+		return 0, 0, 1
+	}
+	offset = (page - 1) * PageSize
+	newPage = 1
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= count {
+		offset = (count - 1) - ((count - 1) % PageSize)
+		newPage = offset/PageSize + 1
+	}
+	lastPage = (count-1)/PageSize + 1
+	return offset, newPage, lastPage
+}
+
 type jsonError struct {
 	Erreur string `json:"error"`
 }
