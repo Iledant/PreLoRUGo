@@ -125,6 +125,12 @@ func BatchCities(ctx iris.Context) {
 		ctx.JSON(jsonError{"Batch de Villes, requête : " + err.Error()})
 		return
 	}
+	var resp models.Cities
+	if err := resp.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de Villes, get all : " + err.Error()})
+		return
+	}
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(jsonMessage{"Batch de Villes importé"})
+	ctx.JSON(resp)
 }

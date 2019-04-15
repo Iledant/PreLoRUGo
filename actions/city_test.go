@@ -229,7 +229,8 @@ func testBatchCities(t *testing.T, c *TestContext) {
 			Sent: []byte(`{"City":[{"InseeCode":75101,"Name":"PARIS 1","CommunityCode":"217500016"},
 			{"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityCode":"247700123"},
 			{"InseeCode":78146,"Name":"CHATOU","CommunityCode":"200058519.78"}]}`),
-			RespContains: []string{"Batch de Villes importé"},
+			Count:        3,
+			RespContains: []string{`"InseeCode":75101,"Name":"PARIS 1"`, `"InseeCode":78146,"Name":"CHATOU","CommunityID":4`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
 	for i, tc := range tcc {
@@ -246,15 +247,9 @@ func testBatchCities(t *testing.T, c *TestContext) {
 			t.Errorf("BatchCity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
 		}
 		if status == http.StatusOK {
-			response = c.E.GET("/api/cities").
-				WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-			body = string(response.Content)
-			for _, j := range []string{`"InseeCode":75101,"Name":"PARIS 1","CommunityID":3`,
-				`"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityID":null`,
-				`"InseeCode":78146,"Name":"CHATOU","CommunityID":4`} {
-				if !strings.Contains(body, j) {
-					t.Errorf("BatchCity[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
-				}
+			count := strings.Count(body, `"InseeCode"`)
+			if count != tc.Count {
+				t.Errorf("BatchCity[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}
