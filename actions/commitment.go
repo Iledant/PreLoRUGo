@@ -25,12 +25,20 @@ func GetCommitments(ctx iris.Context) {
 // match the given pattern and return a paginated struct with commitments, page number
 // and total page count
 func GetPaginatedCommitments(ctx iris.Context) {
-	var req models.CommitmentQuery
-	if err := ctx.ReadJSON(&req); err != nil {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Page d'engagements, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Page d'engagements, décodage Year : " + err.Error()})
 		return
 	}
+	page, err := ctx.URLParamInt64("Page")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page d'engagements, décodage Page : " + err.Error()})
+		return
+	}
+	search := ctx.URLParam("Search")
+	req := models.CommitmentQuery{Year: year, Page: page, Search: search}
 	db := ctx.Values().Get("db").(*sql.DB)
 	var resp models.PaginatedCommitments
 	if err := resp.Get(db, &req); err != nil {

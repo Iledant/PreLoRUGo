@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -37,8 +38,8 @@ type CommitmentLine struct {
 	Code             string     `json:"Code"`
 	Number           int64      `json:"Number"`
 	Line             int64      `json:"Line"`
-	CreationDate     int64      `json:"Creation"`
-	ModificationDate int64      `json:"Modification"`
+	CreationDate     int64      `json:"CreationDate"`
+	ModificationDate int64      `json:"ModificationDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	BeneficiaryCode  int64      `json:"BeneficiaryCode"`
@@ -66,7 +67,7 @@ type CommitmentQuery struct {
 type PaginatedCommitments struct {
 	Commitments
 	Page       int64 `json:"Page"`
-	PagesCount int64 `json:"PagesCount"`
+	ItemsCount int64 `json:"ItemsCount"`
 }
 
 // Get fetches the results of a paginated commitment query
@@ -77,7 +78,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 		Scan(&count); err != nil {
 		return errors.New("count query failed " + err.Error())
 	}
-	offset, newPage, lastPage := GetPaginateParams(c.Page, count)
+	offset, newPage := GetPaginateParams(c.Page, count)
 
 	rows, err := db.Query(`SELECT id,year,code,number,line,creation_date,
 	modification_date,name,value,beneficiary_id,iris_code FROM commitment
@@ -102,7 +103,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 		p.Commitments.Commitments = []Commitment{}
 	}
 	p.Page = newPage
-	p.PagesCount = lastPage
+	p.ItemsCount = count
 	return err
 }
 
@@ -150,7 +151,7 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			r.ModificationDate < 20090101 || r.Name == "" || r.BeneficiaryCode == 0 ||
 			r.BeneficiaryName == "" || r.Sector == "" {
 			tx.Rollback()
-			return errors.New("Champs incorrects")
+			return fmt.Errorf("Champs incorrects dans %+v", r)
 		}
 		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, r.CreationDate/10000,
 			r.CreationDate/100%100, r.CreationDate%100, r.ModificationDate/10000,

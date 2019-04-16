@@ -94,25 +94,26 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		{Token: "",
-			Sent:         []byte(`{"Page":1,"Year":2008,"Search":""}`),
+			Sent:         []byte(`Page=2&Year=2010&Search=fontenay`),
 			RespContains: []string{`Token absent`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(`"Page":1,"Year":2008,"Search":""}`),
-			RespContains: []string{`Page d'engagements, décodage :`},
+			Sent:         []byte(`Page=2&Year=a&Search=fontenay`),
+			RespContains: []string{`Page d'engagements, décodage Year :`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad params query
 		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`{"Page":1,"Year":2009,"Search":""}`),
+			Sent: []byte(`Page=2&Year=2010&Search=fontenay`),
 			// cSpell: disable
-			RespContains: []string{`"Commitment"`, `"Year":2009,"Code":"AE   ","Number":244923,"Line":1,"CreationDate":"2012-01-26T00:00:00Z","ModificationDate":"2012-01-26T00:00:00Z","Name":"TRAITEMENT DE CADUCITE 2011","Value":-15371500,"BeneficiaryID":3,"IrisCode":null`},
+			RespContains: []string{`"Commitment"`, `"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-22802200,"BeneficiaryID":2,"IrisCode":"16006934","HousingID":null,"CoproID":null,"RenewProjectID":null`,
+				`"Page":1`, `"PagesCount":1`},
 			// cSpell: enable
-			Count:      4,
-			StatusCode: http.StatusOK}, // 1 : ok
+			Count:      1,
+			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	for i, tc := range tcc {
-		response := c.E.GET("/api/commitments/paginated").WithBytes(tc.Sent).
+		response := c.E.GET("/api/commitments/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 		body := string(response.Content)
 		for _, r := range tc.RespContains {
