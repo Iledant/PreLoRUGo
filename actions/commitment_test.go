@@ -106,8 +106,8 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Page=2&Year=2010&Search=fontenay`),
 			// cSpell: disable
-			RespContains: []string{`"Commitment"`, `"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-22802200,"BeneficiaryID":2,"IrisCode":"16006934","HousingID":null,"CoproID":null,"RenewProjectID":null`,
-				`"Page":1`, `"PagesCount":1`},
+			RespContains: []string{`"Commitment"`, `"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-22802200,"BeneficiaryID":2,"BeneficiaryName":"SA D HLM LOGIREP","IrisCode":"16006934","HousingID":null,"CoproID":null,"RenewProjectID":null`,
+				`"Page":1`, `"ItemsCount":1`},
 			// cSpell: enable
 			Count:      1,
 			StatusCode: http.StatusOK}, // 2 : ok
