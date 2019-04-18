@@ -100,7 +100,8 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 		JOIN budget_action a ON a.id = c.action_id
 		JOIN budget_sector s ON s.id=a.sector_id 
 		WHERE year >= $1 AND
-			(c.name ILIKE $2 OR c.code ILIKE $2  OR b.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
+			(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
+				OR b.name ILIKE $2 OR a.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
 		Scan(&count); err != nil {
 		return errors.New("count query failed " + err.Error())
 	}
@@ -112,7 +113,8 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
-	WHERE year >= $1 AND (c.name ILIKE $2 OR c.code ILIKE $2 OR b.name ILIKE $2)
+	WHERE year >= $1 AND (c.name ILIKE $2  OR c.number::varchar ILIKE $2 OR 
+		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
 	ORDER BY 2,6,7,3,4,5 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		c.Year, "%"+c.Search+"%", offset)
 	if err != nil {
