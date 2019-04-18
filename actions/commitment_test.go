@@ -62,7 +62,7 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			// cSpell: disable
-			RespContains: []string{`"Commitment"`, `"Year":2009,"Code":"AE   ","Number":244923,"Line":1,"CreationDate":"2012-01-26T00:00:00Z","ModificationDate":"2012-01-26T00:00:00Z","Name":"TRAITEMENT DE CADUCITE 2011","Value":-15371500,"BeneficiaryID":3,"IrisCode":null`},
+			RespContains: []string{`"Commitment"`, `"Year":2009,"Code":"AE   ","Number":244923,"Line":1,"CreationDate":"2012-01-26T00:00:00Z","ModificationDate":"2012-01-26T00:00:00Z","Name":"TRAITEMENT DE CADUCITE 2011","Value":-15371500,"BeneficiaryID":3,"ActionID":3,"IrisCode":null,"HousingID":null,"CoproID":null,"RenewProjectID":null`},
 			// cSpell: enable
 			Count:      4,
 			StatusCode: http.StatusOK}, // 1 : ok
@@ -106,7 +106,7 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Page=2&Year=2010&Search=fontenay`),
 			// cSpell: disable
-			RespContains: []string{`"Commitment"`, `"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-22802200,"BeneficiaryID":2,"BeneficiaryName":"SA D HLM LOGIREP","IrisCode":"16006934","HousingID":null,"CoproID":null,"RenewProjectID":null`,
+			RespContains: []string{`"Commitment"`, `"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-22802200,"BeneficiaryID":2,"BeneficiaryName":"SA D HLM LOGIREP","ActionName":"Aide à la création de logements locatifs sociaux","Sector":"LO","IrisCode":"16006934","HousingID":null,"CoproID":null,"RenewProjectID":null`,
 				`"Page":1`, `"ItemsCount":1`},
 			// cSpell: enable
 			Count:      1,

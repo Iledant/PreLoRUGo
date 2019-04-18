@@ -21,6 +21,7 @@ type Commitment struct {
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	BeneficiaryID    int64      `json:"BeneficiaryID"`
+	ActionID         int64      `json:"ActionID"`
 	IrisCode         NullString `json:"IrisCode"`
 	HousingID        NullInt64  `json:"HousingID"`
 	CoproID          NullInt64  `json:"CoproID"`
@@ -40,6 +41,8 @@ type PaginatedCommitment struct {
 	Value            int64      `json:"Value"`
 	BeneficiaryID    int64      `json:"BeneficiaryID"`
 	BeneficiaryName  string     `json:"BeneficiaryName"`
+	ActionName       string     `json:"ActionName"`
+	Sector           string     `json:"Sector"`
 	IrisCode         NullString `json:"IrisCode"`
 	HousingID        NullInt64  `json:"HousingID"`
 	CoproID          NullInt64  `json:"CoproID"`
@@ -93,16 +96,22 @@ type PaginatedCommitments struct {
 func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 	var count int64
 	if err := db.QueryRow(`SELECT count(1) FROM commitment c 
-		JOIN beneficiary b on c.beneficiary_id=b.id WHERE year >= $1 AND
-		(c.name ILIKE $2 OR c.code ILIKE $2  OR b.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
+		JOIN beneficiary b on c.beneficiary_id=b.id
+		JOIN budget_action a ON a.id = c.action_id
+		JOIN budget_sector s ON s.id=a.sector_id 
+		WHERE year >= $1 AND
+			(c.name ILIKE $2 OR c.code ILIKE $2  OR b.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
 		Scan(&count); err != nil {
 		return errors.New("count query failed " + err.Error())
 	}
 	offset, newPage := GetPaginateParams(c.Page, count)
 
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
-	c.modification_date,c.name,c.value,c.beneficiary_id, b.name, c.iris_code FROM commitment c
+	c.modification_date,c.name,c.value,c.beneficiary_id, b.name, c.iris_code,a.name,
+	s.name FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
+	JOIN budget_action a ON a.id = c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id 
 	WHERE year >= $1 AND (c.name ILIKE $2 OR c.code ILIKE $2 OR b.name ILIKE $2)
 	ORDER BY 2,6,7,3,4,5 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		c.Year, "%"+c.Search+"%", offset)
@@ -114,7 +123,8 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode); err != nil {
+			&row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode, &row.ActionName,
+			&row.Sector); err != nil {
 			return err
 		}
 		p.Commitments = append(p.Commitments, row)
@@ -131,7 +141,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 // GetAll fetches all Commitments from database
 func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,year,code,number,line,creation_date,
-	modification_date,name,value,beneficiary_id,iris_code FROM commitment`)
+	modification_date,name,value,beneficiary_id,iris_code, action_id FROM commitment`)
 	if err != nil {
 		return err
 	}
@@ -140,7 +150,7 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.BeneficiaryID, &row.IrisCode); err != nil {
+			&row.BeneficiaryID, &row.IrisCode, &row.ActionID); err != nil {
 			return err
 		}
 		c.Commitments = append(c.Commitments, row)
