@@ -50,6 +50,28 @@ func GetPaginatedCommitments(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
+// ExportCommitments handles the get request to fetch all commitments that
+// match the given pattern and return a list of commitments with full names
+func ExportCommitments(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Export d'engagements, décodage Year : " + err.Error()})
+		return
+	}
+	search := ctx.URLParam("Search")
+	req := models.ExportCommitmentQuery{Year: year, Search: search}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.ExportedCommitments
+	if err := resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Export d'engagements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // BatchCommitments handle the post request to update and insert a batch of commitments into the database
 func BatchCommitments(ctx iris.Context) {
 	var b models.CommitmentBatch

@@ -91,6 +91,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	userParty.Get("/commitments", GetCommitments)
 	userParty.Get("/commitments/paginated", GetPaginatedCommitments)
+	userParty.Get("/commitments/export", ExportCommitments)
 
 	userParty.Get("/beneficiaries", GetBeneficiaries)
 

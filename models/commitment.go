@@ -92,6 +92,38 @@ type PaginatedCommitments struct {
 	ItemsCount  int64                 `json:"ItemsCount"`
 }
 
+// ExportCommitmentQuery embeddes the request to fetch some commitments from database
+// according to the given pattern for export purpose
+type ExportCommitmentQuery struct {
+	Year   int64  `json:"Year"`
+	Search string `json:"Search"`
+}
+
+// ExportedCommitment is dedicated to commitments exports with explicit fields
+type ExportedCommitment struct {
+	ID               int64      `json:"ID"`
+	Year             int64      `json:"Year"`
+	Code             string     `json:"Code"`
+	Number           int64      `json:"Number"`
+	Line             int64      `json:"Line"`
+	CreationDate     time.Time  `json:"CreationDate"`
+	ModificationDate time.Time  `json:"ModificationDate"`
+	Name             string     `json:"Name"`
+	Value            int64      `json:"Value"`
+	BeneficiaryName  string     `json:"BeneficiaryName"`
+	Sector           string     `json:"Sector"`
+	ActionName       string     `json:"ActionName"`
+	IrisCode         NullString `json:"IrisCode"`
+	HousingName      NullString `json:"HousingName"`
+	CoproName        NullString `json:"CoproName"`
+	RenewProjectName NullString `json:"RenewProjectName"`
+}
+
+// ExportedCommitments embeddes an array of ExportedCommitment for json export
+type ExportedCommitments struct {
+	ExportedCommitments []ExportedCommitment `json:"ExportedCommitment"`
+}
+
 // Get fetches the results of a paginated commitment query
 func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 	var count int64
@@ -137,6 +169,41 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 	}
 	p.Page = newPage
 	p.ItemsCount = count
+	return err
+}
+
+// Get fetches the results of exported commitments
+func (e *ExportedCommitments) Get(db *sql.DB, q *ExportCommitmentQuery) error {
+	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
+	c.modification_date,c.name,c.value,b.name, c.iris_code,a.name,
+	s.name, copro.name, housing.address,renew_project.name FROM commitment c
+	JOIN beneficiary b ON c.beneficiary_id = b.id
+	JOIN budget_action a ON a.id = c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id
+	LEFT JOIN copro ON copro.id = c.copro_id
+	LEFT JOIN housing ON housing.id = c.housing_id
+	LEFT JOIN renew_project ON renew_project.id = c.renew_project_id
+	WHERE year >= $1 AND (c.name ILIKE $2  OR c.number::varchar ILIKE $2 OR 
+		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
+	ORDER BY 2,6,7,3,4,5`, q.Year, "%"+q.Search+"%")
+	if err != nil {
+		return err
+	}
+	var row ExportedCommitment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
+			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
+			&row.BeneficiaryName, &row.IrisCode, &row.ActionName, &row.Sector,
+			&row.CoproName, &row.HousingName, &row.RenewProjectName); err != nil {
+			return err
+		}
+		e.ExportedCommitments = append(e.ExportedCommitments, row)
+	}
+	err = rows.Err()
+	if len(e.ExportedCommitments) == 0 {
+		e.ExportedCommitments = []ExportedCommitment{}
+	}
 	return err
 }
 

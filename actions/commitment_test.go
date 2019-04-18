@@ -13,6 +13,7 @@ func testCommitment(t *testing.T, c *TestContext) {
 		testBatchCommitments(t, c)
 		testGetCommitments(t, c)
 		testGetPaginatedCommitments(t, c)
+		testExportedCommitments(t, c)
 	})
 }
 
@@ -129,6 +130,50 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 			count := strings.Count(body, `"ID"`)
 			if count != tc.Count {
 				t.Errorf("GetPaginatedCommitments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
+			}
+		}
+	}
+}
+
+// testExportedCommitments checks if route is user protected and exported
+// commitments correctly sent back
+func testExportedCommitments(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: "",
+			Sent:         []byte(`Year=2010&Search=fontenay`),
+			RespContains: []string{`Token absent`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			Sent:         []byte(`Year=a&Search=fontenay`),
+			RespContains: []string{`Export d'engagements, décodage Year :`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad params query
+		{Token: c.Config.Users.User.Token,
+			Sent: []byte(`Year=2010&Search=fontenay`),
+			// cSpell: disable
+			RespContains: []string{`"ExportedCommitment":[`, `"ID":2,"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-22802200,"BeneficiaryName":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux","IrisCode":"16006934","HousingName":null,"CoproName":null,"RenewProjectName":null`},
+			// cSpell: enable
+			Count:      1,
+			StatusCode: http.StatusOK}, // 2 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.GET("/api/commitments/export").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("GetExportedCommitments[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("GetExportedCommitments[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		}
+		if status == http.StatusOK {
+			count := strings.Count(body, `"ID"`)
+			if count != tc.Count {
+				t.Errorf("GetExportedCommitments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}
