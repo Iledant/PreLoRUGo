@@ -12,6 +12,7 @@ func testPayment(t *testing.T, c *TestContext) {
 	t.Run("Payment", func(t *testing.T) {
 		testBatchPayments(t, c)
 		testGetPayments(t, c)
+		testGetPaginatedPayments(t, c)
 	})
 }
 
@@ -83,6 +84,49 @@ func testGetPayments(t *testing.T, c *TestContext) {
 			count := strings.Count(body, `"ID"`)
 			if count != tc.Count {
 				t.Errorf("GetPayments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
+			}
+		}
+	}
+}
+
+// testGetPaginatedPayments checks if route is user protected and Payments correctly sent back
+func testGetPaginatedPayments(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: "",
+			Sent:         []byte(`Page=2&Year=2010&Search=fontenay`),
+			RespContains: []string{`Token absent`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			Sent:         []byte(`Page=2&Year=a&Search=fontenay`),
+			RespContains: []string{`Page de paiements, décodage Year :`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
+		{Token: c.Config.Users.User.Token,
+			Sent: []byte(`Page=2&Year=2010&Search=fontenay`),
+			//cSpell: disable
+			RespContains: []string{`"Payments":[`, `"CreationDate":"2018-02-19T00:00:00Z","Value":3147322,"Number":104983,"CommitmentDate":"2017-03-13T00:00:00Z","CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","CommitmentValue":-22802200,"Beneficiary":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
+			//cSpell: enable
+			Count:      1,
+			StatusCode: http.StatusOK}, // 1 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.GET("/api/payments/paginated").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("GetPaginatedPayments[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("GetPaginatedPayments[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		}
+		if status == http.StatusOK {
+			count := strings.Count(body, `"ID"`)
+			if count != tc.Count {
+				t.Errorf("GetPaginatedPayments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}

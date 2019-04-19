@@ -42,3 +42,31 @@ func BatchPayments(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Batch de Paiements importé"})
 }
+
+// GetPaginatedPayments handle the get request for commitments that match a given
+// search pattern returning a PageSize items, page number and total count of items.
+func GetPaginatedPayments(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de paiements, décodage Year : " + err.Error()})
+		return
+	}
+	page, err := ctx.URLParamInt64("Page")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de paiements, décodage Page : " + err.Error()})
+		return
+	}
+	search := ctx.URLParam("Search")
+	req := models.PaginatedQuery{Year: year, Page: page, Search: search}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.PaginatedPayments
+	if err := resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de paiements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}

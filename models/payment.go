@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 	"time"
 )
 
@@ -42,6 +43,29 @@ type PaymentLine struct {
 // PaymentBatch embeddes an array of PaymentLine for json export
 type PaymentBatch struct {
 	Lines []PaymentLine `json:"Payment"`
+}
+
+// PaginatedPayment is used for paginated request to fetch some payments that
+// match a search pattern using PaginatedQuery
+type PaginatedPayment struct {
+	ID              int64      `json:"ID"`
+	CreationDate    time.Time  `json:"CreationDate"`
+	Value           int64      `json:"Value"`
+	Number          int64      `json:"Number"`
+	CommitmentDate  NullTime   `json:"CommitmentDate"`
+	CommitmentName  NullString `json:"CommitmentName"`
+	CommitmentValue NullInt64  `json:"CommitmentValue"`
+	Beneficiary     NullString `json:"Beneficiary"`
+	Sector          NullString `json:"Sector"`
+	ActionName      NullString `json:"ActionName"`
+}
+
+// PaginatedPayments embeddes an array of PaginatedPayment for json export with
+// paginated informations
+type PaginatedPayments struct {
+	Payments   []PaginatedPayment `json:"Payments"`
+	Page       int64              `json:"Page"`
+	ItemsCount int64              `json:"ItemsCount"`
 }
 
 // GetAll fetches all Payments from database
@@ -126,4 +150,50 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 	}
 	tx.Commit()
 	return nil
+}
+
+// Get fetches all paginated payments from database that match the paginated query
+func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
+	var count int64
+	if err := db.QueryRow(`SELECT count(1) FROM payment p 
+		LEFT JOIN commitment c on p.commitment_id=c.id
+		JOIN budget_action a ON a.id = c.action_id
+		JOIN budget_sector s ON s.id=a.sector_id 
+		JOIN beneficiary b ON c.beneficiary_id = b.id
+		WHERE p.year >= $1 AND
+			(c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)`, q.Year, "%"+q.Search+"%").
+		Scan(&count); err != nil {
+		return errors.New("count query failed " + err.Error())
+	}
+	offset, newPage := GetPaginateParams(q.Page, count)
+
+	rows, err := db.Query(`SELECT p.id,p.creation_date,p.value, p.number,
+	c.creation_date, c.name, c.value, b.name, s.name, a.name FROM payment p
+	LEFT JOIN commitment c ON p.commitment_id = c.id
+	JOIN beneficiary b ON c.beneficiary_id = b.id
+	JOIN budget_action a ON a.id = c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id 
+	WHERE p.year >= $1 AND (c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
+	ORDER BY 2,4,5 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+		q.Year, "%"+q.Search+"%", offset)
+	if err != nil {
+		return err
+	}
+	var row PaginatedPayment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.CreationDate, &row.Value, &row.Number,
+			&row.CommitmentDate, &row.CommitmentName, &row.CommitmentValue,
+			&row.Beneficiary, &row.Sector, &row.ActionName); err != nil {
+			return err
+		}
+		p.Payments = append(p.Payments, row)
+	}
+	err = rows.Err()
+	if len(p.Payments) == 0 {
+		p.Payments = []PaginatedPayment{}
+	}
+	p.Page = newPage
+	p.ItemsCount = count
+	return err
 }

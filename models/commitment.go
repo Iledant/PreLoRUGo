@@ -77,15 +77,15 @@ type CommitmentBatch struct {
 	Lines []CommitmentLine `json:"Commitment"`
 }
 
-// CommitmentQuery embeddes the request to fetch some commitments from database
+// PaginatedQuery embeddes the request to fetch some commitments from database
 // according to the given pattern
-type CommitmentQuery struct {
+type PaginatedQuery struct {
 	Page   int64  `json:"Page"`
 	Year   int64  `json:"Year"`
 	Search string `json:"Search"`
 }
 
-// PaginatedCommitments embeddes the query results of a CommitmentQuery
+// PaginatedCommitments embeddes the query results of a PaginatedQuery
 type PaginatedCommitments struct {
 	Commitments []PaginatedCommitment `json:"Commitment"`
 	Page        int64                 `json:"Page"`
@@ -125,7 +125,7 @@ type ExportedCommitments struct {
 }
 
 // Get fetches the results of a paginated commitment query
-func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
+func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	var count int64
 	if err := db.QueryRow(`SELECT count(1) FROM commitment c 
 		JOIN beneficiary b on c.beneficiary_id=b.id

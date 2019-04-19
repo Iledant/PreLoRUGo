@@ -38,7 +38,7 @@ func GetPaginatedCommitments(ctx iris.Context) {
 		return
 	}
 	search := ctx.URLParam("Search")
-	req := models.CommitmentQuery{Year: year, Page: page, Search: search}
+	req := models.PaginatedQuery{Year: year, Page: page, Search: search}
 	db := ctx.Values().Get("db").(*sql.DB)
 	var resp models.PaginatedCommitments
 	if err := resp.Get(db, &req); err != nil {

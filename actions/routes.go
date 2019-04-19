@@ -96,6 +96,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	userParty.Get("/beneficiaries", GetBeneficiaries)
 
 	userParty.Get("/payments", GetPayments)
+	userParty.Get("/payments/paginated", GetPaginatedPayments)
 
 	userParty.Get("/budget_sectors", GetBudgetSectors)
 	userParty.Get("/budget_sector/{ID}", GetBudgetSector)
