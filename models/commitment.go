@@ -109,7 +109,7 @@ type ExportedCommitment struct {
 	CreationDate     time.Time  `json:"CreationDate"`
 	ModificationDate time.Time  `json:"ModificationDate"`
 	Name             string     `json:"Name"`
-	Value            int64      `json:"Value"`
+	Value            float64    `json:"Value"`
 	BeneficiaryName  string     `json:"BeneficiaryName"`
 	Sector           string     `json:"Sector"`
 	ActionName       string     `json:"ActionName"`
@@ -175,7 +175,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *CommitmentQuery) error {
 // Get fetches the results of exported commitments
 func (e *ExportedCommitments) Get(db *sql.DB, q *ExportCommitmentQuery) error {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
-	c.modification_date,c.name,c.value,b.name, c.iris_code,a.name,
+	c.modification_date,c.name,c.value * 0.01,b.name, c.iris_code,a.name,
 	s.name, copro.name, housing.address,renew_project.name FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
