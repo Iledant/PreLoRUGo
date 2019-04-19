@@ -152,7 +152,7 @@ func testExportedCommitments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Year=2010&Search=fontenay`),
 			// cSpell: disable
-			RespContains: []string{`"ExportedCommitment":[`, `"ID":2,"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-22802200,"BeneficiaryName":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux","IrisCode":"16006934","HousingName":null,"CoproName":null,"RenewProjectName":null`},
+			RespContains: []string{`"ExportedCommitment":[`, `"ID":2,"Year":2017,"Code":"IRIS ","Number":525554,"Line":1,"CreationDate":"2017-03-13T00:00:00Z","ModificationDate":"2017-03-13T00:00:00Z","Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Value":-228022,"BeneficiaryName":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux","IrisCode":"16006934","HousingName":null,"CoproName":null,"RenewProjectName":null`},
 			// cSpell: enable
 			Count:      1,
 			StatusCode: http.StatusOK}, // 2 : ok
