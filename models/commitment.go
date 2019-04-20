@@ -92,9 +92,9 @@ type PaginatedCommitments struct {
 	ItemsCount  int64                 `json:"ItemsCount"`
 }
 
-// ExportCommitmentQuery embeddes the request to fetch some commitments from database
+// ExportQuery embeddes the request to fetch some commitments from database
 // according to the given pattern for export purpose
-type ExportCommitmentQuery struct {
+type ExportQuery struct {
 	Year   int64  `json:"Year"`
 	Search string `json:"Search"`
 }
@@ -173,7 +173,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 }
 
 // Get fetches the results of exported commitments
-func (e *ExportedCommitments) Get(db *sql.DB, q *ExportCommitmentQuery) error {
+func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
 	c.modification_date,c.name,c.value * 0.01,b.name, c.iris_code,a.name,
 	s.name, copro.name, housing.address,renew_project.name FROM commitment c

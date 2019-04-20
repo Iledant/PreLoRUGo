@@ -13,6 +13,7 @@ func testPayment(t *testing.T, c *TestContext) {
 		testBatchPayments(t, c)
 		testGetPayments(t, c)
 		testGetPaginatedPayments(t, c)
+		testExportedPayments(t, c)
 	})
 }
 
@@ -127,6 +128,49 @@ func testGetPaginatedPayments(t *testing.T, c *TestContext) {
 			count := strings.Count(body, `"ID"`)
 			if count != tc.Count {
 				t.Errorf("GetPaginatedPayments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
+			}
+		}
+	}
+}
+
+// testExportedPayments checks if route is user protected and Payments correctly sent back
+func testExportedPayments(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: "",
+			Sent:         []byte(`Year=2010&Search=fontenay`),
+			RespContains: []string{`Token absent`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			Sent:         []byte(`Year=a&Search=fontenay`),
+			RespContains: []string{`Export de paiements, décodage Year :`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
+		{Token: c.Config.Users.User.Token,
+			Sent: []byte(`Year=2010&Search=fontenay`),
+			//cSpell: disable
+			RespContains: []string{`"ExportPayment":[`, `"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","ModificationDate":"2018-02-19T00:00:00Z","Number":104983,"Value":31473.22,"CommitmentYear":2017,"CommitmentCode":"IRIS ","CommitmentNumber":525554,"CommitmentLine":1,"CommitmentCreationDate":"2017-03-13T00:00:00Z","CommitmentModificationDate":"2017-03-13T00:00:00Z","CommitmentValue":null,"CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","BeneficiaryName":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
+			//cSpell: enable
+			Count:      1,
+			StatusCode: http.StatusOK}, // 1 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.GET("/api/payments/exported").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("ExportedPayments[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("ExportedPayments[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		}
+		if status == http.StatusOK {
+			count := strings.Count(body, `"ID"`)
+			if count != tc.Count {
+				t.Errorf("ExportedPayments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}

@@ -70,3 +70,25 @@ func GetPaginatedPayments(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
+
+// GetExportedPayments handle the get request for commitments that match a given
+// search pattern returning a payments with full linked names.
+func GetExportedPayments(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Export de paiements, décodage Year : " + err.Error()})
+		return
+	}
+	search := ctx.URLParam("Search")
+	req := models.ExportQuery{Year: year, Search: search}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.ExportPayments
+	if err := resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Export de paiements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}

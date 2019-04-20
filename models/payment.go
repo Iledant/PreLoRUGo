@@ -68,6 +68,33 @@ type PaginatedPayments struct {
 	ItemsCount int64              `json:"ItemsCount"`
 }
 
+// ExportPayment is used for the excel export query to fetch payment with all
+// fields according to a certain search pattern
+type ExportPayment struct {
+	ID                         int64       `json:"ID"`
+	Year                       int64       `json:"Year"`
+	CreationDate               time.Time   `json:"CreationDate"`
+	ModificationDate           time.Time   `json:"ModificationDate"`
+	Number                     int64       `json:"Number"`
+	Value                      float64     `json:"Value"`
+	CommitmentYear             int64       `json:"CommitmentYear"`
+	CommitmentCode             string      `json:"CommitmentCode"`
+	CommitmentNumber           int64       `json:"CommitmentNumber"`
+	CommitmentLine             int64       `json:"CommitmentLine"`
+	CommitmentCreationDate     NullTime    `json:"CommitmentCreationDate"`
+	CommitmentModificationDate NullTime    `json:"CommitmentModificationDate"`
+	CommitmentValue            NullFloat64 `json:"CommitmentValue"`
+	CommitmentName             NullString  `json:"CommitmentName"`
+	BeneficiaryName            NullString  `json:"BeneficiaryName"`
+	Sector                     NullString  `json:"Sector"`
+	ActionName                 NullString  `json:"ActionName"`
+}
+
+// ExportPayments embeddes an array of ExportPayment for json export
+type ExportPayments struct {
+	ExportPayments []ExportPayment `json:"ExportPayment"`
+}
+
 // GetAll fetches all Payments from database
 func (p *Payments) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,commitment_id,commitment_year,commitment_code,
@@ -195,5 +222,40 @@ func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
 	}
 	p.Page = newPage
 	p.ItemsCount = count
+	return err
+}
+
+// Get fetches all exported payments from database that match the export query
+func (p *ExportPayments) Get(db *sql.DB, q *ExportQuery) error {
+	rows, err := db.Query(`SELECT p.id,p.year,p.creation_date,p.modification_date,
+	p.number, p.value * 0.01, p.commitment_year, p.commitment_code, p.commitment_number,
+	p.commitment_line, c.creation_date, c.modification_date, 
+	CASE WHEN c.value <> NULL THEN c.value * 0.01 ELSE NULL END,c.name, b.name, s.name, a.name
+	FROM payment p
+	LEFT JOIN commitment c ON p.commitment_id = c.id
+	JOIN beneficiary b ON c.beneficiary_id = b.id
+	JOIN budget_action a ON a.id = c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id 
+	WHERE p.year >= $1 AND (c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
+	ORDER BY 2,4,5 `, q.Year, "%"+q.Search+"%")
+	if err != nil {
+		return err
+	}
+	var row ExportPayment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.Year, &row.CreationDate, &row.ModificationDate,
+			&row.Number, &row.Value, &row.CommitmentYear, &row.CommitmentCode,
+			&row.CommitmentNumber, &row.CommitmentLine, &row.CommitmentCreationDate,
+			&row.CommitmentModificationDate, &row.CommitmentValue, &row.CommitmentName,
+			&row.BeneficiaryName, &row.Sector, &row.ActionName); err != nil {
+			return err
+		}
+		p.ExportPayments = append(p.ExportPayments, row)
+	}
+	err = rows.Err()
+	if len(p.ExportPayments) == 0 {
+		p.ExportPayments = []ExportPayment{}
+	}
 	return err
 }

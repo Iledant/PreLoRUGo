@@ -60,7 +60,7 @@ func ExportCommitments(ctx iris.Context) {
 		return
 	}
 	search := ctx.URLParam("Search")
-	req := models.ExportCommitmentQuery{Year: year, Search: search}
+	req := models.ExportQuery{Year: year, Search: search}
 	db := ctx.Values().Get("db").(*sql.DB)
 	var resp models.ExportedCommitments
 	if err := resp.Get(db, &req); err != nil {
