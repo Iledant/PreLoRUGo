@@ -106,7 +106,7 @@ func testGetPaginatedPayments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Page=2&Year=2010&Search=fontenay`),
 			//cSpell: disable
-			RespContains: []string{`"Payments":[`, `"CreationDate":"2018-02-19T00:00:00Z","Value":3147322,"Number":104983,"CommitmentDate":"2017-03-13T00:00:00Z","CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","CommitmentValue":-22802200,"Beneficiary":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
+			RespContains: []string{`"Payments":[`, `"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","Value":3147322,"Number":104983,"CommitmentDate":"2017-03-13T00:00:00Z","CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","CommitmentValue":-22802200,"Beneficiary":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
 			//cSpell: enable
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
@@ -149,13 +149,13 @@ func testExportedPayments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Year=2010&Search=fontenay`),
 			//cSpell: disable
-			RespContains: []string{`"ExportPayment":[`, `"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","ModificationDate":"2018-02-19T00:00:00Z","Number":104983,"Value":31473.22,"CommitmentYear":2017,"CommitmentCode":"IRIS ","CommitmentNumber":525554,"CommitmentLine":1,"CommitmentCreationDate":"2017-03-13T00:00:00Z","CommitmentModificationDate":"2017-03-13T00:00:00Z","CommitmentValue":null,"CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","BeneficiaryName":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
+			RespContains: []string{`"ExportedPayment":[`, `"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","ModificationDate":"2018-02-19T00:00:00Z","Number":104983,"Value":31473.22,"CommitmentYear":2017,"CommitmentCode":"IRIS ","CommitmentNumber":525554,"CommitmentCreationDate":"2017-03-13T00:00:00Z","CommitmentValue":-228022,"CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","BeneficiaryName":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
 			//cSpell: enable
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
 	for i, tc := range tcc {
-		response := c.E.GET("/api/payments/exported").WithQueryString(string(tc.Sent)).
+		response := c.E.GET("/api/payments/export").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 		body := string(response.Content)
 		for _, r := range tc.RespContains {

@@ -217,3 +217,21 @@ INSERT INTO users (name,email,password,rights) VALUES
 -- cSpell: disable
 ('Utilisateur','user@if.fr','$2a$10$tMrZWq5yIgPI8tBwFge/B.aZ.4FyahEhd21Qdgwfc9TYCZhQbILAC',1);
 -- cSpell: enable
+
+-- Creation de la VIEW pour avoir des engagements cumulés
+CREATE VIEW cumulated_commitment AS
+  SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value,
+    c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
+    c.renew_project_id
+  FROM commitment c
+  JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
+    min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
+  ON c.id = q.id;
+
+-- Mise à jour de la table payment pour que payment pointe vers les id de
+-- la view cumulated_payment
+UPDATE payment SET commitment_id = cumulated_commitment.id
+  FROM cumulated_commitment
+  WHERE payment.commitment_year = cumulated_commitment.year 
+    AND payment.commitment_code = cumulated_commitment.code
+    AND payment.commitment_number = cumulated_commitment.number;

@@ -49,6 +49,7 @@ type PaymentBatch struct {
 // match a search pattern using PaginatedQuery
 type PaginatedPayment struct {
 	ID              int64      `json:"ID"`
+	Year            int64      `json:"Year"`
 	CreationDate    time.Time  `json:"CreationDate"`
 	Value           int64      `json:"Value"`
 	Number          int64      `json:"Number"`
@@ -68,31 +69,29 @@ type PaginatedPayments struct {
 	ItemsCount int64              `json:"ItemsCount"`
 }
 
-// ExportPayment is used for the excel export query to fetch payment with all
+// ExportedPayment is used for the excel export query to fetch payment with all
 // fields according to a certain search pattern
-type ExportPayment struct {
-	ID                         int64       `json:"ID"`
-	Year                       int64       `json:"Year"`
-	CreationDate               time.Time   `json:"CreationDate"`
-	ModificationDate           time.Time   `json:"ModificationDate"`
-	Number                     int64       `json:"Number"`
-	Value                      float64     `json:"Value"`
-	CommitmentYear             int64       `json:"CommitmentYear"`
-	CommitmentCode             string      `json:"CommitmentCode"`
-	CommitmentNumber           int64       `json:"CommitmentNumber"`
-	CommitmentLine             int64       `json:"CommitmentLine"`
-	CommitmentCreationDate     NullTime    `json:"CommitmentCreationDate"`
-	CommitmentModificationDate NullTime    `json:"CommitmentModificationDate"`
-	CommitmentValue            NullFloat64 `json:"CommitmentValue"`
-	CommitmentName             NullString  `json:"CommitmentName"`
-	BeneficiaryName            NullString  `json:"BeneficiaryName"`
-	Sector                     NullString  `json:"Sector"`
-	ActionName                 NullString  `json:"ActionName"`
+type ExportedPayment struct {
+	ID                     int64       `json:"ID"`
+	Year                   int64       `json:"Year"`
+	CreationDate           time.Time   `json:"CreationDate"`
+	ModificationDate       time.Time   `json:"ModificationDate"`
+	Number                 int64       `json:"Number"`
+	Value                  float64     `json:"Value"`
+	CommitmentYear         int64       `json:"CommitmentYear"`
+	CommitmentCode         string      `json:"CommitmentCode"`
+	CommitmentNumber       int64       `json:"CommitmentNumber"`
+	CommitmentCreationDate NullTime    `json:"CommitmentCreationDate"`
+	CommitmentValue        NullFloat64 `json:"CommitmentValue"`
+	CommitmentName         NullString  `json:"CommitmentName"`
+	BeneficiaryName        NullString  `json:"BeneficiaryName"`
+	Sector                 NullString  `json:"Sector"`
+	ActionName             NullString  `json:"ActionName"`
 }
 
-// ExportPayments embeddes an array of ExportPayment for json export
-type ExportPayments struct {
-	ExportPayments []ExportPayment `json:"ExportPayment"`
+// ExportedPayments embeddes an array of ExportedPayment for json export
+type ExportedPayments struct {
+	ExportedPayments []ExportedPayment `json:"ExportedPayment"`
 }
 
 // GetAll fetches all Payments from database
@@ -164,8 +163,8 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 	SELECT c.id,t.commitment_year,t.commitment_code,t.commitment_number,
 		t.commitment_line,t.year,t.creation_date,t.modification_date,t.number,t.value 
 		FROM temp_payment t
-		LEFT JOIN commitment c ON t.commitment_year=c.year AND t.commitment_code=c.code
-			AND t.commitment_number=c.number AND t.commitment_line=c.line
+		LEFT JOIN cumulated_commitment c ON t.commitment_year=c.year AND t.commitment_code=c.code
+			AND t.commitment_number=c.number
 		WHERE (t.commitment_year,t.commitment_code,t.commitment_number,t.commitment_line,
 			t.year,t.creation_date,t.modification_date) 
 		NOT IN (SELECT DISTINCT commitment_year,commitment_code,commitment_number,
@@ -183,7 +182,7 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
 	var count int64
 	if err := db.QueryRow(`SELECT count(1) FROM payment p 
-		LEFT JOIN commitment c on p.commitment_id=c.id
+		LEFT JOIN cumulated_commitment c on p.commitment_id=c.id
 		JOIN budget_action a ON a.id = c.action_id
 		JOIN budget_sector s ON s.id=a.sector_id 
 		JOIN beneficiary b ON c.beneficiary_id = b.id
@@ -194,14 +193,14 @@ func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
 	}
 	offset, newPage := GetPaginateParams(q.Page, count)
 
-	rows, err := db.Query(`SELECT p.id,p.creation_date,p.value, p.number,
+	rows, err := db.Query(`SELECT p.id,p.year,p.creation_date,p.value, p.number,
 	c.creation_date, c.name, c.value, b.name, s.name, a.name FROM payment p
-	LEFT JOIN commitment c ON p.commitment_id = c.id
+	LEFT JOIN cumulated_commitment c ON p.commitment_id = c.id
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
 	WHERE p.year >= $1 AND (c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
-	ORDER BY 2,4,5 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+	ORDER BY 2,5,3 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		q.Year, "%"+q.Search+"%", offset)
 	if err != nil {
 		return err
@@ -209,8 +208,8 @@ func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
 	var row PaginatedPayment
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.CreationDate, &row.Value, &row.Number,
-			&row.CommitmentDate, &row.CommitmentName, &row.CommitmentValue,
+		if err = rows.Scan(&row.ID, &row.Year, &row.CreationDate, &row.Value,
+			&row.Number, &row.CommitmentDate, &row.CommitmentName, &row.CommitmentValue,
 			&row.Beneficiary, &row.Sector, &row.ActionName); err != nil {
 			return err
 		}
@@ -226,36 +225,34 @@ func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
 }
 
 // Get fetches all exported payments from database that match the export query
-func (p *ExportPayments) Get(db *sql.DB, q *ExportQuery) error {
+func (p *ExportedPayments) Get(db *sql.DB, q *ExportQuery) error {
 	rows, err := db.Query(`SELECT p.id,p.year,p.creation_date,p.modification_date,
 	p.number, p.value * 0.01, p.commitment_year, p.commitment_code, p.commitment_number,
-	p.commitment_line, c.creation_date, c.modification_date, 
-	CASE WHEN c.value <> NULL THEN c.value * 0.01 ELSE NULL END,c.name, b.name, s.name, a.name
+	c.creation_date, c.value * 0.01,c.name, b.name, s.name, a.name
 	FROM payment p
-	LEFT JOIN commitment c ON p.commitment_id = c.id
+	LEFT JOIN cumulated_commitment c ON p.commitment_id = c.id
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
 	WHERE p.year >= $1 AND (c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
-	ORDER BY 2,4,5 `, q.Year, "%"+q.Search+"%")
+	ORDER BY 2,5,3 `, q.Year, "%"+q.Search+"%")
 	if err != nil {
 		return err
 	}
-	var row ExportPayment
+	var row ExportedPayment
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.CreationDate, &row.ModificationDate,
 			&row.Number, &row.Value, &row.CommitmentYear, &row.CommitmentCode,
-			&row.CommitmentNumber, &row.CommitmentLine, &row.CommitmentCreationDate,
-			&row.CommitmentModificationDate, &row.CommitmentValue, &row.CommitmentName,
-			&row.BeneficiaryName, &row.Sector, &row.ActionName); err != nil {
+			&row.CommitmentNumber, &row.CommitmentCreationDate, &row.CommitmentValue,
+			&row.CommitmentName, &row.BeneficiaryName, &row.Sector, &row.ActionName); err != nil {
 			return err
 		}
-		p.ExportPayments = append(p.ExportPayments, row)
+		p.ExportedPayments = append(p.ExportedPayments, row)
 	}
 	err = rows.Err()
-	if len(p.ExportPayments) == 0 {
-		p.ExportPayments = []ExportPayment{}
+	if len(p.ExportedPayments) == 0 {
+		p.ExportedPayments = []ExportedPayment{}
 	}
 	return err
 }

@@ -83,7 +83,7 @@ func GetExportedPayments(ctx iris.Context) {
 	search := ctx.URLParam("Search")
 	req := models.ExportQuery{Year: year, Search: search}
 	db := ctx.Values().Get("db").(*sql.DB)
-	var resp models.ExportPayments
+	var resp models.ExportedPayments
 	if err := resp.Get(db, &req); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Export de paiements, requête : " + err.Error()})

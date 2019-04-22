@@ -83,15 +83,20 @@ func initializeTests(t *testing.T) *TestContext {
 }
 
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
-	if _, err := db.Exec(`DROP TABLE IF EXISTS copro, users, imported_commitment, 
+	dropQueries := []string{`DROP VIEW IF EXISTS cumulated_commitment`,
+		`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
 	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
 	community , temp_community, city , temp_city, renew_project_forecast , 
-	temp_renew_project_forecast, copro_forecast, temp_copro_forecast `); err != nil {
-		t.Error("Suppression des tables : " + err.Error())
-		t.FailNow()
-		return
+	temp_renew_project_forecast, copro_forecast, temp_copro_forecast`,
+	}
+	for i, q := range dropQueries {
+		if _, err := db.Exec(q); err != nil {
+			t.Errorf("Suppression table/views[%d] : %s", i, err.Error())
+			t.FailNow()
+			return
+		}
 	}
 	queries := []string{`CREATE TABLE users (
 		id SERIAL PRIMARY KEY,
@@ -294,6 +299,14 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    comment text,
 	    copro_id int NOT NULL
 		);`, // 22 : temp_copro_forecast
+		`CREATE VIEW cumulated_commitment AS
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value,
+			c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
+			c.renew_project_id
+		FROM commitment c
+		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
+			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
+		ON c.id = q.id;`, // 23 : cumulated_commitment view
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
