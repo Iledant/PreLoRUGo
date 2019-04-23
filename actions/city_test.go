@@ -268,7 +268,7 @@ func testGetPaginatedCities(t *testing.T, c *TestContext) {
 			Sent: []byte(`Page=2&Search=acheres`),
 			RespContains: []string{`"City"`, `"Page"`, `"ItemsCount"`,
 				// cSpell: disable
-				`"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityID":null`,
+				`"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityID":null,"CommunityName":null`,
 				//cSpell: enable
 			},
 			Count:      1,
