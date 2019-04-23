@@ -134,3 +134,27 @@ func BatchCities(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
+
+// GetPaginatedCities handles the get request to fetch all beneficiaries that
+// match the given pattern and return a paginated struct with beneficiaries, page number
+// and total page count
+func GetPaginatedCities(ctx iris.Context) {
+	var req models.PaginatedQuery
+	var err error
+	req.Page, err = ctx.URLParamInt64("Page")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de villes, décodage Page : " + err.Error()})
+		return
+	}
+	req.Search = ctx.URLParam("Search")
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.PaginatedCities
+	if err = resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de villes, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}

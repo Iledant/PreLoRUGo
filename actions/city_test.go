@@ -22,6 +22,7 @@ func testCity(t *testing.T, c *TestContext) {
 		testGetCities(t, c)
 		testDeleteCity(t, c, ID)
 		testBatchCities(t, c)
+		testGetPaginatedCities(t, c)
 	})
 }
 
@@ -250,6 +251,46 @@ func testBatchCities(t *testing.T, c *TestContext) {
 			count := strings.Count(body, `"InseeCode"`)
 			if count != tc.Count {
 				t.Errorf("BatchCity[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
+			}
+		}
+	}
+}
+
+// testGetPaginatedCities checks if route is user protected and Cities correctly sent back
+func testGetPaginatedCities(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: "",
+			Sent:         []byte(`Page=2&Search=acheres`),
+			RespContains: []string{`Token absent`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			Sent: []byte(`Page=2&Search=acheres`),
+			RespContains: []string{`"City"`, `"Page"`, `"ItemsCount"`,
+				// cSpell: disable
+				`"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityID":null`,
+				//cSpell: enable
+			},
+			Count:      1,
+			StatusCode: http.StatusOK}, // 1 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.GET("/api/cities/paginated").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("GetPaginatedCities[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("GetPaginatedCities[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		}
+		if status == http.StatusOK {
+			count := strings.Count(body, `"InseeCode"`)
+			if count != tc.Count {
+				t.Errorf("GetPaginatedCities[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}

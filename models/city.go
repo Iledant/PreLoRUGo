@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"strconv"
 )
 
 // City model
@@ -27,6 +28,13 @@ type CityLine struct {
 // CityBatch embeddes an array of CityLine for json export
 type CityBatch struct {
 	Lines []CityLine `json:"City"`
+}
+
+// PaginatedCities embeddes an array of City for paginated display
+type PaginatedCities struct {
+	Cities     []City `json:"City"`
+	Page       int64  `json:"Page"`
+	ItemsCount int64  `json:"ItemsCount"`
 }
 
 // Validate checks if City's fields are correctly filled
@@ -157,4 +165,38 @@ func (c *CityBatch) Save(db *sql.DB) (err error) {
 	}
 	tx.Commit()
 	return nil
+}
+
+// Get fetches all cities that matches the search pattern
+func (p *PaginatedCities) Get(db *sql.DB, q *PaginatedQuery) error {
+	var count int64
+	if err := db.QueryRow(`SELECT count(1) FROM city 
+		WHERE name ILIKE $1 OR insee_code::varchar ILIKE $1`, "%"+q.Search+"%").
+		Scan(&count); err != nil {
+		return errors.New("count query failed " + err.Error())
+	}
+	offset, newPage := GetPaginateParams(q.Page, count)
+
+	rows, err := db.Query(`SELECT insee_code,name FROM city b
+	WHERE name ILIKE $1 OR insee_code::varchar ILIKE $1
+	ORDER BY 1,2 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
+		"%"+q.Search+"%", offset)
+	if err != nil {
+		return err
+	}
+	var row City
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.InseeCode, &row.Name); err != nil {
+			return err
+		}
+		p.Cities = append(p.Cities, row)
+	}
+	err = rows.Err()
+	if len(p.Cities) == 0 {
+		p.Cities = []City{}
+	}
+	p.Page = newPage
+	p.ItemsCount = count
+	return err
 }

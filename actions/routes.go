@@ -110,6 +110,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	userParty.Get("/city/{ID}", GetCity)
 	userParty.Get("/cities", GetCities)
+	userParty.Get("/cities/paginated", GetPaginatedCities)
 
 	userParty.Get("/renew_project_forecast/{ID}", GetRenewProjectForecast)
 	userParty.Get("/renew_project_forecasts", GetRenewProjectForecasts)
