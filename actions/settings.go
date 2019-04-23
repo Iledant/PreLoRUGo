@@ -12,13 +12,16 @@ type settingsResp struct {
 	models.BudgetSectors
 	models.BudgetActions
 	models.Commissions
-	models.Cities
 	models.Communities
+	models.PaginatedCities      `json:"PaginatedCity"`
+	models.PaginatedPayments    `json:"PaginatedPayment"`
+	models.PaginatedCommitments `json:"PaginatedCommitment"`
 }
 
 // GetSettings handles the get requests to give all datats in one batch
 func GetSettings(ctx iris.Context) {
 	var resp settingsResp
+	var qry models.PaginatedQuery
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.BudgetSectors.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
@@ -35,7 +38,17 @@ func GetSettings(ctx iris.Context) {
 		ctx.JSON(jsonError{"Administration, commissions : " + err.Error()})
 		return
 	}
-	if err := resp.Cities.GetAll(db); err != nil {
+	if err := resp.PaginatedCities.Get(db, &qry); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration, villes : " + err.Error()})
+		return
+	}
+	if err := resp.PaginatedPayments.Get(db, &qry); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration, villes : " + err.Error()})
+		return
+	}
+	if err := resp.PaginatedCommitments.Get(db, &qry); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Administration, villes : " + err.Error()})
 		return

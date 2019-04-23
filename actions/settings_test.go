@@ -21,9 +21,10 @@ func testGetSettings(t *testing.T, c *TestContext) {
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"BudgetSector":[`, `"BudgetAction":[`, `"Commission":[`, `"City":[`, `"Community":[`},
-			Count:        9,
-			StatusCode:   http.StatusOK}, // 1 : bad request
+			RespContains: []string{`"BudgetSector":[`, `"BudgetAction":[`, `"Commission":[`,
+				`"PaginatedCity":{`, `"Community":[`, `"PaginatedPayment":{`, `"PaginatedCommitment":{`},
+			Count:      14,
+			StatusCode: http.StatusOK}, // 1 : bad request
 	}
 	for i, tc := range tcc {
 		response := c.E.GET("/api/settings").
