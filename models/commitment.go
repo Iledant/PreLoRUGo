@@ -124,6 +124,19 @@ type ExportedCommitments struct {
 	ExportedCommitments []ExportedCommitment `json:"ExportedCommitment"`
 }
 
+// MonthCumulatedValue is used for window query to fetch the value of a given
+// month
+type MonthCumulatedValue struct {
+	Month int     `json:"Month"`
+	Value float64 `json:"Value"`
+}
+
+// TwoYearsCommitments is used to fetch commitments of current and previous year
+type TwoYearsCommitments struct {
+	CurrentYear  []MonthCumulatedValue `json:"CurrentYear"`
+	PreviousYear []MonthCumulatedValue `json:"PreviousYear"`
+}
+
 // Get fetches the results of a paginated commitment query
 func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	var count int64
@@ -298,4 +311,47 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 	}
 	tx.Commit()
 	return nil
+}
+
+// Get fetches all commitments per year for the current and the previous years
+func (t *TwoYearsCommitments) Get(db *sql.DB) error {
+	var row MonthCumulatedValue
+	rows, err := db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
+	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
+	FROM commitment WHERE year=extract(year FROM CURRENT_DATE) GROUP BY 1) q`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.Month, &row.Value); err != nil {
+			return err
+		}
+		t.CurrentYear = append(t.CurrentYear, row)
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	if len(t.CurrentYear) == 0 {
+		t.CurrentYear = []MonthCumulatedValue{}
+	}
+	rows, err = db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
+	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
+	FROM commitment WHERE year=extract(year FROM CURRENT_DATE)-1 GROUP BY 1) q`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.Month, &row.Value); err != nil {
+			return err
+		}
+		t.PreviousYear = append(t.PreviousYear, row)
+	}
+	err = rows.Err()
+	if len(t.PreviousYear) == 0 {
+		t.PreviousYear = []MonthCumulatedValue{}
+	}
+	return err
 }

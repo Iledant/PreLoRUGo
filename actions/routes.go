@@ -117,6 +117,8 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	userParty.Get("/copro_forecast/{ID}", GetCoproForecast)
 	userParty.Get("/copro_forecasts", GetCoproForecasts)
+
+	userParty.Get("/home", GetHome)
 }
 
 // setDBMiddleware return a middleware to add db to context values

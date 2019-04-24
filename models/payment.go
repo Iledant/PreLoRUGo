@@ -94,6 +94,12 @@ type ExportedPayments struct {
 	ExportedPayments []ExportedPayment `json:"ExportedPayment"`
 }
 
+// TwoYearsPayments is used to fetch payments of current and previous year
+type TwoYearsPayments struct {
+	CurrentYear  []MonthCumulatedValue `json:"CurrentYear"`
+	PreviousYear []MonthCumulatedValue `json:"PreviousYear"`
+}
+
 // GetAll fetches all Payments from database
 func (p *Payments) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,commitment_id,commitment_year,commitment_code,
@@ -253,6 +259,49 @@ func (p *ExportedPayments) Get(db *sql.DB, q *ExportQuery) error {
 	err = rows.Err()
 	if len(p.ExportedPayments) == 0 {
 		p.ExportedPayments = []ExportedPayment{}
+	}
+	return err
+}
+
+// Get fetches all payments per year for the current and the previous years
+func (t *TwoYearsPayments) Get(db *sql.DB) error {
+	var row MonthCumulatedValue
+	rows, err := db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
+	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
+	FROM payment WHERE year=extract(year FROM CURRENT_DATE) GROUP BY 1) q`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.Month, &row.Value); err != nil {
+			return err
+		}
+		t.CurrentYear = append(t.CurrentYear, row)
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	if len(t.CurrentYear) == 0 {
+		t.CurrentYear = []MonthCumulatedValue{}
+	}
+	rows, err = db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
+	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
+	FROM payment WHERE year=extract(year FROM CURRENT_DATE)-1 GROUP BY 1) q`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.Month, &row.Value); err != nil {
+			return err
+		}
+		t.PreviousYear = append(t.PreviousYear, row)
+	}
+	err = rows.Err()
+	if len(t.PreviousYear) == 0 {
+		t.PreviousYear = []MonthCumulatedValue{}
 	}
 	return err
 }
