@@ -157,7 +157,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    plai int NOT NULL,
 	    plus int NOT NULL,
 	    pls int NOT NULL,
-	    anru boolean NOT NULL
+			anru boolean NOT NULL,
+			qpv boolean NOT NULL
 		);`, // 7 : housing
 		`CREATE TABLE temp_housing (
 	    reference varchar(100) NOT NULL,
@@ -166,7 +167,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    plai int NOT NULL,
 	    plus int NOT NULL,
 	    pls int NOT NULL,
-	    anru boolean NOT NULL
+	    anru boolean NOT NULL,
+	    qpv boolean NOT NULL
 		);`, // 8 : temp_housing
 		`CREATE TABLE beneficiary (
 	    id SERIAL PRIMARY KEY,
