@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 // RenewProjectForecast model
@@ -120,6 +121,11 @@ func (r *RenewProjectForecast) Delete(db *sql.DB) (err error) {
 
 // Save insert a batch of RenewProjectForecastLine into database
 func (r *RenewProjectForecastBatch) Save(db *sql.DB) (err error) {
+	for i, r := range r.Lines {
+		if r.CommissionID == 0 || r.Value == 0 || r.RenewProjectID == 0 {
+			return fmt.Errorf("ligne %d, champs incorrects", i+1)
+		}
+	}
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -131,29 +137,25 @@ func (r *RenewProjectForecastBatch) Save(db *sql.DB) (err error) {
 	}
 	defer stmt.Close()
 	for _, r := range r.Lines {
-		if r.CommissionID == 0 || r.Value == 0 || r.RenewProjectID == 0 {
-			tx.Rollback()
-			return errors.New("Champs incorrects")
-		}
 		if _, err = stmt.Exec(r.ID, r.CommissionID, r.Value, r.Comment, r.RenewProjectID); err != nil {
 			tx.Rollback()
 			return err
 		}
 	}
-	_, err = tx.Exec(`UPDATE renew_project_forecast SET commission_id=t.commission_id,
+	queries := []string{`UPDATE renew_project_forecast SET commission_id=t.commission_id,
 	value=t.value,comment=t.comment,renew_project_id=t.renew_project_id 
-	FROM temp_renew_project_forecast t WHERE t.id = renew_project_forecast.id`)
-	if err != nil {
-		tx.Rollback()
-		return errors.New("UPDATE " + err.Error())
-	}
-	_, err = tx.Exec(`INSERT INTO renew_project_forecast (commission_id,value,comment,renew_project_id)
+	FROM temp_renew_project_forecast t WHERE t.id = renew_project_forecast.id`,
+		`INSERT INTO renew_project_forecast (commission_id,value,comment,renew_project_id)
 	SELECT commission_id,value,comment,renew_project_id from temp_renew_project_forecast 
-	  WHERE id NOT IN (SELECT id from renew_project_forecast)`)
-
-	if err != nil {
-		tx.Rollback()
-		return errors.New("INSERT : " + err.Error())
+		WHERE id NOT IN (SELECT id from renew_project_forecast)`,
+		`DELETE FROM temp_renew_project_forecast`,
+	}
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
 	}
 	tx.Commit()
 	return nil
