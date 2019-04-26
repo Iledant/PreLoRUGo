@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -140,6 +141,11 @@ func (c *CityBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
+	for i, r := range c.Lines {
+		if r.InseeCode == 0 || r.Name == "" {
+			return fmt.Errorf("Ligne %d, champ incorrect", i+1)
+		}
+	}
 	stmt, err := tx.Prepare(`INSERT INTO temp_city (insee_code,name,community_code) 
 	VALUES ($1,$2,$3)`)
 	if err != nil {
@@ -147,29 +153,27 @@ func (c *CityBatch) Save(db *sql.DB) (err error) {
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
-		if r.InseeCode == 0 || r.Name == "" {
-			tx.Rollback()
-			return errors.New("Champs incorrects")
-		}
 		if _, err = stmt.Exec(r.InseeCode, r.Name, r.CommunityCode); err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
 	}
-	_, err = tx.Exec(`UPDATE city SET name=q.name,community_id=q.id 
-	FROM (SELECT t.*, c.id FROM temp_city t LEFT JOIN community c ON t.community_code = c.code) q 
-	WHERE q.insee_code = city.insee_code`)
-	if err != nil {
-		tx.Rollback()
-		return errors.New("UPDATE " + err.Error())
-	}
-	_, err = tx.Exec(`INSERT INTO city (insee_code,name,community_id)
+	queries := []string{`UPDATE city SET name=q.name,community_id=q.id 
+	FROM (SELECT t.*, c.id FROM temp_city t 
+					LEFT JOIN community c ON t.community_code = c.code) q 
+	WHERE q.insee_code = city.insee_code`,
+		`INSERT INTO city (insee_code,name,community_id)
 	SELECT t.insee_code,t.name,c.id from temp_city t 
 		LEFT JOIN community c ON t.community_code = c.code
-	WHERE insee_code NOT IN (SELECT DISTINCT insee_code from city)`)
-	if err != nil {
-		tx.Rollback()
-		return errors.New("INSERT " + err.Error())
+	WHERE insee_code NOT IN (SELECT DISTINCT insee_code from city)`,
+		`DELETE FROM temp_city`,
+	}
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
 	}
 	tx.Commit()
 	return nil

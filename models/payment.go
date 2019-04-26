@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -153,32 +154,35 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 			return err
 		}
 	}
-	_, err = tx.Exec(`UPDATE payment SET value=t.value, modification_date=t.modification_date
+	queries := []string{`UPDATE payment SET value=t.value, 
+		modification_date=t.modification_date
 	FROM temp_payment t WHERE t.commitment_year=payment.commitment_year AND 
 		t.commitment_code=payment.commitment_code AND
 		t.commitment_number=payment.commitment_number AND
 		t.commitment_line=payment.commitment_line AND t.year=payment.year AND 
 		t.creation_date=payment.creation_date AND
-		t.number=payment.number`)
-	if err != nil {
-		tx.Rollback()
-		return err
+		t.number=payment.number`,
+		`INSERT INTO payment (commitment_id,commitment_year,commitment_code,
+			commitment_number,commitment_line,year,creation_date,modification_date,
+			number, value)
+		SELECT c.id,t.commitment_year,t.commitment_code,t.commitment_number,
+			t.commitment_line,t.year,t.creation_date,t.modification_date,t.number,t.value 
+			FROM temp_payment t
+			LEFT JOIN cumulated_commitment c 
+				ON t.commitment_year=c.year AND t.commitment_code=c.code
+				AND t.commitment_number=c.number
+			WHERE (t.commitment_year,t.commitment_code,t.commitment_number,
+				t.commitment_line,t.year,t.creation_date,t.modification_date) 
+			NOT IN (SELECT DISTINCT commitment_year,commitment_code,commitment_number,
+				commitment_line,year,creation_date,modification_date from payment)`,
+		`DELETE FROM temp_payment`,
 	}
-	_, err = tx.Exec(`INSERT INTO payment (commitment_id,commitment_year,commitment_code,
-		commitment_number,commitment_line,year,creation_date,modification_date,number, value)
-	SELECT c.id,t.commitment_year,t.commitment_code,t.commitment_number,
-		t.commitment_line,t.year,t.creation_date,t.modification_date,t.number,t.value 
-		FROM temp_payment t
-		LEFT JOIN cumulated_commitment c ON t.commitment_year=c.year AND t.commitment_code=c.code
-			AND t.commitment_number=c.number
-		WHERE (t.commitment_year,t.commitment_code,t.commitment_number,t.commitment_line,
-			t.year,t.creation_date,t.modification_date) 
-		NOT IN (SELECT DISTINCT commitment_year,commitment_code,commitment_number,
-			commitment_line,year,creation_date,modification_date from payment)`)
-
-	if err != nil {
-		tx.Rollback()
-		return err
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
 	}
 	tx.Commit()
 	return nil

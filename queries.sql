@@ -242,3 +242,22 @@ UPDATE payment SET commitment_id = cumulated_commitment.id
 ALTER TABLE housing ADD COLUMN qpv boolean NOT NULL DEFAULT false;
 
 ALTER TABLE temp_housing ADD COLUMN qpv boolean NOT NULL; 
+
+-- Recopie des données d'engagements et de paiement pour alimenter la base de données
+DELETE from payment;
+DELETE from commitment;
+
+COPY temp_commitment(year, code, number, line, creation_date, modification_date, 
+  name, value, beneficiary_code, beneficiary_name, iris_code, sector, action_code, 
+  action_name) FROM './assets/20190129 AP PreLoRu.csv' DELIMITER ';' CSV HEADER;
+
+UPDATE temp_commitment set code=RTRIM(code), name=RTRIM(name), 
+  beneficiary_name=RTRIM(beneficiary_name), sector=RTRIM(sector), 
+  action_name=RTRIM(action_name);
+
+UPDATE temp_payment set commitment_code = RTRIM(commitment_code);
+
+COPY temp_payment(commitment_year, commitment_code, commitment_number, 
+  commitment_line, year, number, creation_date, modification_date, value)
+  FROM './assets/20190123 Mandats PreLoRU.csv' DELIMITER ';' CSV HEADER;
+
