@@ -68,7 +68,8 @@ CREATE TABLE housing (
   plai int NOT NULL,
   plus int NOT NULL,
   pls int NOT NULL,
-  anru boolean NOT NULL);
+  anru boolean NOT NULL,
+  qpv boolean NOT NULL);
   
 CREATE TABLE temp_housing (
   reference varchar(100) NOT NULL,
@@ -77,7 +78,8 @@ CREATE TABLE temp_housing (
   plai int NOT NULL,
   plus int NOT NULL,
   pls int NOT NULL,
-  anru boolean NOT NULL);
+  anru boolean NOT NULL,
+  qpv boolean NOT NULL);
   
 CREATE TABLE beneficiary (
   id SERIAL PRIMARY KEY,
@@ -235,3 +237,8 @@ UPDATE payment SET commitment_id = cumulated_commitment.id
   WHERE payment.commitment_year = cumulated_commitment.year 
     AND payment.commitment_code = cumulated_commitment.code
     AND payment.commitment_number = cumulated_commitment.number;
+
+-- Ajout de la colonne QPV dans la table housing
+ALTER TABLE housing ADD COLUMN qpv boolean NOT NULL DEFAULT false;
+
+ALTER TABLE temp_housing ADD COLUMN qpv boolean NOT NULL; 
