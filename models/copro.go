@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 // Copro is the model for a labelled condominium
@@ -119,6 +120,11 @@ func (c *Copros) GetAll(db *sql.DB) (err error) {
 
 // Save insert a batch of CoproLine into database
 func (c *CoproBatch) Save(db *sql.DB) (err error) {
+	for i, r := range c.Lines {
+		if r.Reference == "" || r.Name == "" || r.Address == "" || r.ZipCode == 0 {
+			return fmt.Errorf("ligne %d : champs incorrects", i+1)
+		}
+	}
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -131,28 +137,26 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
-		if r.Reference == "" || r.Name == "" || r.Address == "" || r.ZipCode == 0 {
-			tx.Rollback()
-			return errors.New("Champs incorrects")
-		}
 		if _, err = stmt.Exec(r.Reference, r.Name, r.Address, r.ZipCode,
 			r.LabelDate, r.Budget); err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
 	}
-	_, err = tx.Exec(`UPDATE copro SET name=t.name, address=t.address, zip_code=t.zip_code,
-	label_date=t.label_date,budget=t.budget FROM temp_copro t WHERE t.reference = copro.reference`)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	_, err = tx.Exec(`INSERT INTO copro (reference, name,address,zip_code,label_date,budget)
+	queries := []string{`UPDATE copro SET name=t.name, address=t.address, zip_code=t.zip_code,
+	label_date=t.label_date,budget=t.budget FROM temp_copro t WHERE t.reference = copro.reference`,
+		`INSERT INTO copro (reference, name,address,zip_code,label_date,budget)
 	SELECT reference,name,address,zip_code,label_date,budget from temp_copro 
-	  WHERE reference NOT IN (SELECT reference from copro)`)
-	if err != nil {
-		tx.Rollback()
-		return err
+		WHERE reference NOT IN (SELECT reference from copro)`,
+		`DELETE from temp_copro`,
+	}
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
+
 	}
 	tx.Commit()
 	return nil
