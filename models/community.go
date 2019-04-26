@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 // Community model
@@ -123,6 +124,11 @@ func (c *Community) Delete(db *sql.DB) (err error) {
 
 // Save insert a batch of CommunityLine into database
 func (c *CommunityBatch) Save(db *sql.DB) (err error) {
+	for i, r := range c.Lines {
+		if r.Code == "" || r.Name == "" {
+			return fmt.Errorf("ligne %d, champ incorrect", i+1)
+		}
+	}
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -133,28 +139,24 @@ func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
-		if r.Code == "" || r.Name == "" {
-			tx.Rollback()
-			return errors.New("Champs incorrects")
-		}
 		if _, err = stmt.Exec(r.Code, r.Name); err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
 	}
-	_, err = tx.Exec(`UPDATE community SET name=t.name FROM temp_community t 
-	WHERE t.code = community.code`)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	_, err = tx.Exec(`INSERT INTO community (code,name)
+	queries := []string{`UPDATE community SET name=t.name FROM temp_community t 
+	WHERE t.code = community.code`,
+		`INSERT INTO community (code,name)
 	SELECT code,name from temp_community 
-	  WHERE code NOT IN (SELECT DISTINCT code from community)`)
-
-	if err != nil {
-		tx.Rollback()
-		return err
+		WHERE code NOT IN (SELECT DISTINCT code from community)`,
+		`DELETE FROM temp_community`,
+	}
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
 	}
 	tx.Commit()
 	return nil

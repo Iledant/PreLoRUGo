@@ -137,14 +137,14 @@ func (c *City) Delete(db *sql.DB) (err error) {
 
 // Save insert a batch of CityLine into database
 func (c *CityBatch) Save(db *sql.DB) (err error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
 	for i, r := range c.Lines {
 		if r.InseeCode == 0 || r.Name == "" {
 			return fmt.Errorf("Ligne %d, champ incorrect", i+1)
 		}
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
 	}
 	stmt, err := tx.Prepare(`INSERT INTO temp_city (insee_code,name,community_code) 
 	VALUES ($1,$2,$3)`)
