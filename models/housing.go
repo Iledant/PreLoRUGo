@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 // Housing model
@@ -116,6 +117,11 @@ func (h *Housing) Delete(db *sql.DB) (err error) {
 
 // Save insert a batch of HousingLine into database
 func (h *HousingBatch) Save(db *sql.DB) (err error) {
+	for i, r := range h.Lines {
+		if r.Reference == "" {
+			return fmt.Errorf("ligne %d, champ Reference incorrect", i)
+		}
+	}
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -127,35 +133,27 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 	}
 	defer stmt.Close()
 	for _, r := range h.Lines {
-		if r.Reference == "" {
-			tx.Rollback()
-			return errors.New("Champ Reference incorrect")
-		}
 		if _, err = stmt.Exec(r.Reference, r.Address, r.ZipCode, r.PLAI, r.PLUS,
 			r.PLS, r.ANRU, r.QPV); err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
 	}
-	_, err = tx.Exec(`UPDATE housing SET address=t.address,zip_code=t.zip_code,
+	queries := []string{`UPDATE housing SET address=t.address,zip_code=t.zip_code,
 	plai=t.plai,plus=t.plus,pls=t.pls,anru=t.anru, qpv=t.qpv FROM temp_housing t 
-	WHERE t.reference = housing.reference`)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	_, err = tx.Exec(`INSERT INTO housing
+	WHERE t.reference = housing.reference`,
+		`INSERT INTO housing
 	(reference,address,zip_code,plai,plus,pls,anru,qpv)
 	SELECT reference,address,zip_code,plai,plus,pls,anru,qpv from temp_housing 
-	  WHERE reference NOT IN (SELECT reference from housing)`)
-	if err != nil {
-		tx.Rollback()
-		return err
+		WHERE reference NOT IN (SELECT reference from housing)`,
+		`DELETE from temp_housing`,
 	}
-	_, err = tx.Exec("DELETE from temp_housing")
-	if err != nil {
-		tx.Rollback()
-		return err
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
 	}
 	tx.Commit()
 	return nil
