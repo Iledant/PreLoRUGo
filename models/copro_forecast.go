@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 // CoproForecast model
@@ -120,6 +121,11 @@ func (r *CoproForecast) Delete(db *sql.DB) (err error) {
 
 // Save insert a batch of CoproForecastLine into database
 func (r *CoproForecastBatch) Save(db *sql.DB) (err error) {
+	for i, r := range r.Lines {
+		if r.CommissionID == 0 || r.Value == 0 || r.CoproID == 0 {
+			return fmt.Errorf("ligne %d, champs incorrects", i+1)
+		}
+	}
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -131,29 +137,25 @@ func (r *CoproForecastBatch) Save(db *sql.DB) (err error) {
 	}
 	defer stmt.Close()
 	for _, r := range r.Lines {
-		if r.CommissionID == 0 || r.Value == 0 || r.CoproID == 0 {
-			tx.Rollback()
-			return errors.New("Champs incorrects")
-		}
 		if _, err = stmt.Exec(r.ID, r.CommissionID, r.Value, r.Comment, r.CoproID); err != nil {
 			tx.Rollback()
 			return err
 		}
 	}
-	_, err = tx.Exec(`UPDATE copro_forecast SET commission_id=t.commission_id,
+	queries := []string{`UPDATE copro_forecast SET commission_id=t.commission_id,
 	value=t.value,comment=t.comment,copro_id=t.copro_id 
-	FROM temp_copro_forecast t WHERE t.id = copro_forecast.id`)
-	if err != nil {
-		tx.Rollback()
-		return errors.New("UPDATE " + err.Error())
-	}
-	_, err = tx.Exec(`INSERT INTO copro_forecast (commission_id,value,comment,copro_id)
+	FROM temp_copro_forecast t WHERE t.id = copro_forecast.id`,
+		`INSERT INTO copro_forecast (commission_id,value,comment,copro_id)
 	SELECT commission_id,value,comment,copro_id from temp_copro_forecast 
-	  WHERE id NOT IN (SELECT id from copro_forecast)`)
-
-	if err != nil {
-		tx.Rollback()
-		return errors.New("INSERT : " + err.Error())
+		WHERE id NOT IN (SELECT id from copro_forecast)`,
+		`DELETE from temp_copro_forecast`,
+	}
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
 	}
 	tx.Commit()
 	return nil
