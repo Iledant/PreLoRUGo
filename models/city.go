@@ -12,6 +12,7 @@ type City struct {
 	InseeCode   int64     `json:"InseeCode"`
 	Name        string    `json:"Name"`
 	CommunityID NullInt64 `json:"CommunityID"`
+	QPV         bool      `json:"QPV"`
 }
 
 // Cities embeddes an array of City for json export
@@ -24,6 +25,7 @@ type CityLine struct {
 	InseeCode     int64      `json:"InseeCode"`
 	Name          string     `json:"Name"`
 	CommunityCode NullString `json:"CommunityCode"`
+	QPV           bool       `json:"QPV"`
 }
 
 // CityBatch embeddes an array of CityLine for json export
@@ -35,6 +37,7 @@ type CityBatch struct {
 type PaginatedCity struct {
 	InseeCode     int64      `json:"InseeCode"`
 	Name          string     `json:"Name"`
+	QPV           bool       `json:"QPV"`
 	CommunityID   NullInt64  `json:"CommunityID"`
 	CommunityName NullString `json:"CommunityName"`
 }
@@ -56,8 +59,8 @@ func (c *City) Validate() error {
 
 // Create insert a new City into database
 func (c *City) Create(db *sql.DB) (err error) {
-	res, err := db.Exec(`INSERT INTO city (insee_code,name,community_id)
- VALUES($1,$2,$3)`, &c.InseeCode, &c.Name, &c.CommunityID)
+	res, err := db.Exec(`INSERT INTO city (insee_code,name,community_id,qpv)
+ VALUES($1,$2,$3,$4)`, &c.InseeCode, &c.Name, &c.CommunityID, &c.QPV)
 	if err != nil {
 		return err
 	}
@@ -73,8 +76,8 @@ func (c *City) Create(db *sql.DB) (err error) {
 
 // Get fetches a City from database using ID field
 func (c *City) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT name, community_id FROM city WHERE insee_code=$1`,
-		c.InseeCode).Scan(&c.Name, &c.CommunityID)
+	err = db.QueryRow(`SELECT name, community_id,qpv FROM city WHERE insee_code=$1`,
+		c.InseeCode).Scan(&c.Name, &c.CommunityID, &c.QPV)
 	if err != nil {
 		return err
 	}
@@ -83,8 +86,9 @@ func (c *City) Get(db *sql.DB) (err error) {
 
 // Update modifies a city in database
 func (c *City) Update(db *sql.DB) (err error) {
-	res, err := db.Exec(`UPDATE city SET name=$1,community_id=$2 WHERE insee_code=$3`,
-		c.Name, c.CommunityID, c.InseeCode)
+	res, err := db.Exec(`UPDATE city SET name=$1,community_id=$2,qpv=$3 
+		WHERE insee_code=$4`,
+		c.Name, c.CommunityID, c.QPV, c.InseeCode)
 	if err != nil {
 		return err
 	}
@@ -100,14 +104,14 @@ func (c *City) Update(db *sql.DB) (err error) {
 
 // GetAll fetches all Cities from database
 func (c *Cities) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT insee_code,name,community_id FROM city`)
+	rows, err := db.Query(`SELECT insee_code,name,community_id,qpv FROM city`)
 	if err != nil {
 		return err
 	}
 	var row City
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.InseeCode, &row.Name, &row.CommunityID); err != nil {
+		if err = rows.Scan(&row.InseeCode, &row.Name, &row.CommunityID, &row.QPV); err != nil {
 			return err
 		}
 		c.Cities = append(c.Cities, row)
@@ -146,24 +150,24 @@ func (c *CityBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_city (insee_code,name,community_code) 
-	VALUES ($1,$2,$3)`)
+	stmt, err := tx.Prepare(`INSERT INTO temp_city 
+	(insee_code,name,community_code,qpv) VALUES ($1,$2,$3,$4)`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
-		if _, err = stmt.Exec(r.InseeCode, r.Name, r.CommunityCode); err != nil {
+		if _, err = stmt.Exec(r.InseeCode, r.Name, r.CommunityCode, r.QPV); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
 	}
-	queries := []string{`UPDATE city SET name=q.name,community_id=q.id 
+	queries := []string{`UPDATE city SET name=q.name,community_id=q.id,qpv=q.qpv 
 	FROM (SELECT t.*, c.id FROM temp_city t 
 					LEFT JOIN community c ON t.community_code = c.code) q 
 	WHERE q.insee_code = city.insee_code`,
-		`INSERT INTO city (insee_code,name,community_id)
-	SELECT t.insee_code,t.name,c.id from temp_city t 
+		`INSERT INTO city (insee_code,name,community_id,qpv)
+	SELECT t.insee_code,t.name,c.id,t.qpv from temp_city t 
 		LEFT JOIN community c ON t.community_code = c.code
 	WHERE insee_code NOT IN (SELECT DISTINCT insee_code from city)`,
 		`DELETE FROM temp_city`,
@@ -190,7 +194,7 @@ func (p *PaginatedCities) Get(db *sql.DB, q *PaginatedQuery) error {
 	}
 	offset, newPage := GetPaginateParams(q.Page, count)
 
-	rows, err := db.Query(`SELECT c.insee_code,c.name, o.id, o.name FROM city c
+	rows, err := db.Query(`SELECT c.insee_code,c.name, o.id, o.name,c.qpv FROM city c
 	LEFT JOIN community o on o.id = c.community_id
 	WHERE c.name ILIKE $1 OR c.insee_code::varchar ILIKE $1
 	ORDER BY 1,2 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
@@ -202,7 +206,7 @@ func (p *PaginatedCities) Get(db *sql.DB, q *PaginatedQuery) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.InseeCode, &row.Name, &row.CommunityID,
-			&row.CommunityName); err != nil {
+			&row.CommunityName, &row.QPV); err != nil {
 			return err
 		}
 		p.Cities = append(p.Cities, row)

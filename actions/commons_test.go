@@ -157,8 +157,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    plai int NOT NULL,
 	    plus int NOT NULL,
 	    pls int NOT NULL,
-			anru boolean NOT NULL,
-			qpv boolean NOT NULL
+			anru boolean NOT NULL
 		);`, // 7 : housing
 		`CREATE TABLE temp_housing (
 	    reference varchar(100) NOT NULL,
@@ -167,8 +166,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    plai int NOT NULL,
 	    plus int NOT NULL,
 	    pls int NOT NULL,
-	    anru boolean NOT NULL,
-	    qpv boolean NOT NULL
+	    anru boolean NOT NULL
 		);`, // 8 : temp_housing
 		`CREATE TABLE beneficiary (
 	    id SERIAL PRIMARY KEY,
@@ -262,13 +260,15 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    insee_code int NOT NULL PRIMARY KEY,
 	    name varchar(50) NOT NULL,
 			community_id int,
+			qpv boolean NOT NULL,
 			FOREIGN KEY (community_id) REFERENCES community (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 17 : city
 		`CREATE TABLE temp_city (
 	    insee_code int NOT NULL UNIQUE,
 	    name varchar(50) NOT NULL,
-	    community_code varchar(15)
+	    community_code varchar(15),
+			qpv boolean NOT NULL
 		);`, // 18 : temp_city
 		`CREATE TABLE renew_project_forecast (
 	    id SERIAL PRIMARY KEY,

@@ -16,7 +16,6 @@ type Housing struct {
 	PLUS      int64      `json:"PLUS"`
 	PLS       int64      `json:"PLS"`
 	ANRU      bool       `json:"ANRU"`
-	QPV       bool       `json:"QPV"`
 }
 
 // Housings embeddes an array of Housing for json export
@@ -33,7 +32,6 @@ type HousingLine struct {
 	PLUS      int64      `json:"PLUS"`
 	PLS       int64      `json:"PLS"`
 	ANRU      bool       `json:"ANRU"`
-	QPV       bool       `json:"QPV"`
 }
 
 // HousingBatch embeddes an array of HousingLine for json export
@@ -52,17 +50,17 @@ func (h *Housing) Validate() error {
 // Create insert a new Housing into database
 func (h *Housing) Create(db *sql.DB) (err error) {
 	err = db.QueryRow(`INSERT INTO housing 
-	(reference,address,zip_code,plai,plus,pls,anru,qpv)
-	 VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, &h.Reference, &h.Address,
-		&h.ZipCode, &h.PLAI, &h.PLUS, &h.PLS, &h.ANRU, &h.QPV).Scan(&h.ID)
+	(reference,address,zip_code,plai,plus,pls,anru)
+	 VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`, &h.Reference, &h.Address,
+		&h.ZipCode, &h.PLAI, &h.PLUS, &h.PLS, &h.ANRU).Scan(&h.ID)
 	return err
 }
 
 // Update modifies a housing in database
 func (h *Housing) Update(db *sql.DB) (err error) {
 	res, err := db.Exec(`UPDATE housing SET reference=$1,address=$2,zip_code=$3,
-	plai=$4,plus=$5,pls=$6,anru=$7, qpv=$8 WHERE id=$9`, h.Reference, h.Address,
-		h.ZipCode, h.PLAI, h.PLUS, h.PLS, h.ANRU, h.QPV, h.ID)
+	plai=$4,plus=$5,pls=$6,anru=$7 WHERE id=$8`, h.Reference, h.Address,
+		h.ZipCode, h.PLAI, h.PLUS, h.PLS, h.ANRU, h.ID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +77,7 @@ func (h *Housing) Update(db *sql.DB) (err error) {
 // GetAll fetches all Housings from database
 func (h *Housings) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,reference,address,zip_code,plai,plus,pls,
-	anru,qpv FROM housing`)
+	anru FROM housing`)
 	if err != nil {
 		return err
 	}
@@ -87,7 +85,7 @@ func (h *Housings) GetAll(db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
-			&row.PLAI, &row.PLUS, &row.PLS, &row.ANRU, &row.QPV); err != nil {
+			&row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
 			return err
 		}
 		h.Housings = append(h.Housings, row)
@@ -127,24 +125,24 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 		return err
 	}
 	stmt, err := tx.Prepare(`INSERT INTO temp_housing (reference,address,zip_code,
-		plai,plus,pls,anru, qpv) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`)
+		plai,plus,pls,anru) VALUES ($1,$2,$3,$4,$5,$6,$7)`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, r := range h.Lines {
 		if _, err = stmt.Exec(r.Reference, r.Address, r.ZipCode, r.PLAI, r.PLUS,
-			r.PLS, r.ANRU, r.QPV); err != nil {
+			r.PLS, r.ANRU); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
 	}
 	queries := []string{`UPDATE housing SET address=t.address,zip_code=t.zip_code,
-	plai=t.plai,plus=t.plus,pls=t.pls,anru=t.anru, qpv=t.qpv FROM temp_housing t 
+	plai=t.plai,plus=t.plus,pls=t.pls,anru=t.anru FROM temp_housing t 
 	WHERE t.reference = housing.reference`,
 		`INSERT INTO housing
-	(reference,address,zip_code,plai,plus,pls,anru,qpv)
-	SELECT reference,address,zip_code,plai,plus,pls,anru,qpv from temp_housing 
+	(reference,address,zip_code,plai,plus,pls,anru)
+	SELECT reference,address,zip_code,plai,plus,pls,anru from temp_housing 
 		WHERE reference NOT IN (SELECT reference from housing)`,
 		`DELETE from temp_housing`,
 	}

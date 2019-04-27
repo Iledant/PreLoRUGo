@@ -68,8 +68,7 @@ CREATE TABLE housing (
   plai int NOT NULL,
   plus int NOT NULL,
   pls int NOT NULL,
-  anru boolean NOT NULL,
-  qpv boolean NOT NULL);
+  anru boolean NOT NULL);
   
 CREATE TABLE temp_housing (
   reference varchar(100) NOT NULL,
@@ -78,8 +77,7 @@ CREATE TABLE temp_housing (
   plai int NOT NULL,
   plus int NOT NULL,
   pls int NOT NULL,
-  anru boolean NOT NULL,
-  qpv boolean NOT NULL);
+  anru boolean NOT NULL);
   
 CREATE TABLE beneficiary (
   id SERIAL PRIMARY KEY,
@@ -173,13 +171,15 @@ CREATE TABLE city (
   insee_code int NOT NULL PRIMARY KEY,
   name varchar(50) NOT NULL,
   community_id int,
+  qpv boolean NOT NULL,
   FOREIGN KEY (community_id) REFERENCES community(id) MATCH SIMPLE
   ON UPDATE NO ACTION ON DELETE NO ACTION);
   
 CREATE TABLE temp_city (
   insee_code int NOT NULL UNIQUE,
   name varchar(50) NOT NULL,
-  community_code varchar(15));
+  community_code varchar(15),
+  qpv boolean NOT NULL);
   
 CREATE TABLE renew_project_forecast (
   id SERIAL PRIMARY KEY,
@@ -255,9 +255,50 @@ UPDATE temp_commitment set code=RTRIM(code), name=RTRIM(name),
   beneficiary_name=RTRIM(beneficiary_name), sector=RTRIM(sector), 
   action_name=RTRIM(action_name);
 
-UPDATE temp_payment set commitment_code = RTRIM(commitment_code);
-
 COPY temp_payment(commitment_year, commitment_code, commitment_number, 
   commitment_line, year, number, creation_date, modification_date, value)
   FROM './assets/20190123 Mandats PreLoRU.csv' DELIMITER ';' CSV HEADER;
 
+UPDATE temp_payment set commitment_code = RTRIM(commitment_code);
+
+INSERT INTO beneficiary (code,name) SELECT DISTINCT beneficiary_code,beneficiary_name 
+		FROM temp_commitment WHERE beneficiary_code not in (SELECT code from beneficiary);
+		
+INSERT INTO budget_sector (name) SELECT DISTINCT sector
+	FROM temp_commitment WHERE sector not in (SELECT name from budget_sector);
+	
+INSERT INTO budget_action (code,name,sector_id) 
+		SELECT DISTINCT ic.action_code,ic.action_name, s.id
+		FROM temp_commitment ic
+		LEFT JOIN budget_sector s ON ic.sector = s.name
+		WHERE action_code not in (SELECT code from budget_action);
+		
+
+INSERT INTO commitment (year,code,number,line,creation_date,modification_date,
+		name,value,beneficiary_id,iris_code,action_id)
+  	(SELECT ic.year,ic.code,ic.number,ic.line,ic.creation_date,ic.modification_date,
+			ic.name,ic.value,b.id,ic.iris_code,a.id
+  	FROM temp_commitment ic
+		JOIN beneficiary b on ic.beneficiary_code=b.code
+		LEFT JOIN budget_action a on ic.action_code = a.code
+  	WHERE (ic.year,ic.code,ic.number,ic.line,ic.creation_date,ic.modification_date,ic.name, ic.value) 
+    NOT IN (select year,code,number,line,creation_date,modification_date,name,value FROM commitment));
+	
+select count(1) from temp_payment
+
+INSERT INTO payment (commitment_id,commitment_year,commitment_code,
+			commitment_number,commitment_line,year,creation_date,modification_date,
+			number, value)
+		SELECT c.id,t.commitment_year,t.commitment_code,t.commitment_number,
+			t.commitment_line,t.year,t.creation_date,t.modification_date,t.number,t.value 
+			FROM temp_payment t
+			LEFT JOIN cumulated_commitment c 
+				ON t.commitment_year=c.year AND t.commitment_code=c.code
+				AND t.commitment_number=c.number
+			WHERE (t.commitment_year,t.commitment_code,t.commitment_number,
+				t.commitment_line,t.year,t.creation_date,t.modification_date) 
+			NOT IN (SELECT DISTINCT commitment_year,commitment_code,commitment_number,
+				commitment_line,year,creation_date,modification_date from payment);
+
+DELETE from temp_payment;
+DELETE from temp_commitment;
