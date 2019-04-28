@@ -135,8 +135,8 @@ func BatchCities(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
-// GetPaginatedCities handles the get request to fetch all beneficiaries that
-// match the given pattern and return a paginated struct with beneficiaries, page number
+// GetPaginatedCities handles the get request to fetch all cities that
+// match the given pattern and return a paginated struct with cities, page number
 // and total page count
 func GetPaginatedCities(ctx iris.Context) {
 	var req models.PaginatedQuery

@@ -107,3 +107,27 @@ func BatchHousings(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Batch de Logements importé"})
 }
+
+// GetPaginatedHousings handles the get request to fetch all housings that
+// match the given pattern and return a paginated struct with housings, page
+// number and total page count
+func GetPaginatedHousings(ctx iris.Context) {
+	var req models.PaginatedQuery
+	var err error
+	req.Page, err = ctx.URLParamInt64("Page")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de logements, décodage Page : " + err.Error()})
+		return
+	}
+	req.Search = ctx.URLParam("Search")
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.PaginatedHousings
+	if err = resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de logements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}

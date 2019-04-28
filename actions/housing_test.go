@@ -21,6 +21,7 @@ func testHousing(t *testing.T, c *TestContext) {
 		testGetHousings(t, c)
 		testDeleteHousing(t, c, ID)
 		testBatchHousings(t, c)
+		testGetPaginatedHousings(t, c)
 	})
 }
 
@@ -211,6 +212,47 @@ func testBatchHousings(t *testing.T, c *TestContext) {
 				if !strings.Contains(body, j) {
 					t.Errorf("BatchHousing[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
 				}
+			}
+		}
+	}
+}
+
+// testGetPaginatedHousings checks if route is user protected and Housings correctly sent back
+func testGetPaginatedHousings(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: "",
+			RespContains: []string{`Token absent`},
+			Sent:         []byte(`Page=2&Search=essai3`),
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			Sent:         []byte(`Page=a&Search=essai3`),
+			RespContains: []string{`Page de logements, décodage Page :`},
+			Count:        1,
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad parameter
+		{Token: c.Config.Users.User.Token,
+			Sent:         []byte(`Page=2&Search=essai3`),
+			RespContains: []string{`{"Housing":[`, `"Page":1`, `"ItemsCount":1`, `"Reference":"Essai3","Address":"Adresse","ZipCode":75005,"PLAI":4,"PLUS":5,"PLS":6,"ANRU":true`},
+			Count:        1,
+			StatusCode:   http.StatusOK}, // 2 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.GET("/api/housings/paginated").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("GetPaginatedHousings[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("GetPaginatedHousings[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		}
+		if status == http.StatusOK {
+			count := strings.Count(body, `"ID"`)
+			if count != tc.Count {
+				t.Errorf("GetPaginatedHousings[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
 	}

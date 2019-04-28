@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 // Housing model
@@ -37,6 +38,13 @@ type HousingLine struct {
 // HousingBatch embeddes an array of HousingLine for json export
 type HousingBatch struct {
 	Lines []HousingLine `json:"Housing"`
+}
+
+// PaginatedHousings embeddes an array of housing for paginated get request
+type PaginatedHousings struct {
+	Housings   []Housing `json:"Housing"`
+	Page       int64     `json:"Page"`
+	ItemsCount int64     `json:"ItemsCount"`
 }
 
 // Validate checks if Housing's fields are correctly filled
@@ -155,4 +163,41 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 	}
 	tx.Commit()
 	return nil
+}
+
+// Get fetches a bath of paginated housings form database that fetch a search
+// pattern
+func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
+	var count int64
+	if err := db.QueryRow(`SELECT count(1) FROM housing
+		WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1`,
+		"%"+q.Search+"%").Scan(&count); err != nil {
+		return errors.New("count query failed " + err.Error())
+	}
+	offset, newPage := GetPaginateParams(q.Page, count)
+
+	rows, err := db.Query(`SELECT id, reference, address, zip_code, plai, plus,
+	pls, anru FROM housing
+	WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1
+	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
+		"%"+q.Search+"%", offset)
+	if err != nil {
+		return err
+	}
+	var row Housing
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
+			&row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
+			return err
+		}
+		p.Housings = append(p.Housings, row)
+	}
+	err = rows.Err()
+	if len(p.Housings) == 0 {
+		p.Housings = []Housing{}
+	}
+	p.Page = newPage
+	p.ItemsCount = count
+	return err
 }
