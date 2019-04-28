@@ -9,10 +9,11 @@ import (
 
 // City model
 type City struct {
-	InseeCode   int64     `json:"InseeCode"`
-	Name        string    `json:"Name"`
-	CommunityID NullInt64 `json:"CommunityID"`
-	QPV         bool      `json:"QPV"`
+	InseeCode     int64      `json:"InseeCode"`
+	Name          string     `json:"Name"`
+	CommunityID   NullInt64  `json:"CommunityID"`
+	CommunityName NullString `json:"CommunityName"`
+	QPV           bool       `json:"QPV"`
 }
 
 // Cities embeddes an array of City for json export
@@ -71,13 +72,19 @@ func (c *City) Create(db *sql.DB) (err error) {
 	if count != 1 {
 		return errors.New("Insertion de la ville non réussie")
 	}
-	return nil
+	if c.CommunityID.Valid {
+		err = db.QueryRow(`SELECT name from community WHERE id=$1`, c.CommunityID).
+			Scan(&c.CommunityName)
+	}
+	return err
 }
 
 // Get fetches a City from database using ID field
 func (c *City) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT name, community_id,qpv FROM city WHERE insee_code=$1`,
-		c.InseeCode).Scan(&c.Name, &c.CommunityID, &c.QPV)
+	err = db.QueryRow(`SELECT c.name, c.community_id, c.qpv, o.name FROM city c
+		LEFT JOIN community o ON c.community_id = o.id	
+	WHERE insee_code=$1`,
+		c.InseeCode).Scan(&c.Name, &c.CommunityID, &c.QPV, &c.CommunityName)
 	if err != nil {
 		return err
 	}
@@ -87,8 +94,7 @@ func (c *City) Get(db *sql.DB) (err error) {
 // Update modifies a city in database
 func (c *City) Update(db *sql.DB) (err error) {
 	res, err := db.Exec(`UPDATE city SET name=$1,community_id=$2,qpv=$3 
-		WHERE insee_code=$4`,
-		c.Name, c.CommunityID, c.QPV, c.InseeCode)
+		WHERE insee_code=$4`, c.Name, c.CommunityID, c.QPV, c.InseeCode)
 	if err != nil {
 		return err
 	}
@@ -99,19 +105,26 @@ func (c *City) Update(db *sql.DB) (err error) {
 	if count != 1 {
 		return errors.New("Ville introuvable")
 	}
+	if c.CommunityID.Valid {
+		err = db.QueryRow(`SELECT name FROM community WHERE id$=1`, c.CommunityID).
+			Scan(&c.CommunityName)
+	}
 	return err
 }
 
 // GetAll fetches all Cities from database
 func (c *Cities) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT insee_code,name,community_id,qpv FROM city`)
+	rows, err := db.Query(`SELECT c.insee_code,c.name,c.community_id,c.qpv,o.name
+		FROM city c
+		LEFT JOIN community o ON c.community_id=o.id`)
 	if err != nil {
 		return err
 	}
 	var row City
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.InseeCode, &row.Name, &row.CommunityID, &row.QPV); err != nil {
+		if err = rows.Scan(&row.InseeCode, &row.Name, &row.CommunityID, &row.QPV,
+			&row.CommunityName); err != nil {
 			return err
 		}
 		c.Cities = append(c.Cities, row)

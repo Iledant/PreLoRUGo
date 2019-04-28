@@ -48,7 +48,7 @@ func testCreateCity(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{Sent: []byte(`{"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":2,"QPV":true}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":2,"QPV":true`},
+			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":2,"CommunityName":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)","QPV":true`},
 			StatusCode:   http.StatusCreated}, // 4 : ok
 	}
 	for i, tc := range tcc {
@@ -97,7 +97,7 @@ func testUpdateCity(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
 		{Sent: []byte(`{"City":{"InseeCode":` + strconv.Itoa(ID) + `,"Name":"Essai2","CommunityID":null,"QPV":false}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"City":{"InseeCode":` + strconv.Itoa(ID) + `,"Name":"Essai2","CommunityID":null,"QPV":false}`},
+			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false`},
 			StatusCode:   http.StatusOK}, // 5 : ok
 	}
 	for i, tc := range tcc {
@@ -128,7 +128,7 @@ func testGetCity(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Récupération de ville, requête :`},
 			ID:           0}, // 1 : bad ID
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"City":{"InseeCode":` + strconv.Itoa(ID) + `,"Name":"Essai2","CommunityID":null,"QPV":false}}`},
+			RespContains: []string{`{"City":{"InseeCode":` + strconv.Itoa(ID) + `,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false}}`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
@@ -156,7 +156,7 @@ func testGetCities(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"City":[{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"QPV":false}]}`},
+			RespContains: []string{`{"City":[{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false}]}`},
 			Count:        1,
 			StatusCode:   http.StatusOK}, // 1 : ok
 	}
@@ -231,7 +231,7 @@ func testBatchCities(t *testing.T, c *TestContext) {
 			{"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityCode":"247700123","QPV":true},
 			{"InseeCode":78146,"Name":"CHATOU","CommunityCode":"200058519.78","QPV":false}]}`),
 			Count:        3,
-			RespContains: []string{`"InseeCode":75101,"Name":"PARIS 1"`, `"InseeCode":78146,"Name":"CHATOU","CommunityID":4,"QPV":false`},
+			RespContains: []string{`"InseeCode":75101,"Name":"PARIS 1"`, `"InseeCode":78146,"Name":"CHATOU","CommunityID":4,"CommunityName":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)","QPV":false`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
 	for i, tc := range tcc {
