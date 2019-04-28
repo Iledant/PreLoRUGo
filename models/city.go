@@ -197,7 +197,7 @@ func (p *PaginatedCities) Get(db *sql.DB, q *PaginatedQuery) error {
 	rows, err := db.Query(`SELECT c.insee_code,c.name, o.id, o.name,c.qpv FROM city c
 	LEFT JOIN community o on o.id = c.community_id
 	WHERE c.name ILIKE $1 OR c.insee_code::varchar ILIKE $1
-	ORDER BY 1,2 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
+	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
 		"%"+q.Search+"%", offset)
 	if err != nil {
 		return err

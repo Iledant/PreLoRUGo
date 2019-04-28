@@ -245,7 +245,7 @@ func (p *ExportedPayments) Get(db *sql.DB, q *ExportQuery) error {
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
 	WHERE p.year >= $1 AND (c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
-	ORDER BY 2,5,3 `, q.Year, "%"+q.Search+"%")
+	ORDER BY 1 `, q.Year, "%"+q.Search+"%")
 	if err != nil {
 		return err
 	}

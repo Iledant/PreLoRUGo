@@ -160,7 +160,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	JOIN budget_sector s ON s.id=a.sector_id 
 	WHERE year >= $1 AND (c.name ILIKE $2  OR c.number::varchar ILIKE $2 OR 
 		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
-	ORDER BY 2,6,7,3,4,5 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		c.Year, "%"+c.Search+"%", offset)
 	if err != nil {
 		return err
