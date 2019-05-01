@@ -8,9 +8,9 @@ import (
 	"github.com/kataras/iris"
 )
 
-// SetCommitmentLink handles the post request to link or unlink commitments and
+// LinkCommitment handles the post request to link commitments and
 // housing, renew_project, copro
-func SetCommitmentLink(ctx iris.Context) {
+func LinkCommitment(ctx iris.Context) {
 	var req models.CommitmentLink
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
@@ -30,4 +30,23 @@ func SetCommitmentLink(ctx iris.Context) {
 	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Liens d'engagements mis à jour"})
+}
+
+// UnlinkCommitment handles the post request to link commitments and
+// housing, renew_project, copro
+func UnlinkCommitment(ctx iris.Context) {
+	var req models.CommitmentUnlink
+	if err := ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Suppression de liens d'engagements, décodage : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := req.Set(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Suppression de liens d'engagements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Suppression de liens d'engagements mis à jour"})
 }
