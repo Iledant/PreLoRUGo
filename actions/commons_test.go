@@ -55,6 +55,7 @@ func TestAll(t *testing.T) {
 	testCoproForecast(t, cfg)
 	testSettings(t, cfg)
 	testHome(t, cfg)
+	testBeneficiaryDatas(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
