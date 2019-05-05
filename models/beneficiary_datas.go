@@ -34,7 +34,7 @@ func (p *PaginatedBeneficiaryDatas) Get(db *sql.DB, q *PaginatedQuery, ID int) e
 	}
 	offset, newPage := GetPaginateParams(q.Page, count)
 
-	rows, err := db.Query(`SELECT c.id, c.value, c.creation_date, c.name, c.value-q.added 
+	rows, err := db.Query(`SELECT c.id, c.value, c.creation_date, c.name, c.value-COALESCE(q.added,0) 
 	FROM cumulated_commitment c
 	LEFT JOIN (SELECT sum(value) AS added, commitment_id FROM payment GROUP BY 2) q
 		ON q.commitment_id = c.id
