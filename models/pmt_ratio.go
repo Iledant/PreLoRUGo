@@ -24,6 +24,11 @@ type PmtRatioBatch struct {
 	Ratios []PmtRatio `json:"Ratios"`
 }
 
+// PmtRatiosYears is used to fetch years with ratios payments from database
+type PmtRatiosYears struct {
+	Years []int `json:"PmtRatiosYear"`
+}
+
 // Get fetches the payment transformation ratios of commitments for the given
 // year
 func (p *PmtRatios) Get(db *sql.DB, year int) error {
@@ -76,4 +81,25 @@ func (p *PmtRatioBatch) Save(db *sql.DB) error {
 	}
 	tx.Commit()
 	return nil
+}
+
+// Get fetches all years from ratio table in the database
+func (p *PmtRatiosYears) Get(db *sql.DB) error {
+	rows, err := db.Query(`SELECT DISTINCT year FROM ratio`)
+	if err != nil {
+		return fmt.Errorf("get request %v", err)
+	}
+	var y int
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&y); err != nil {
+			return err
+		}
+		p.Years = append(p.Years, y)
+	}
+	err = rows.Err()
+	if len(p.Years) == 0 {
+		p.Years = []int{}
+	}
+	return err
 }

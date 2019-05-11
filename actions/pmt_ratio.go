@@ -20,7 +20,7 @@ func GetPmtRatios(ctx iris.Context) {
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.Get(db, year); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Liste des paiements, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Ratios de paiements, requête : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
@@ -44,4 +44,17 @@ func BatchPmtRatios(ctx iris.Context) {
 	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Batch de ratios de paiement traité"})
+}
+
+// GetPmtRatiosYears handles the get request to fetch payments ratios of a given year
+func GetPmtRatiosYears(ctx iris.Context) {
+	var resp models.PmtRatiosYears
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.Get(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Années des ratios des paiements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
 }
