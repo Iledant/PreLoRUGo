@@ -20,7 +20,7 @@ type PmtRatios struct {
 // PmtRatioBatch is used to decode the payload of a post request fo save ratios
 // of a given year
 type PmtRatioBatch struct {
-	Year   int        `json:"int"`
+	Year   int        `json:"Year"`
 	Ratios []PmtRatio `json:"Ratios"`
 }
 

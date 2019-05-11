@@ -213,6 +213,12 @@ CREATE TABLE temp_copro_forecast (
   comment text,
   copro_id int NOT NULL);
 		 
+CREATE TABLE ratio (
+			id SERIAL PRIMARY KEY,
+			year int NOT NULL,
+			index int NOT NULL,
+			ratio double precision NOT NULL);
+
 -- Insertion des utilisateurs
 INSERT INTO users (name,email,password,rights) VALUES
 ('Administrateur','cs@if.fr','$2a$10$bQ1G2K8UeH8mTwERhwe2XerDeQtVLN02GDz4HD4WP/N9X/7S.MhbO',5),
