@@ -56,6 +56,7 @@ func TestAll(t *testing.T) {
 	testSettings(t, cfg)
 	testHome(t, cfg)
 	testBeneficiaryDatas(t, cfg)
+	testPmtRatio(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -91,7 +92,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
 	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
 	community , temp_community, city , temp_city, renew_project_forecast , 
-	temp_renew_project_forecast, copro_forecast, temp_copro_forecast`,
+	temp_renew_project_forecast, copro_forecast, temp_copro_forecast, ratio`,
 	}
 	for i, q := range dropQueries {
 		if _, err := db.Exec(q); err != nil {
@@ -311,6 +312,12 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
 		ON c.id = q.id;`, // 23 : cumulated_commitment view
+		`CREATE TABLE ratio (
+			id SERIAL PRIMARY KEY,
+			year int NOT NULL,
+			index int NOT NULL,
+			ratio double precision NOT NULL
+		);`,
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {

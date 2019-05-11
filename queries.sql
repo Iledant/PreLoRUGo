@@ -302,3 +302,24 @@ INSERT INTO payment (commitment_id,commitment_year,commitment_code,
 
 DELETE from temp_payment;
 DELETE from temp_commitment;
+
+-- Requête de calcul des chroniques de transformation des engagements en paiements 
+-- pour une année donnée et par action budgétaire
+WITH cmt AS (SELECT action_id, SUM(value) AS value FROM commitment 
+  WHERE extract(year FROM creation_date)=2012 AND value>0 GROUP BY 1 ORDER BY 1),
+  pmt AS (SELECT c.action_id, SUM(p.value) AS value, 
+    extract(year from p.creation_date)::integer-2012 AS index
+    FROM payment p, commitment c WHERE p.commitment_id=c.id AND c.value >0 
+      AND extract(year FROM c.creation_date)=2012 GROUP BY 1,3)
+SELECT pmt.action_id, pmt.index, pmt.value/cmt.value AS ratio FROM cmt, pmt 
+WHERE cmt.action_id=pmt.action_id
+
+-- Requête de calcul des chroniques de transformation des engagements en paiements 
+-- pour une année donnée toutes actions budgétaires confondues
+WITH cmt AS (SELECT SUM(value) AS value FROM commitment 
+  WHERE extract(year FROM creation_date)=2018 AND value>0),
+  pmt AS (SELECT SUM(p.value) AS value, 
+    extract(year from p.creation_date)::integer-2018 AS index
+    FROM payment p, commitment c WHERE p.commitment_id=c.id AND c.value >0 
+      AND extract(year FROM c.creation_date)=2018 GROUP BY 2)
+SELECT pmt.index, pmt.value/cmt.value AS ratio FROM cmt, pmt 

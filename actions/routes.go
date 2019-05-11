@@ -81,6 +81,8 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	adminParty.Get("/settings", GetSettings)
 
+	adminParty.Post("/ratios", BatchPmtRatios)
+
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
 	userParty.Post("/user/logout", Logout)
@@ -122,6 +124,8 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	userParty.Get("/copro_forecasts", GetCoproForecasts)
 
 	userParty.Get("/home", GetHome)
+
+	userParty.Get("/ratios", GetPmtRatios)
 }
 
 // setDBMiddleware return a middleware to add db to context values
