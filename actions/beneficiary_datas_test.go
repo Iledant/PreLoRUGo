@@ -18,29 +18,29 @@ func testBeneficiaryDatas(t *testing.T, c *TestContext) {
 func testGetBeneficiaryDatas(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		{Token: "",
-			Sent:         []byte(`Page=2&Year=2010&Search=fontenay`),
+			Sent:         []byte(`Page=2&Year=2010&Search=savigny`),
 			RespContains: []string{`Token absent`},
 			Count:        1,
-			ID:           2,
+			ID:           3,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(`Page=2&Year=a&Search=fontenay`),
+			Sent:         []byte(`Page=2&Year=a&Search=savigny`),
 			RespContains: []string{`Page de données bénéficiaire, décodage Year :`},
 			Count:        1,
-			ID:           2,
+			ID:           3,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
 		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(`Page=2&Year=2010&Search=fontenay`),
+			Sent:         []byte(`Page=2&Year=2010&Search=savigny`),
 			RespContains: []string{`"Datas":[],"Page":1,"ItemsCount":0`},
 			Count:        0,
 			ID:           0,
 			StatusCode:   http.StatusOK}, // 2 : bad ID
 		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Page=2&Year=2010&Search=fontenay`),
+			Sent: []byte(`Page=2&Year=2010&Search=savigny`),
 			//cSpell: disable
-			RespContains: []string{`Datas":[{"ID":2,"Date":"2017-03-13T00:00:00Z","Value":-22802200,"Name":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","Available":-25949522}],"Page":1,"ItemsCount":1`},
+			RespContains: []string{`"Datas":[{"ID":3,"Date":"2015-04-13T00:00:00Z","Value":30000000,"Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU - 65 PLUS/PLAI","Available":30000000}],"Page":1,"ItemsCount":1`},
 			//cSpell: enable
-			ID:         2,
+			ID:         3,
 			Count:      1,
 			StatusCode: http.StatusOK}, // 3 : ok
 	}

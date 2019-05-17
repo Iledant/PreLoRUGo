@@ -187,6 +187,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    value bigint NOT NULL,
 	    beneficiary_id int NOT NULL,
 			iris_code varchar(20),
+			sold_out boolean NOT NULL,
 			action_id int,
 			housing_id int,
 			copro_id int,
@@ -214,6 +215,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    beneficiary_code int NOT NULL,
 	    beneficiary_name varchar(150) NOT NULL,
 			iris_code varchar(20),
+			sold_out boolean NOT NULL,
 			sector varchar(5) NOT NULL,
 			action_code bigint,
 			action_name varchar(150)

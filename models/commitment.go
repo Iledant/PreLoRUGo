@@ -20,6 +20,7 @@ type Commitment struct {
 	ModificationDate time.Time  `json:"ModificationDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
+	SoldOut          bool       `json:"SoldOut"`
 	BeneficiaryID    int64      `json:"BeneficiaryID"`
 	ActionID         int64      `json:"ActionID"`
 	IrisCode         NullString `json:"IrisCode"`
@@ -39,6 +40,7 @@ type PaginatedCommitment struct {
 	ModificationDate time.Time  `json:"ModificationDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
+	SoldOut          bool       `json:"SoldOut"`
 	BeneficiaryID    int64      `json:"BeneficiaryID"`
 	BeneficiaryName  string     `json:"BeneficiaryName"`
 	ActionName       string     `json:"ActionName"`
@@ -64,6 +66,7 @@ type CommitmentLine struct {
 	ModificationDate int64      `json:"ModificationDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
+	SoldOut          string     `json:"SoldOut"`
 	BeneficiaryCode  int64      `json:"BeneficiaryCode"`
 	BeneficiaryName  string     `json:"BeneficiaryName"`
 	IrisCode         NullString `json:"IrisCode"`
@@ -110,6 +113,7 @@ type ExportedCommitment struct {
 	ModificationDate time.Time  `json:"ModificationDate"`
 	Name             string     `json:"Name"`
 	Value            float64    `json:"Value"`
+	SoldOut          bool       `json:"SoldOut"`
 	BeneficiaryName  string     `json:"BeneficiaryName"`
 	Sector           string     `json:"Sector"`
 	ActionName       string     `json:"ActionName"`
@@ -151,10 +155,9 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 		return errors.New("count query failed " + err.Error())
 	}
 	offset, newPage := GetPaginateParams(c.Page, count)
-
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
-	c.modification_date,c.name,c.value,c.beneficiary_id, b.name, c.iris_code,a.name,
-	s.name FROM commitment c
+	c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,b.name,
+	c.iris_code,a.name,s.name FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
@@ -170,8 +173,8 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode, &row.ActionName,
-			&row.Sector); err != nil {
+			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
+			&row.ActionName, &row.Sector); err != nil {
 			return err
 		}
 		p.Commitments = append(p.Commitments, row)
@@ -188,7 +191,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 // Get fetches the results of exported commitments
 func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
-	c.modification_date,c.name,c.value * 0.01,b.name, c.iris_code,a.name,
+	c.modification_date,c.name,c.value * 0.01,c.sold_out, b.name, c.iris_code,a.name,
 	s.name, copro.name, housing.address,renew_project.name FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
@@ -207,8 +210,8 @@ func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.BeneficiaryName, &row.IrisCode, &row.ActionName, &row.Sector,
-			&row.CoproName, &row.HousingName, &row.RenewProjectName); err != nil {
+			&row.SoldOut, &row.BeneficiaryName, &row.IrisCode, &row.ActionName,
+			&row.Sector, &row.CoproName, &row.HousingName, &row.RenewProjectName); err != nil {
 			return err
 		}
 		e.ExportedCommitments = append(e.ExportedCommitments, row)
@@ -223,7 +226,8 @@ func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 // GetAll fetches all Commitments from database
 func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,year,code,number,line,creation_date,
-	modification_date,name,value,beneficiary_id,iris_code, action_id FROM commitment`)
+	modification_date,name,value,sold_out, beneficiary_id,iris_code, action_id 
+	FROM commitment`)
 	if err != nil {
 		return err
 	}
@@ -232,7 +236,7 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.BeneficiaryID, &row.IrisCode, &row.ActionID); err != nil {
+			&row.SoldOut, &row.BeneficiaryID, &row.IrisCode, &row.ActionID); err != nil {
 			return err
 		}
 		c.Commitments = append(c.Commitments, row)
@@ -251,10 +255,10 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		return err
 	}
 	stmt, err := tx.Prepare(`INSERT INTO temp_commitment (year,code,number,line,
-		creation_date,modification_date,name,value,beneficiary_code,beneficiary_name,
-		iris_code,sector,action_code,action_name)
+		creation_date,modification_date,name,value,sold_out,beneficiary_code,
+		beneficiary_name,iris_code,sector,action_code,action_name)
 	VALUES ($1,$2,$3,$4,make_date($5,$6,$7),make_date($8,$9,$10),$11,$12,$13,$14,
-	$15,$16,$17,$18)`)
+	$15,$16,$17,$18,$19)`)
 	if err != nil {
 		return errors.New("Statement creation " + err.Error())
 	}
@@ -269,8 +273,8 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, r.CreationDate/10000,
 			r.CreationDate/100%100, r.CreationDate%100, r.ModificationDate/10000,
 			r.ModificationDate/100%100, r.ModificationDate%100, strings.TrimSpace(r.Name),
-			r.Value, r.BeneficiaryCode, strings.TrimSpace(r.BeneficiaryName), r.IrisCode,
-			strings.TrimSpace(r.Sector), r.ActionCode, r.ActionName.TrimSpace()); err != nil {
+			r.Value, r.SoldOut == "O", r.BeneficiaryCode, strings.TrimSpace(r.BeneficiaryName),
+			r.IrisCode, strings.TrimSpace(r.Sector), r.ActionCode, r.ActionName.TrimSpace()); err != nil {
 			tx.Rollback()
 			return errors.New("Statement execution " + err.Error())
 		}
@@ -286,9 +290,9 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			LEFT JOIN budget_sector s ON ic.sector = s.name
 			WHERE action_code not in (SELECT code from budget_action)`,
 		`INSERT INTO commitment (year,code,number,line,creation_date,modification_date,
-			name,value,beneficiary_id,iris_code,action_id)
+			name,value,sold_out,beneficiary_id,iris_code,action_id)
   		(SELECT ic.year,ic.code,ic.number,ic.line,ic.creation_date,ic.modification_date,
-				ic.name,ic.value,b.id,ic.iris_code,a.id
+				ic.name,ic.value,ic.sold_out,b.id,ic.iris_code,a.id
   		FROM temp_commitment ic
 			JOIN beneficiary b on ic.beneficiary_code=b.code
 			LEFT JOIN budget_action a on ic.action_code = a.code

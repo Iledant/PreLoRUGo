@@ -96,6 +96,7 @@ CREATE TABLE commitment (
   value bigint NOT NULL,
   beneficiary_id int NOT NULL,
   iris_code varchar(20),
+  sold_out bool,
   action_id int,
   housing_id int,
   copro_id int,

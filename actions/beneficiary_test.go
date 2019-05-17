@@ -22,12 +22,12 @@ func testGetBeneficiaries(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"Beneficiary"`, `"Code":5019,"Name":"ESSONNE HABITAT"`,
-				// cSpell: disable
-				`"Code":30953,"Name":"FONCIA MARCEAU"`,
-				`"Code":6850,"Name":"SA D HLM LOGIREP"`,
+			RespContains: []string{`"Beneficiary"`, // cSpell: disable
+				`"Code":56080,"Name":"BLANGIS"`,
+				`"Code":40505,"Name":"CLD IMMOBILIER"`,
+				`"Code":7010,"Name":"IMMOBILIERE 3F"`,
 				//cSpell: enable
-				`"Code":29364,"Name":"OPH MANTES YVELINES HABITAT"`},
+			},
 			Count:      4,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
@@ -57,15 +57,15 @@ func testGetBeneficiaries(t *testing.T, c *TestContext) {
 func testGetPaginatedBeneficiaries(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		{Token: "",
-			Sent:         []byte(`Page=2&Search=marceau`),
+			Sent:         []byte(`Page=2&Search=humanisme`),
 			RespContains: []string{`Token absent`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Page=2&Search=marceau`),
+			Sent: []byte(`Page=2&Search=humanisme`),
 			RespContains: []string{`"Beneficiary"`, `"Page"`, `"ItemsCount"`,
 				// cSpell: disable
-				`"Code":30953,"Name":"FONCIA MARCEAU"`,
+				`"Code":20186,"Name":"SCA FONCIERE HABITAT ET HUMANISME"`,
 				//cSpell: enable
 			},
 			Count:      1,

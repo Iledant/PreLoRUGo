@@ -23,7 +23,7 @@ func testGetSettings(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"BudgetSector":[`, `"BudgetAction":[`, `"Commission":[`,
 				`"PaginatedCity":{`, `"Community":[`, `"PaginatedPayment":{`, `"PaginatedCommitment":{`},
-			Count:      14,
+			Count:      15,
 			StatusCode: http.StatusOK}, // 1 : bad request
 	}
 	for i, tc := range tcc {

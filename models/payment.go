@@ -144,7 +144,7 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 			r.CommitmentLine == 0 || r.Year == 0 || r.CreationDate < 20090101 ||
 			r.ModificationDate < 20090101 || r.Number == 0 {
 			tx.Rollback()
-			return errors.New("Champs incorrects")
+			return fmt.Errorf("Champ incorrect dans %+v", r)
 		}
 		if _, err = stmt.Exec(r.CommitmentYear, r.CommitmentCode, r.CommitmentNumber,
 			r.CommitmentLine, r.Year, r.CreationDate/10000, (r.CreationDate/100)%100,

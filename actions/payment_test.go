@@ -63,9 +63,9 @@ func testGetPayments(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"CommitmentYear":2012,"CommitmentCode":"IRIS ","CommitmentNumber":392543,"CommitmentLine":1,"Year":2014,"CreationDate":"2014-01-29T00:00:00Z","ModificationDate":"2014-02-10T00:00:00Z","Number":104030,"Value":12648324`,
-				`"ID":3,"CommitmentID":2,"CommitmentYear":2017,"CommitmentCode":"IRIS ","CommitmentNumber":525554,"CommitmentLine":1,"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","ModificationDate":"2018-02-19T00:00:00Z","Number":104983,"Value":3147322`},
-			Count:      3,
+			RespContains: []string{`"ID":1,"CommitmentID":4,"CommitmentYear":2010,"CommitmentCode":"IRIS ","CommitmentNumber":277678,"CommitmentLine":1,"Year":2010,"CreationDate":"2010-02-02T00:00:00Z","ModificationDate":"2010-04-16T00:00:00Z","Number":102717,"Value":1896880`,
+				`"ID":4,"CommitmentID":2,"CommitmentYear":2014,"CommitmentCode":"IRIS ","CommitmentNumber":431370,"CommitmentLine":1,"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","ModificationDate":"2016-09-19T00:00:00Z","Number":141103,"Value":239200`},
+			Count:      4,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
 	for i, tc := range tcc {
@@ -94,19 +94,19 @@ func testGetPayments(t *testing.T, c *TestContext) {
 func testGetPaginatedPayments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		{Token: "",
-			Sent:         []byte(`Page=2&Year=2010&Search=fontenay`),
+			Sent:         []byte(`Page=2&Year=2010&Search=cld`),
 			RespContains: []string{`Token absent`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(`Page=2&Year=a&Search=fontenay`),
+			Sent:         []byte(`Page=2&Year=a&Search=cld`),
 			RespContains: []string{`Page de paiements, décodage Year :`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
 		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Page=2&Year=2010&Search=fontenay`),
+			Sent: []byte(`Page=2&Year=2010&Search=cld`),
 			//cSpell: disable
-			RespContains: []string{`"Payments":[`, `"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","Value":3147322,"Number":104983,"CommitmentDate":"2017-03-13T00:00:00Z","CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","CommitmentValue":-22802200,"Beneficiary":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
+			RespContains: []string{`"Payments":[`, `"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","Value":239200,"Number":141103,"CommitmentDate":"2014-02-05T00:00:00Z","CommitmentName":"13021233 - 1","CommitmentValue":239200,"Beneficiary":"CLD IMMOBILIER","Sector":"LO","ActionName":"Aide aux copropriétés en difficulté"`},
 			//cSpell: enable
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
@@ -137,19 +137,19 @@ func testGetPaginatedPayments(t *testing.T, c *TestContext) {
 func testExportedPayments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		{Token: "",
-			Sent:         []byte(`Year=2010&Search=fontenay`),
+			Sent:         []byte(`Year=2010&Search=cld`),
 			RespContains: []string{`Token absent`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(`Year=a&Search=fontenay`),
+			Sent:         []byte(`Year=a&Search=cld`),
 			RespContains: []string{`Export de paiements, décodage Year :`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
 		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Year=2010&Search=fontenay`),
+			Sent: []byte(`Year=2010&Search=cld`),
 			//cSpell: disable
-			RespContains: []string{`"ExportedPayment":[`, `"Year":2018,"CreationDate":"2018-02-19T00:00:00Z","ModificationDate":"2018-02-19T00:00:00Z","Number":104983,"Value":31473.22,"CommitmentYear":2017,"CommitmentCode":"IRIS ","CommitmentNumber":525554,"CommitmentCreationDate":"2017-03-13T00:00:00Z","CommitmentValue":-228022,"CommitmentName":"78 - FONTENAY LE FLEURY - SQUARE LAMARTINE - 38 PLUS/PLAI /","BeneficiaryName":"SA D HLM LOGIREP","Sector":"LO","ActionName":"Aide à la création de logements locatifs sociaux"`},
+			RespContains: []string{`"ExportedPayment":[`, `"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","ModificationDate":"2016-09-19T00:00:00Z","Number":141103,"Value":2392,"CommitmentYear":2014,"CommitmentCode":"IRIS ","CommitmentNumber":431370,"CommitmentCreationDate":"2014-02-05T00:00:00Z","CommitmentValue":2392,"CommitmentName":"13021233 - 1","BeneficiaryName":"CLD IMMOBILIER","Sector":"LO","ActionName":"Aide aux copropriétés en difficulté"`},
 			//cSpell: enable
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
