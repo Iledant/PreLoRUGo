@@ -220,6 +220,13 @@ CREATE TABLE ratio (
 			index int NOT NULL,
 			ratio double precision NOT NULL);
 
+CREATE TABLE migration (
+  id SERIAL PRIMARY KEY,
+  created timestamp NOT NULL,
+  index int NOT NULL,
+  query text
+);
+
 -- Insertion des utilisateurs
 INSERT INTO users (name,email,password,rights) VALUES
 ('Administrateur','cs@if.fr','$2a$10$bQ1G2K8UeH8mTwERhwe2XerDeQtVLN02GDz4HD4WP/N9X/7S.MhbO',5),

@@ -3,7 +3,6 @@ package main
 import (
 	stdContext "context"
 	"log"
-	"os"
 	"time"
 
 	"github.com/Iledant/PreLoRUGo/actions"
@@ -22,8 +21,10 @@ func main() {
 
 	db, err := config.LaunchDB(&cfg.Databases.Development)
 	if err != nil {
-		log.Printf("Impossible de se connecter à la base de données : %s", err.Error())
-		os.Exit(1)
+		log.Fatalf("Impossible de se connecter à la base de données : %s", err.Error())
+	}
+	if err = config.HandleMigrations(db); err != nil {
+		log.Fatal(err.Error())
 	}
 	defer db.Close()
 	actions.SetRoutes(app, db)
