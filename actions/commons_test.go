@@ -57,6 +57,7 @@ func TestAll(t *testing.T) {
 	testHome(t, cfg)
 	testBeneficiaryDatas(t, cfg)
 	testPmtRatio(t, cfg)
+	testPmtForecasts(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -101,7 +102,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			return
 		}
 	}
-	queries := []string{`CREATE TABLE users (
+	queries := []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
+		`CREATE TABLE users (
 		id SERIAL PRIMARY KEY,
 		name varchar(50) NOT NULL,
 		email varchar(120) NOT NULL,
