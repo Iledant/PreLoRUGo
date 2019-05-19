@@ -18,15 +18,15 @@ var migrations = []string{}
 // HandleMigrations check if new migrations have been created and launches them
 // against the database
 func HandleMigrations(db *sql.DB) error {
-	var maxIdx int
+	var maxIdx *int
 	err := db.QueryRow("SELECT max(index) FROM migration").Scan(&maxIdx)
 	if err != nil {
-		if err != sql.ErrNoRows {
-			return fmt.Errorf("Migration select max index : %+v", err)
-		}
-		maxIdx = -1
+		return fmt.Errorf("Migration select max index : %+v", err)
 	}
-	i := maxIdx + 1
+	var i int
+	if maxIdx != nil {
+		i = *maxIdx + 1
+	}
 	for i < len(migrations) {
 		if _, err = db.Exec(migrations[i]); err != nil {
 			return fmt.Errorf("Migration %d : %+v", i, err)
