@@ -13,7 +13,7 @@ type migrationEntry struct {
 	Query   string
 }
 
-var migrations = []string{}
+var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`}
 
 // HandleMigrations check if new migrations have been created and launches them
 // against the database
