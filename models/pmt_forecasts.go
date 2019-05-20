@@ -29,16 +29,15 @@ func (p *PmtForecasts) Get(db *sql.DB, year int) error {
 	actualYear := time.Now().Year()
 	qry := fmt.Sprintf("SELECT q.action_id, b.code, b.name, greatest(q.y0,0),"+
 		"greatest(q.y1,0),greatest(q.y2,0),greatest(q.y3,0),greatest(q.y4,0)"+
-		"FROM (select * FROM crosstab('SELECT c.action_id,"+
+		"FROM (select * FROM crosstab('SELECT action_id, year, pmt FROM (SELECT c.action_id,"+
 		"extract(year FROM c.Creation_Date)::int+r.index AS year,"+
-		"0.1*SUM(c.value*r.ratio) AS pmt FROM commitment c, ratio r"+
-		" WHERE r.year=%d AND c.sold_out = false AND "+
-		"extract(year FROM c.Creation_Date)::int+r.index>=%d AND "+
-		"extract(year FROM c.Creation_Date)::int+r.index<%d "+
-		"GROUP BY 1,2 ORDER BY 1,2') AS (action_id int, y0 double precision, "+
+		"SUM(c.value*r.ratio) AS pmt FROM commitment c, ratio r"+
+		" WHERE r.year=%d AND c.sold_out = false GROUP BY 1,2 ORDER BY 1,2) qry "+
+		"WHERE qry.year>=%d AND qry.year<%d') "+
+		"AS (action_id int, y0 double precision, "+
 		"y1 double precision,y2 double precision, y3 double precision, "+
 		"y4 double precision) ) q "+
-		"JOIN budget_action b ON q.action_id=b.id ORDER BY 2", year, actualYear, actualYear+4)
+		"JOIN budget_action b ON q.action_id=b.id ORDER BY 2", year, actualYear, actualYear+5)
 	rows, err := db.Query(qry)
 	if err != nil {
 		return fmt.Errorf("get request %v", err)
