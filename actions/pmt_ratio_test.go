@@ -29,9 +29,9 @@ func testGetPmtRatios(t *testing.T, c *TestContext) {
 			Sent:         []byte(`Year=a`),
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad year parameter format
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"PmtRatio":[]`},
-			Count:        0,
-			Sent:         []byte(`Year=2017`),
+			RespContains: []string{`"PmtRatio":[{"Index":0,"SectorID":1,"SectorName":"LO","Ratio":0.8},{"Index":1,"SectorID":1,"SectorName":"LO","Ratio":0.2}]`},
+			Count:        2,
+			Sent:         []byte(`Year=2010`),
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
 	for i, tc := range tcc {
@@ -68,7 +68,7 @@ func testBatchPmtRatios(t *testing.T, c *TestContext) {
 			RespContains: []string{"Batch de ratios de paiement, décodage :"},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad payload
 		{Token: c.Config.Users.Admin.Token,
-			Sent:         []byte(`{"Year":2009,"Ratios":[{"Index":0,"Ratio":0.1},{"Index":1,"Ratio":0.2},{"Index":2,"Ratio":0.3}]}`),
+			Sent:         []byte(`{"Year":2009,"Ratios":[{"Index":0,"SectorID":1,"Ratio":0.1},{"Index":1,"SectorID":1,"Ratio":0.2},{"Index":2,"SectorID":1,"Ratio":0.3}]}`),
 			RespContains: []string{"Batch de ratios de paiement traité"},
 			Count:        3,
 			StatusCode:   http.StatusOK}, // 2 : OK

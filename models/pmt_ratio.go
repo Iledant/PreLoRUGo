@@ -8,8 +8,10 @@ import (
 // PmtRatio is used to calculate one line of payment transformation ratio of
 // commitments for all budget actions
 type PmtRatio struct {
-	Index int     `json:"Index"`
-	Ratio float64 `json:"Ratio"`
+	Index    int     `json:"Index"`
+	SectorID int     `json:"SectorID"`
+	SectorName string `json:"SectorName"`
+	Ratio    float64 `json:"Ratio"`
 }
 
 // PmtRatios embeddes an array of PmtRatio for json export
@@ -32,20 +34,25 @@ type PmtRatiosYears struct {
 // Get fetches the payment transformation ratios of commitments for the given
 // year
 func (p *PmtRatios) Get(db *sql.DB, year int) error {
-	rows, err := db.Query(`WITH cmt AS (SELECT SUM(value) AS value FROM commitment 
-  WHERE extract(year FROM creation_date)=$1 AND value>0),
+	rows, err := db.Query(`WITH cmt AS (SELECT SUM(c.value) AS value, a.sector_id 
+		FROM commitment c, budget_action a
+		WHERE extract(year FROM c.creation_date)=$1 AND c.value>0 AND c.action_id=a.id
+		GROUP BY 2),
   pmt AS (SELECT SUM(p.value) AS value, 
-    extract(year from p.creation_date)::integer-$1 AS index
-    FROM payment p, commitment c WHERE p.commitment_id=c.id AND c.value >0 
-      AND extract(year FROM c.creation_date)=$1 GROUP BY 2)
-SELECT pmt.index, pmt.value/cmt.value AS ratio FROM cmt, pmt`, year)
+    extract(year from p.creation_date)::integer-$1 AS index, a.sector_id
+    FROM payment p, commitment c, budget_action a WHERE p.commitment_id=c.id 
+      AND c.value >0 AND c.action_id=a.id 
+      AND extract(year FROM c.creation_date)=$1 GROUP BY 2,3)
+	SELECT pmt.index, pmt.sector_id, s.name, pmt.value/cmt.value AS ratio 
+	FROM cmt, pmt, budget_sector s 
+	WHERE cmt.sector_id=pmt.sector_id AND pmt.sector_id=s.id`, year)
 	if err != nil {
 		return fmt.Errorf("get request %v", err)
 	}
 	var r PmtRatio
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&r.Index, &r.Ratio); err != nil {
+		if err = rows.Scan(&r.Index, &r.SectorID, &r.SectorName, &r.Ratio); err != nil {
 			return err
 		}
 		p.PmtRatios = append(p.PmtRatios, r)
@@ -67,14 +74,15 @@ func (p *PmtRatioBatch) Save(db *sql.DB) error {
 		tx.Rollback()
 		return fmt.Errorf("DELETE %v", err)
 	}
-	stmt, err := tx.Prepare(`INSERT INTO ratio (year, index, ratio) VALUES ($1,$2,$3)`)
+	stmt, err := tx.Prepare(`INSERT INTO ratio (year, index, sector_id, ratio) 
+	VALUES ($1,$2,$3,$4)`)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("statement creation %v", err)
 	}
 	defer stmt.Close()
 	for _, r := range p.Ratios {
-		if _, err = stmt.Exec(p.Year, r.Index, r.Ratio); err != nil {
+		if _, err = stmt.Exec(p.Year, r.Index, r.SectorID, r.Ratio); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("statement execution %v", err)
 		}

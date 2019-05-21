@@ -319,9 +319,12 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 		`CREATE TABLE ratio (
 			id SERIAL PRIMARY KEY,
 			year int NOT NULL,
+			sector_id int NOT NULL,
 			index int NOT NULL,
-			ratio double precision NOT NULL
-		);`,
+			ratio double precision NOT NULL,
+			FOREIGN KEY (sector_id) REFERENCES budget_sector (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
+			);`,
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {

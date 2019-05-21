@@ -13,7 +13,12 @@ type migrationEntry struct {
 	Query   string
 }
 
-var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`}
+var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
+	`DELETE FROM ratio`,
+	`ALTER TABLE ratio
+	ADD COLUMN sector_id int NOT NULL,
+	ADD CONSTRAINT ratio_sector_id_fkey FOREIGN KEY (sector_id) REFERENCES budget_sector (id) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE NO ACTION`}
 
 // HandleMigrations check if new migrations have been created and launches them
 // against the database
