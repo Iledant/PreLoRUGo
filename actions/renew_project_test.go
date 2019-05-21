@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
-
-	"github.com/Iledant/PreLoRUGo/models"
 )
 
 // testRenewProject is the entry point for testing all renew projet requests
@@ -22,17 +19,7 @@ func testRenewProject(t *testing.T, c *TestContext) {
 		testUpdateRenewProject(t, c, ID)
 		testGetRenewProjects(t, c)
 		testDeleteRenewProject(t, c, ID)
-		rp := models.RenewProject{Reference: "RP_TEST",
-			Name:           "Projet RU test",
-			Budget:         250000000,
-			Population:     models.NullInt64{Valid: false},
-			CompositeIndex: models.NullInt64{Valid: false}}
-		if err := rp.Create(c.DB); err != nil {
-			t.Error("Impossible de créer le projet de renouvellement de test")
-			t.FailNow()
-			return
-		}
-		c.RenewProjectID = rp.ID
+		testBatchRenewProject(t, c)
 	})
 }
 
@@ -68,18 +55,9 @@ func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 	for i, tc := range tcc {
 		response := c.E.POST("/api/renew_project").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateRenewProject[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateRenewProject[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "CreateRenewProject")
 		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"RenewProject":{"ID":%d`, &ID)
+			fmt.Sscanf(string(response.Content), `{"RenewProject":{"ID":%d`, &ID)
 		}
 	}
 	return ID
@@ -121,16 +99,7 @@ func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 	for i, tc := range tcc {
 		response := c.E.PUT("/api/renew_project").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UpdateRenewProject[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UpdateRenewProject[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "UpdateRenewProject")
 	}
 }
 
@@ -142,30 +111,16 @@ func testGetRenewProjects(t *testing.T, c *TestContext) {
 			RespContains: []string{`Token invalide`},
 			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
 		{Sent: []byte(`fake`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`"RenewProject"`, `"Name":"PRU2"`},
-			Count:        1,
-			StatusCode:   http.StatusOK}, // 1 : bad request
+			Token:         c.Config.Users.User.Token,
+			RespContains:  []string{`"RenewProject"`, `"Name":"PRU2"`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : bad request
 	}
 	for i, tc := range tcc {
 		response := c.E.GET("/api/renew_projects").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetRenewProjects[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetRenewProjects[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetRenewProjects[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "GetRenewProjects")
 	}
 }
 
@@ -193,15 +148,58 @@ func testDeleteRenewProject(t *testing.T, c *TestContext, ID int) {
 	for i, tc := range tcc {
 		response := c.E.DELETE("/api/renew_project/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("DeleteRenewProject[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
+		chkBodyStatusAndCount(t, tc, i, response, "DeleteRenewProject")
+	}
+}
+
+// testBatchRenewProject checks that route is admin protected and batch request
+// sends ok back
+func testBatchRenewProject(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: "fake",
+			RespContains: []string{`Token invalide`},
+			StatusCode:   http.StatusInternalServerError}, // 0 : bad token
+		{Token: c.Config.Users.User.Token,
+			RespContains: []string{`Droits administrateur requis`},
+			StatusCode:   http.StatusUnauthorized}, // 1 : user unauthorized
+		{Token: c.Config.Users.Admin.Token,
+			Sent: []byte(`RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000},
+			{"Reference":"PRU003","Name":"Site RU 2","Budget":150000000}]}`),
+			RespContains: []string{`Batch de projets de renouvellement, décodage`},
+			StatusCode:   http.StatusBadRequest}, // 2 : bad payload
+		{Token: c.Config.Users.Admin.Token,
+			Sent: []byte(`{"RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000},
+			{"Reference":"PRU002","Name":"Site RU 2","Budget":150000000}]}`),
+			RespContains: []string{`Batch de projets de renouvellement, requête`},
+			StatusCode:   http.StatusInternalServerError}, // 3 : duplicated reference
+		{Token: c.Config.Users.Admin.Token,
+			Sent: []byte(`{"RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000},
+			{"Reference":"PRU003","Name":"Site RU 2","Budget":150000000,"Population":10000,"CompositeIndex":12}]}`),
+			RespContains: []string{`Batch de projets de renouvellement importé`},
+			StatusCode:   http.StatusOK}, // 4 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.POST("/api/renew_projects").WithBytes(tc.Sent).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		chkBodyStatusAndCount(t, tc, i, response, "BatchRenewProject")
+		if tc.StatusCode == http.StatusOK {
+			var count int64
+			err := c.DB.QueryRow("SELECT count(1) FROM renew_project").Scan(&count)
+			if err != nil {
+				t.Errorf("Impossible de lire le nombre d'éléments insérés")
+				t.FailNow()
+				return
 			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("DeleteRenewProject[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+			if count != 2 {
+				t.Errorf("BatchRenewProject : 2 projets devaient être insérés, trouvés : %d", count)
+				t.FailNow()
+			}
+			err = c.DB.QueryRow("SELECT id FROM renew_project WHERE reference='PRU003'").Scan(&c.RenewProjectID)
+			if err != nil {
+				t.Errorf("Impossible de récupérer l'ID du projet de renouvellement")
+				t.FailNow()
+				return
+			}
 		}
 	}
 }

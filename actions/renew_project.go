@@ -90,3 +90,22 @@ func DeleteRenewProject(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Projet de renouvellement supprimé"})
 }
+
+// BatchRenewProjects handle the post request to update and insert a batch of
+// renew projects into the database
+func BatchRenewProjects(ctx iris.Context) {
+	var rp models.RenewProjectBatch
+	if err := ctx.ReadJSON(&rp); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Batch de projets de renouvellement, décodage : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := rp.Save(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de projets de renouvellement, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Batch de projets de renouvellement importé"})
+}

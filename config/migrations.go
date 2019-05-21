@@ -17,8 +17,16 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 	`DELETE FROM ratio`,
 	`ALTER TABLE ratio
 	ADD COLUMN sector_id int NOT NULL,
-	ADD CONSTRAINT ratio_sector_id_fkey FOREIGN KEY (sector_id) REFERENCES budget_sector (id) MATCH SIMPLE
-	ON UPDATE NO ACTION ON DELETE NO ACTION`}
+	ADD CONSTRAINT ratio_sector_id_fkey FOREIGN KEY (sector_id) REFERENCES 
+		budget_sector (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION`,
+	`CREATE VIEW cumulated_sold_commitment AS
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value, 
+			c.sold_out,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id,
+			c.copro_id,c.renew_project_id
+		FROM commitment c
+		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
+			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
+		ON c.id = q.id`}
 
 // HandleMigrations check if new migrations have been created and launches them
 // against the database

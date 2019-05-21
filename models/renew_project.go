@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 // RenewProject model
@@ -18,6 +19,20 @@ type RenewProject struct {
 // RenewProjects embeddes an array of RenewProject for json export
 type RenewProjects struct {
 	RenewProjects []RenewProject `json:"RenewProject"`
+}
+
+// RenewProjectLine is used to decode one line of renew projects batch
+type RenewProjectLine struct {
+	Reference      string    `json:"Reference"`
+	Name           string    `json:"Name"`
+	Budget         int64     `json:"Budget"`
+	Population     NullInt64 `json:"Population"`
+	CompositeIndex NullInt64 `json:"CompositeIndex"`
+}
+
+// RenewProjectBatch embeddes an array of RenewProjectLine
+type RenewProjectBatch struct {
+	Lines []RenewProjectLine `json:"RenewProject"`
 }
 
 // Validate checks if the fields of a renew project are correctly filled
@@ -89,5 +104,51 @@ func (r *RenewProject) Delete(db *sql.DB) (err error) {
 	if count != 1 {
 		return errors.New("Projet de renouvellement introuvable")
 	}
+	return nil
+}
+
+// Save validate the array of project and update or save all renew projects
+// against the database
+func (r *RenewProjectBatch) Save(db *sql.DB) error {
+	for i, l := range r.Lines {
+		if l.Name == "" || l.Reference == "" || l.Budget == 0 {
+			return fmt.Errorf("ligne %d : champs incorrects", i+1)
+		}
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(`INSERT INTO temp_renew_project 
+	(Reference, Name, Budget, Population, Composite_Index)
+	VALUES ($1,$2,$3,$4,$5)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, l := range r.Lines {
+		if _, err = stmt.Exec(l.Reference, l.Name, l.Budget, l.Population,
+			l.CompositeIndex); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
+		}
+	}
+	queries := []string{`UPDATE renew_project SET name=t.name, budget=t.budget,
+	population=t.population, composite_index=t.composite_index
+	FROM temp_renew_project t WHERE t.reference = renew_project.reference`,
+		`INSERT INTO renew_project (Reference, Name, Budget, Population, Composite_Index)
+	SELECT Reference, Name, Budget, Population, Composite_Index from temp_renew_project 
+		WHERE reference NOT IN (SELECT reference from renew_project)`,
+		`DELETE from temp_renew_project`,
+	}
+	for i, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d : %s", i, err.Error())
+		}
+
+	}
+	tx.Commit()
 	return nil
 }
