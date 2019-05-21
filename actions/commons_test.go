@@ -3,6 +3,8 @@ package actions
 import (
 	"database/sql"
 	"encoding/json"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/Iledant/PreLoRUGo/config"
@@ -25,12 +27,13 @@ type TestContext struct {
 
 // TestCase is used as common structure for all request tests
 type TestCase struct {
-	Sent         []byte
-	Token        string
-	RespContains []string
-	StatusCode   int
-	ID           int
-	Count        int
+	Sent          []byte
+	Token         string
+	RespContains  []string
+	StatusCode    int
+	ID            int
+	Count         int
+	CountItemName string
 }
 
 // TestAll embeddes all test functions and is the only test entry point
@@ -87,7 +90,8 @@ func initializeTests(t *testing.T) *TestContext {
 }
 
 func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
-	dropQueries := []string{`DROP VIEW IF EXISTS cumulated_commitment`,
+	dropQueries := []string{`DROP VIEW IF EXISTS cumulated_commitment, 
+	cumulated_sold_commitment`,
 		`DROP TABLE IF EXISTS copro, users, imported_commitment, 
 	commitment, imported_payment, payment, report, budget_action, beneficiary, 
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
@@ -316,6 +320,14 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
 		ON c.id = q.id;`, // 23 : cumulated_commitment view
+		`CREATE VIEW cumulated_sold_commitment AS
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value, c.sold_out,
+			c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
+			c.renew_project_id
+		FROM commitment c
+		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
+			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
+		ON c.id = q.id;`, // 24 : cumulated_sold_commitment view
 		`CREATE TABLE ratio (
 			id SERIAL PRIMARY KEY,
 			year int NOT NULL,
@@ -324,7 +336,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			ratio double precision NOT NULL,
 			FOREIGN KEY (sector_id) REFERENCES budget_sector (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
-			);`,
+			);`, // 25 : ratio
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
@@ -379,4 +391,28 @@ func fetchTokens(t *testing.T, ctx *TestContext) {
 		}
 		u.Token = lr.Token
 	}
+}
+
+// chkBodyStatusAndCount checks the status and the content of a response according
+// to the given test case. If test field CountItemName is filled, chkBodyStatusAndCount
+// checks also that the count of such elements is the one give in the Count field
+func chkBodyStatusAndCount(t *testing.T, tc TestCase, i int,
+	response *httpexpect.Response, name string) {
+	body := string(response.Content)
+	for _, r := range tc.RespContains {
+		if !strings.Contains(body, r) {
+			t.Errorf("%s[%d]\n  ->attendu %s\n  ->reçu: %s", name, i, r, body)
+		}
+	}
+	status := response.Raw().StatusCode
+	if status != tc.StatusCode {
+		t.Errorf("%s[%d]  ->status attendu %d  ->reçu: %d", name, i, tc.StatusCode, status)
+	}
+	if status == http.StatusOK && tc.CountItemName != "" {
+		count := strings.Count(body, tc.CountItemName)
+		if count != tc.Count {
+			t.Errorf("%s[%d]  ->nombre attendu %d  ->reçu: %d", name, i, tc.Count, count)
+		}
+	}
+
 }
