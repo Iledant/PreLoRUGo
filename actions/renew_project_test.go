@@ -47,10 +47,14 @@ func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : budget null
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000}}`),
+		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000,"CityCode1":0}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"RenewProject":{"ID":1,"Reference":"PRU001","Name":"PRU","Budget":250000000,"Population":null,"CompositeIndex":null}`},
-			StatusCode:   http.StatusCreated}, // 5 : ok
+			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			StatusCode:   http.StatusBadRequest}, // 5 : CityCode1 null
+		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000,"CityCode1":75101}}`),
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`"RenewProject":{"ID":1,"Reference":"PRU001","Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,"CityName1":"PARIS 1","CityCode2":null,"CityName2":null,"CityCode3":null,"CityName3":null,"Population":null,"CompositeIndex":null`},
+			StatusCode:   http.StatusCreated}, // 6 : ok
 	}
 	for i, tc := range tcc {
 		response := c.E.POST("/api/renew_project").WithBytes(tc.Sent).
@@ -87,13 +91,13 @@ func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : budget null
-		{Sent: []byte(`{"RenewProject":{"ID":0,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"Population":5400,"CompositeIndex":1}}`),
+		{Sent: []byte(`{"RenewProject":{"ID":0,"Reference":"PRU001","Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,"CityCode2":null,"CityCode3":null,"Population":null,"CompositeIndex":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement, requête : Projet de renouvellement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad ID
-		{Sent: []byte(`{"RenewProject":{"ID":` + strconv.Itoa(ID) + `,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"Population":5400,"CompositeIndex":1}}`),
+		{Sent: []byte(`{"RenewProject":{"ID":` + strconv.Itoa(ID) + `,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityCode2":75101,"CityCode3":78146,"Population":5400,"CompositeIndex":1}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"RenewProject":{"ID":1,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"Population":5400,"CompositeIndex":1}`},
+			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) + `,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","CityCode2":75101,"CityName2":"PARIS 1","CityCode3":78146,"CityName3":"CHATOU","Population":5400,"CompositeIndex":1}`},
 			StatusCode:   http.StatusCreated}, // 6 : ok
 	}
 	for i, tc := range tcc {
@@ -112,7 +116,7 @@ func testGetRenewProjects(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
 		{Sent: []byte(`fake`),
 			Token:         c.Config.Users.User.Token,
-			RespContains:  []string{`"RenewProject"`, `"Name":"PRU2"`},
+			RespContains:  []string{`"RenewProject"`, `"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","CityCode2":75101,"CityName2":"PARIS 1","CityCode3":78146,"CityName3":"CHATOU","Population":5400,"CompositeIndex":1`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : bad request
@@ -173,8 +177,8 @@ func testBatchRenewProject(t *testing.T, c *TestContext) {
 			RespContains: []string{`Batch de projets de renouvellement, requête`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : duplicated reference
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000},
-			{"Reference":"PRU003","Name":"Site RU 2","Budget":150000000,"Population":10000,"CompositeIndex":12}]}`),
+			Sent: []byte(`{"RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000,"PRIN":true,"CityCode1":75101,"CityCode2":null,"CityCode3":null,"Population":null,"CompositeIndex":null},
+			{"Reference":"PRU003","Name":"Site RU 2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityCode2":78146,"CityCode3":null,"Population":5400,"CompositeIndex":2}]}`),
 			RespContains: []string{`Batch de projets de renouvellement importé`},
 			StatusCode:   http.StatusOK}, // 4 : ok
 	}
@@ -193,6 +197,7 @@ func testBatchRenewProject(t *testing.T, c *TestContext) {
 			if count != 2 {
 				t.Errorf("BatchRenewProject : 2 projets devaient être insérés, trouvés : %d", count)
 				t.FailNow()
+				return
 			}
 			err = c.DB.QueryRow("SELECT id FROM renew_project WHERE reference='PRU003'").Scan(&c.RenewProjectID)
 			if err != nil {

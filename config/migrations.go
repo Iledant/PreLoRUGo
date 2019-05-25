@@ -26,7 +26,24 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 		FROM commitment c
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
-		ON c.id = q.id`}
+		ON c.id = q.id`,
+	`ALTER TABLE renew_project
+		ADD column prin bool NOT NULL,
+		ADD column city_code1 int NOT NULL,
+		ADD column city_code2 int,
+		ADD column city_code3 int,
+		ADD CONSTRAINT city_code1_city_insee_code_fkey FOREIGN KEY (city_code1) REFERENCES
+		  city(insee_code) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+		ADD CONSTRAINT city_code2_city_insee_code_fkey FOREIGN KEY (city_code2) REFERENCES
+		  city(insee_code) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+		ADD CONSTRAINT city_code3_city_insee_code_fkey FOREIGN KEY (city_code3) REFERENCES
+		  city(insee_code) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION`,
+	`ALTER TABLE temp_renew_project
+		ADD column prin bool NOT NULL,
+		ADD column city_code1 int NOT NULL,
+		ADD column city_code2 int,
+		ADD column city_code3 int`,
+}
 
 // HandleMigrations check if new migrations have been created and launches them
 // against the database

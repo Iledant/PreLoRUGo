@@ -42,6 +42,8 @@ type TestCase struct {
 func TestAll(t *testing.T) {
 	cfg := initializeTests(t)
 	testUser(t, cfg)
+	testCommunity(t, cfg)
+	testCity(t, cfg)
 	testCopro(t, cfg)
 	testBudgetAction(t, cfg)
 	testRenewProject(t, cfg)
@@ -52,8 +54,6 @@ func TestAll(t *testing.T) {
 	testBudgetSector(t, cfg)
 	testCommitmentLink(t, cfg)
 	testCommission(t, cfg)
-	testCommunity(t, cfg)
-	testCity(t, cfg)
 	testRenewProjectForecast(t, cfg)
 	testCoproForecast(t, cfg)
 	testSettings(t, cfg)
@@ -114,6 +114,29 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 		password varchar(120) NOT NULL,
 		rights int NOT NULL
 		);`, // 0 : users
+		`CREATE TABLE community (
+	    id SERIAL PRIMARY KEY,
+	    code varchar(15) NOT NULL,
+	    name varchar(150) NOT NULL
+		);`, // 1 : community
+		`CREATE TABLE temp_community (
+	    code varchar(15) NOT NULL,
+	    name varchar(150) NOT NULL
+		);`, // 2 : temp_community
+		`CREATE TABLE city (
+	    insee_code int NOT NULL PRIMARY KEY,
+	    name varchar(50) NOT NULL,
+			community_id int,
+			qpv boolean NOT NULL,
+			FOREIGN KEY (community_id) REFERENCES community (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
+		);`, // 3 : city
+		`CREATE TABLE temp_city (
+	    insee_code int NOT NULL UNIQUE,
+	    name varchar(50) NOT NULL,
+	    community_code varchar(15),
+			qpv boolean NOT NULL
+		);`, // 4 : temp_city
 		`CREATE TABLE copro (
 			id SERIAL PRIMARY KEY,
 			reference varchar(15) NOT NULL,
@@ -122,7 +145,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			zip_code int NOT NULL,
 			label_date date,
 			budget bigint
-		);`, // 1 : copro
+		);`, // 5 : copro
 		`CREATE TABLE temp_copro (
 			reference varchar(150) NOT NULL,
 			name varchar(150) NOT NULL,
@@ -130,33 +153,47 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			zip_code int NOT NULL,
 			label_date date,
 			budget bigint
-		);`, // 2 : temp_copro
+		);`, // 6 : temp_copro
 		`CREATE TABLE budget_sector (
 			id SERIAL PRIMARY KEY,
 			name varchar(20) NOT NULL,
 	    full_name varchar(150)
-		);`, // 3 : budget_sector
+		);`, // 7 : budget_sector
 		`CREATE TABLE budget_action (
 			id SERIAL PRIMARY KEY,
 			code bigint NOT NULL,
 			name varchar(250) NOT NULL,
 			sector_id int
-		);`, // 4 : budget_action
+		);`, // 8 : budget_action
 		`CREATE TABLE renew_project (
 			id SERIAL PRIMARY KEY,
 			reference varchar(15) NOT NULL UNIQUE,
 			name varchar(150) NOT NULL,
 			budget bigint NOT NULL,
+			prin bool NOT NULL,
+			city_code1 int NOT NULL,
+			city_code2 int,
+			city_code3 int,			
 			population int,
-			composite_index int
-		);`, // 5 : renew_project
+			composite_index int,
+			FOREIGN KEY (city_code1) REFERENCES city(insee_code) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+			FOREIGN KEY (city_code2) REFERENCES city(insee_code) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+			FOREIGN KEY (city_code3) REFERENCES city(insee_code) 
+			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
+		);`, // 9 : renew_project
 		`CREATE TABLE temp_renew_project (
 			reference varchar(15) NOT NULL UNIQUE,
 			name varchar(150) NOT NULL,
 			budget bigint NOT NULL,	
+			prin bool NOT NULL,
+			city_code1 int NOT NULL,
+			city_code2 int,
+			city_code3 int,			
 			population int,
 			composite_index int
-		);`, // 6 : temp_renew_project
+		);`, // 10 : temp_renew_project
 		`CREATE TABLE housing (
 	    id SERIAL PRIMARY KEY,
 	    reference varchar(100) NOT NULL,
@@ -166,7 +203,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    plus int NOT NULL,
 	    pls int NOT NULL,
 			anru boolean NOT NULL
-		);`, // 7 : housing
+		);`, // 11 : housing
 		`CREATE TABLE temp_housing (
 	    reference varchar(100) NOT NULL,
 	    address varchar(150),
@@ -175,12 +212,12 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    plus int NOT NULL,
 	    pls int NOT NULL,
 	    anru boolean NOT NULL
-		);`, // 8 : temp_housing
+		);`, // 12 : temp_housing
 		`CREATE TABLE beneficiary (
 	    id SERIAL PRIMARY KEY,
 	    code int NOT NULL,
 	    name varchar(120) NOT NULL
-		);`, // 9 : beneficiary
+		);`, // 13 : beneficiary
 		`CREATE TABLE commitment (
 	    id SERIAL PRIMARY KEY,
 	    year int NOT NULL,
@@ -208,7 +245,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
 			FOREIGN KEY (action_id) REFERENCES budget_action(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION
-		);`, // 10 : commitment
+		);`, // 14 : commitment
 		`CREATE TABLE temp_commitment (
 	    year int NOT NULL,
 	    code varchar(5) NOT NULL,
@@ -225,7 +262,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			sector varchar(5) NOT NULL,
 			action_code bigint,
 			action_name varchar(150)
-		);`, // 11 : temp_commitment
+		);`, // 15 : temp_commitment
 		`CREATE TABLE payment (
 	    id SERIAL PRIMARY KEY,
 	    commitment_id int,
@@ -240,7 +277,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			value bigint NOT NULL,
 			FOREIGN KEY (commitment_id) REFERENCES commitment (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
-				);`, // 12 : payment
+		);`, // 16 : payment
 		`CREATE TABLE temp_payment (
 	    commitment_year int NOT NULL,
 	    commitment_code varchar(5) NOT NULL,
@@ -251,35 +288,12 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			modification_date date NOT NULL,
 			number int NOT NULL,
 	    value bigint NOT NULL
-		);`, // 13 : temp_payment
+		);`, // 17 : temp_payment
 		`CREATE TABLE commission (
 	    id SERIAL PRIMARY KEY,
 	    name varchar(140) NOT NULL,
 	    date date
-		);`, // 14 : commission
-		`CREATE TABLE community (
-	    id SERIAL PRIMARY KEY,
-	    code varchar(15) NOT NULL,
-	    name varchar(150) NOT NULL
-		);`, // 15 : community
-		`CREATE TABLE temp_community (
-	    code varchar(15) NOT NULL,
-	    name varchar(150) NOT NULL
-		);`, // 16 : temp_community
-		`CREATE TABLE city (
-	    insee_code int NOT NULL PRIMARY KEY,
-	    name varchar(50) NOT NULL,
-			community_id int,
-			qpv boolean NOT NULL,
-			FOREIGN KEY (community_id) REFERENCES community (id) MATCH SIMPLE
-			ON UPDATE NO ACTION ON DELETE NO ACTION
-		);`, // 17 : city
-		`CREATE TABLE temp_city (
-	    insee_code int NOT NULL UNIQUE,
-	    name varchar(50) NOT NULL,
-	    community_code varchar(15),
-			qpv boolean NOT NULL
-		);`, // 18 : temp_city
+		);`, // 18 : commission
 		`CREATE TABLE renew_project_forecast (
 	    id SERIAL PRIMARY KEY,
 	    commission_id int NOT NULL,

@@ -59,13 +59,27 @@ func UpdateRenewProject(ctx iris.Context) {
 	ctx.JSON(req)
 }
 
-// GetRenewProjects handles the get request to handle all renew projets
+// renewProjectsResp embeddes the renew projects and the cities to the frontend
+// in a single request
+type renewProjectsResp struct {
+	models.Cities
+	models.RenewProjects
+}
+
+// GetRenewProjects handles the get request to handle all renew projets. In order
+// to avoid multiples request from the front end, it also includes the list of
+// the cities
 func GetRenewProjects(ctx iris.Context) {
-	var resp models.RenewProjects
+	var resp renewProjectsResp
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := resp.GetAll(db); err != nil {
+	if err := resp.RenewProjects.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête RU : " + err.Error()})
+		return
+	}
+	if err := resp.Cities.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête villes : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
