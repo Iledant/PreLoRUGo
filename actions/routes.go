@@ -91,7 +91,9 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	userParty.Post("/user/logout", Logout)
 	userParty.Get("/budget_actions", GetBudgetActions)
 	userParty.Get("/copro", GetCopros)
+
 	userParty.Get("/renew_projects", GetRenewProjects)
+	userParty.Get("/renew_project/{ID}/datas", GetRenewProjectDatas)
 
 	userParty.Get("/housings", GetHousings)
 	userParty.Get("/housings/paginated", GetPaginatedHousings)

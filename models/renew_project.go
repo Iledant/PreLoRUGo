@@ -54,6 +54,19 @@ func (r *RenewProject) Validate() error {
 	return nil
 }
 
+// GetByID fetches all fields from a renew project whose ID is given
+func (r *RenewProject) GetByID(db *sql.DB) error {
+	return db.QueryRow(`SELECT r.reference,r.name, r.budget,r.prin,r.city_code1, c1.name,
+	r.city_code2,c2.name,r.city_code3,c3.name,r.population,r.composite_index
+	FROM renew_project r
+	JOIN city c1 ON r.city_code1=c1.insee_code
+	LEFT JOIN city c2 ON r.city_code2=c2.insee_code
+	LEFT JOIN city c3 ON r.city_code3=c3.insee_code
+	WHERE r.id=$1`, r.ID).Scan(&r.Reference, &r.Name, &r.Budget, &r.PRIN, 
+		&r.CityCode1,&r.CityName1,&r.CityCode2, &r.CityName2,&r.CityCode3,
+		&r.CityName3,&r.Population,&r.CompositeIndex)
+}
+
 // Create insert a renew project into database returning it's ID
 func (r *RenewProject) Create(db *sql.DB) (err error) {
 	err = db.QueryRow(`INSERT INTO renew_project (reference,name,budget,prin,

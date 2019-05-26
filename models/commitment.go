@@ -248,6 +248,32 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	return err
 }
 
+// GetLinkedToRenewProject fetches all Commitments from database linked to a renew
+// project whose ID is given
+func (c *Commitments) GetLinkedToRenewProject(ID int64, db *sql.DB) (err error) {
+	rows, err := db.Query(`SELECT id,year,code,number,line,creation_date,
+	modification_date,name,value,sold_out, beneficiary_id,iris_code, action_id 
+	FROM commitment WHERE renew_project_id=$1`, ID)
+	if err != nil {
+		return err
+	}
+	var row Commitment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
+			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
+			&row.SoldOut, &row.BeneficiaryID, &row.IrisCode, &row.ActionID); err != nil {
+			return err
+		}
+		c.Commitments = append(c.Commitments, row)
+	}
+	err = rows.Err()
+	if len(c.Commitments) == 0 {
+		c.Commitments = []Commitment{}
+	}
+	return err
+}
+
 // Save insert a batch of CommitmentLine into database
 func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 	tx, err := db.Begin()

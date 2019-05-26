@@ -18,6 +18,7 @@ func testRenewProject(t *testing.T, c *TestContext) {
 		}
 		testUpdateRenewProject(t, c, ID)
 		testGetRenewProjects(t, c)
+		testGetRenewProjectDatas(t, c, ID)
 		testDeleteRenewProject(t, c, ID)
 		testBatchRenewProject(t, c)
 	})
@@ -206,5 +207,32 @@ func testBatchRenewProject(t *testing.T, c *TestContext) {
 				return
 			}
 		}
+	}
+}
+
+// testGetRenewProjectDatas checks that route is user protected and datas sent
+// have correct fields
+func testGetRenewProjectDatas(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		{Token: "",
+			RespContains: []string{`Token absent`},
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			ID:           0,
+			RespContains: []string{`Datas de projet de renouvellement, requête renewProject :`},
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
+		{Token: c.Config.Users.User.Token,
+			ID: ID,
+			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) + `,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","CityCode2":75101,"CityName2":"PARIS 1","CityCode3":78146,"CityName3":"CHATOU","Population":5400,"CompositeIndex":1}`,
+				`"Commitment"`, `"Payment"`},
+			Count:         1,
+			CountItemName: "Reference",
+			StatusCode:    http.StatusOK}, // 2 : ok
+	}
+
+	for i, tc := range tcc {
+		response := c.E.GET("/api/renew_project/"+strconv.Itoa(tc.ID)+"/datas").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		chkBodyStatusAndCount(t, tc, i, response, "GetRenewProjectData")
 	}
 }

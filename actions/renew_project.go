@@ -13,6 +13,44 @@ type renewProjectReq struct {
 	RenewProject models.RenewProject `json:"RenewProject"`
 }
 
+// renewProjectDataResp embeddes the data for the get renew project datas request
+type renewProjectDataResp struct {
+	RenewProject models.RenewProject `json:"RenewProject"`
+	Commitments  models.Commitments  `json:"Commitment"`
+	Payments     models.Payments     `json:"Payment"`
+}
+
+// GetRenewProjectDatas handles the get request to get renew project fields and
+// related datas
+func GetRenewProjectDatas(ctx iris.Context) {
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Datas de projet de renouvellement, paramètre : " + err.Error()})
+		return
+	}
+	var resp renewProjectDataResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	resp.RenewProject.ID = ID
+	if err = resp.RenewProject.GetByID(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête renewProject : " + err.Error()})
+		return
+	}
+	if err = resp.Commitments.GetLinkedToRenewProject(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête commitments : " + err.Error()})
+		return
+	}
+	if err = resp.Payments.GetLinkedToRenewProject(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête commitments : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // CreateRenewProject handles the post request to create a renew project
 func CreateRenewProject(ctx iris.Context) {
 	var req renewProjectReq
