@@ -163,7 +163,7 @@ func isRenewProject(ctx iris.Context) (bool, error) {
 		return false, err
 	}
 	return u.Rights&models.ActiveRenewProjectMask == models.ActiveRenewProjectMask ||
-		u.Rights&models.ActiveAdminMask != models.ActiveAdminMask ||
+		u.Rights&models.ActiveAdminMask == models.ActiveAdminMask ||
 		u.Rights&models.SuperAdminBit != 0, nil
 }
 
@@ -247,7 +247,7 @@ func CoproMiddleware(ctx iris.Context) {
 // RenewProjectMiddleware checks if there's a valid token and user is active and
 // has rights on renew projects otherwise prompt error
 func RenewProjectMiddleware(ctx iris.Context) {
-	renewProject, err := isActive(ctx)
+	renewProject, err := isRenewProject(ctx)
 	if err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{err.Error()})
