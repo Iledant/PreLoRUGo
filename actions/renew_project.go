@@ -16,8 +16,8 @@ type renewProjectReq struct {
 // renewProjectDataResp embeddes the data for the get renew project datas request
 type renewProjectDataResp struct {
 	RenewProject models.RenewProject `json:"RenewProject"`
-	Commitments  models.Commitments  `json:"Commitment"`
-	Payments     models.Payments     `json:"Payment"`
+	models.RPLinkedCommitments
+	models.Payments
 }
 
 // GetRenewProjectDatas handles the get request to get renew project fields and
@@ -37,7 +37,7 @@ func GetRenewProjectDatas(ctx iris.Context) {
 		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête renewProject : " + err.Error()})
 		return
 	}
-	if err = resp.Commitments.GetLinkedToRenewProject(ID, db); err != nil {
+	if err = resp.RPLinkedCommitments.Get(ID, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête commitments : " + err.Error()})
 		return

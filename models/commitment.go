@@ -141,6 +141,33 @@ type TwoYearsCommitments struct {
 	PreviousYear []MonthCumulatedValue `json:"PreviousYear"`
 }
 
+// RPLinkedCommitment is used for the renew project linked data project and add
+// beneficiary name to the commitment fields
+type RPLinkedCommitment struct {
+	ID               int64      `json:"ID"`
+	Year             int64      `json:"Year"`
+	Code             string     `json:"Code"`
+	Number           int64      `json:"Number"`
+	Line             int64      `json:"Line"`
+	CreationDate     time.Time  `json:"CreationDate"`
+	ModificationDate time.Time  `json:"ModificationDate"`
+	Name             string     `json:"Name"`
+	Value            int64      `json:"Value"`
+	SoldOut          bool       `json:"SoldOut"`
+	BeneficiaryID    int64      `json:"BeneficiaryID"`
+	BeneficiaryName  string     `json:"BeneficiaryName"`
+	ActionID         int64      `json:"ActionID"`
+	IrisCode         NullString `json:"IrisCode"`
+	HousingID        NullInt64  `json:"HousingID"`
+	CoproID          NullInt64  `json:"CoproID"`
+	RenewProjectID   NullInt64  `json:"RenewProjectID"`
+}
+
+// RPLinkedCommitments embeddes an array of RPLinkedCommitment for json export
+type RPLinkedCommitments struct {
+	Commitments []RPLinkedCommitment `json:"Commitment"`
+}
+
 // Get fetches the results of a paginated commitment query
 func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	var count int64
@@ -248,28 +275,31 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	return err
 }
 
-// GetLinkedToRenewProject fetches all Commitments from database linked to a renew
+// Get fetches all Commitments from database linked to a renew
 // project whose ID is given
-func (c *Commitments) GetLinkedToRenewProject(ID int64, db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id,year,code,number,line,creation_date,
-	modification_date,name,value,sold_out, beneficiary_id,iris_code, action_id 
-	FROM commitment WHERE renew_project_id=$1`, ID)
+func (c *RPLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
+	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
+	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
+	b.name,c.iris_code,c.action_id FROM commitment c
+	JOIN beneficiary b on c.beneficiary_id=b.id 
+	WHERE renew_project_id=$1`, ID)
 	if err != nil {
 		return err
 	}
-	var row Commitment
+	var row RPLinkedCommitment
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.IrisCode, &row.ActionID); err != nil {
+			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
+			&row.ActionID); err != nil {
 			return err
 		}
 		c.Commitments = append(c.Commitments, row)
 	}
 	err = rows.Err()
 	if len(c.Commitments) == 0 {
-		c.Commitments = []Commitment{}
+		c.Commitments = []RPLinkedCommitment{}
 	}
 	return err
 }
