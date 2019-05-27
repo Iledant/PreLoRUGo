@@ -151,7 +151,7 @@ func isCopro(ctx iris.Context) (bool, error) {
 		return false, err
 	}
 	return u.Rights&models.ActiveCoproMask == models.ActiveCoproMask ||
-		u.Rights&models.ActiveAdminMask != models.ActiveAdminMask ||
+		u.Rights&models.ActiveAdminMask == models.ActiveAdminMask ||
 		u.Rights&models.SuperAdminBit != 0, nil
 }
 

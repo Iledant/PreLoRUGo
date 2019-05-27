@@ -3,6 +3,7 @@ package actions
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -359,41 +360,51 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			return
 		}
 	}
-	admin := models.User{Name: "Christophe Saintillan",
-		Email:    cfg.Users.Admin.Email,
-		Password: cfg.Users.Admin.Password,
-		Rights:   models.AdminBit | models.ActiveBit}
-	if err := admin.CryptPwd(); err != nil {
-		t.Error("Cryptage mot de passe admin : " + err.Error())
-		t.FailNow()
-		return
+	users := []models.User{
+		{Name: "Christophe Saintillan",
+			Email:    cfg.Users.Admin.Email,
+			Password: cfg.Users.Admin.Password,
+			Rights:   models.AdminBit | models.ActiveBit},
+		{Name: "Utilisateur",
+			Email:    cfg.Users.User.Email,
+			Password: cfg.Users.User.Password,
+			Rights:   models.ActiveBit},
+		{Name: "Utilisateur copro",
+			Email:    cfg.Users.CoproUser.Email,
+			Password: cfg.Users.CoproUser.Password,
+			Rights:   models.ActiveCoproMask},
+		{Name: "Utilisateur RU",
+			Email:    cfg.Users.RenewProjectUser.Email,
+			Password: cfg.Users.RenewProjectUser.Password,
+			Rights:   models.ActiveRenewProjectMask},
 	}
-	if err := admin.Create(db); err != nil {
-		t.Error("Requête admin create : " + err.Error())
-		t.FailNow()
-		return
+	for _, u := range users {
+		if err := createUser(&u, db); err != nil {
+			t.Error(err.Error())
+			t.FailNow()
+			return
+		}
 	}
-	user := models.User{Name: "Utilisateur",
-		Email:    cfg.Users.User.Email,
-		Password: cfg.Users.User.Password,
-		Rights:   models.ActiveBit | models.CoproBit | models.RenewProjectBit}
-	if err := user.CryptPwd(); err != nil {
-		t.Error("Cryptage mot de passe user : " + err.Error())
-		t.FailNow()
-		return
+}
+
+// createUser creates an new user in the test database
+func createUser(u *models.User, db *sql.DB) error {
+	if err := u.CryptPwd(); err != nil {
+		return fmt.Errorf("Cryptage du mot de passe de %s : %v", u.Name, err)
 	}
-	if err := user.Create(db); err != nil {
-		t.Error("Requête user create : " + err.Error())
-		t.FailNow()
-		return
+	if err := u.Create(db); err != nil {
+		return fmt.Errorf("Création en base de données de %s : %v", u.Name, err)
 	}
+	return nil
 }
 
 // fetchTokens uses the login request to store an admin and an user token
 func fetchTokens(t *testing.T, ctx *TestContext) {
 	for _, u := range []*config.Credentials{
 		&ctx.Config.Users.Admin,
-		&ctx.Config.Users.User} {
+		&ctx.Config.Users.User,
+		&ctx.Config.Users.CoproUser,
+		&ctx.Config.Users.RenewProjectUser} {
 		response := ctx.E.POST("/api/user/login").
 			WithBytes([]byte(`{"Email":"` + u.Email + `","Password":"` + u.Password + `"}`)).
 			Expect()

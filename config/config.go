@@ -21,8 +21,10 @@ type PreLoRuGoConf struct {
 
 // Users includes users credentials for test purposes.
 type Users struct {
-	Admin Credentials
-	User  Credentials
+	Admin            Credentials
+	User             Credentials
+	CoproUser        Credentials `yaml:"coprouser"`
+	RenewProjectUser Credentials `yaml:"renewprojectuser"`
 }
 
 // Databases includes the 3 databases settings for production, development and tests.

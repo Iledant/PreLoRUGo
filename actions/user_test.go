@@ -136,16 +136,7 @@ func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 	for i, tc := range tcc {
 		response := c.E.PUT("/api/user/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UpdateUser[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UpdateUser[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "UpdateUser")
 	}
 }
 
@@ -180,16 +171,7 @@ func testChangeUserPwd(t *testing.T, c *TestContext) {
 	for i, tc := range tcc {
 		response := c.E.POST("/api/user/password").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("ChangeUserPwd[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("ChangeUserPwd[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "ChangeUserPwd")
 	}
 }
 
@@ -200,29 +182,15 @@ func testGetUsers(t *testing.T, c *TestContext) {
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Christophe Saintillan"`, `"essai2"`, `"Utilisateur"`},
-			Count:        3,
-			StatusCode:   http.StatusOK}, // 0 : user unauthorized
+			RespContains:  []string{`"Christophe Saintillan"`, `"essai2"`, `"Utilisateur"`},
+			Count:         5,
+			CountItemName: "ID",
+			StatusCode:    http.StatusOK}, // 0 : user unauthorized
 	}
 	for i, tc := range tcc {
 		response := c.E.GET("/api/users").WithHeader("Authorization", "Bearer "+tc.Token).
 			Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetUsers[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetUsers[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.Count != 0 {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetUsers[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "GetUsers")
 	}
 }
 
@@ -245,16 +213,7 @@ func testDeleteUser(t *testing.T, c *TestContext, ID int) {
 	for i, tc := range tcc {
 		response := c.E.DELETE("/api/user/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("DeleteUser[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("DeleteUser[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "DeleteUser")
 	}
 }
 
@@ -282,15 +241,6 @@ func testSignUp(t *testing.T, c *TestContext) {
 	}
 	for i, tc := range tcc {
 		response := c.E.POST("/api/user/sign_up").WithBytes(tc.Sent).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("SignUp[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("SignUp[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "SignUp")
 	}
 }

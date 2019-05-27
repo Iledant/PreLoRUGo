@@ -76,15 +76,17 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	adminParty.Delete("/renew_project_forecast/{ID}", DeleteRenewProjectForecast)
 	adminParty.Post("/renew_project_forecasts", BatchRenewProjectForecasts)
 
-	adminParty.Post("/copro_forecast", CreateCoproForecast)
-	adminParty.Put("/copro_forecast", UpdateCoproForecast)
-	adminParty.Delete("/copro_forecast/{ID}", DeleteCoproForecast)
 	adminParty.Post("/copro_forecasts", BatchCoproForecasts)
 
 	adminParty.Get("/settings", GetSettings)
 
 	adminParty.Post("/ratios", BatchPmtRatios)
 	adminParty.Get("/ratios/years", GetPmtRatiosYears)
+
+	coproUserParty := api.Party("", CoproMiddleware)
+	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
+	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
+	coproUserParty.Delete("/copro_forecast/{ID}", DeleteCoproForecast)
 
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
