@@ -242,6 +242,56 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	return err
 }
 
+// GetUnlinked fetches the commitments whose housing_id, copro_id and
+// renew_project_id are null and that matches the query using the paginated format
+func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error {
+	var count int64
+	if err := db.QueryRow(`SELECT count(1) FROM commitment c 
+		JOIN beneficiary b on c.beneficiary_id=b.id
+		JOIN budget_action a ON a.id = c.action_id
+		JOIN budget_sector s ON s.id=a.sector_id 
+		WHERE year >= $1 AND housing_id IS NULL AND renew_project_id IS NULL AND
+			copro_id IS NULL AND
+			(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
+				OR b.name ILIKE $2 OR a.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
+		Scan(&count); err != nil {
+		return errors.New("count query failed " + err.Error())
+	}
+	offset, newPage := GetPaginateParams(c.Page, count)
+	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
+	c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,b.name,
+	c.iris_code,a.name,s.name FROM commitment c
+	JOIN beneficiary b ON c.beneficiary_id = b.id
+	JOIN budget_action a ON a.id = c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id 
+	WHERE year >= $1 AND housing_id IS NULL AND renew_project_id IS NULL AND
+	copro_id IS NULL AND (c.name ILIKE $2  OR c.number::varchar ILIKE $2 OR 
+		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
+	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+		c.Year, "%"+c.Search+"%", offset)
+	if err != nil {
+		return err
+	}
+	var row PaginatedCommitment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
+			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
+			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
+			&row.ActionName, &row.Sector); err != nil {
+			return err
+		}
+		p.Commitments = append(p.Commitments, row)
+	}
+	err = rows.Err()
+	if len(p.Commitments) == 0 {
+		p.Commitments = []PaginatedCommitment{}
+	}
+	p.Page = newPage
+	p.ItemsCount = count
+	return err
+}
+
 // Get fetches the results of exported commitments
 func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,

@@ -50,6 +50,35 @@ func GetPaginatedCommitments(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
+// GetUnlinkedCommitments handles the get request to fetch all commitments that
+// match the given pattern and are not linked to a copro, housing or renew project
+//  and return a paginated struct with commitments, page number and total page count
+func GetUnlinkedCommitments(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page d'engagements non liés, décodage Year : " + err.Error()})
+		return
+	}
+	page, err := ctx.URLParamInt64("Page")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page d'engagements non liés, décodage Page : " + err.Error()})
+		return
+	}
+	search := ctx.URLParam("Search")
+	req := models.PaginatedQuery{Year: year, Page: page, Search: search}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.PaginatedCommitments
+	if err := resp.GetUnlinked(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page d'engagements non liés, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // ExportCommitments handles the get request to fetch all commitments that
 // match the given pattern and return a list of commitments with full names
 func ExportCommitments(ctx iris.Context) {
