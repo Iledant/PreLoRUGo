@@ -89,9 +89,9 @@ func (c *Copro) Delete(db *sql.DB) (err error) {
 }
 
 // Get fetches the copro whose ID is given
-func (c *Copro) Get(ID int, db *sql.DB) (err error) {
+func (c *Copro) Get(db *sql.DB) (err error) {
 	err = db.QueryRow(`SELECT id,reference,name,address,zip_code,label_date,budget 
-	FROM copro WHERE id = $1`, ID).Scan(&c.ID, &c.Reference, &c.Name, &c.Address,
+	FROM copro WHERE id = $1`, c.ID).Scan(&c.ID, &c.Reference, &c.Name, &c.Address,
 		&c.ZipCode, &c.LabelDate, &c.Budget)
 	return err
 }

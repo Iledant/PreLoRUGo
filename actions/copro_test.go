@@ -21,6 +21,7 @@ func testCopro(t *testing.T, c *TestContext) {
 		}
 		testModifyCopro(t, c, ID)
 		testGetCopros(t, c)
+		testGetCoproDatas(t, c, ID)
 		testDeleteCopro(t, c, ID)
 		testBatchCopros(t, c)
 		copro := models.Copro{Reference: "RefCoproTest",
@@ -162,6 +163,30 @@ func testGetCopros(t *testing.T, c *TestContext) {
 				t.Errorf("GetCopros[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
 			}
 		}
+	}
+}
+
+// testGetCoproDatas check route is protected and copro datas are correctly sent back
+func testGetCoproDatas(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		{Token: "",
+			RespContains: []string{`Token absent`},
+			StatusCode:   http.StatusInternalServerError}, // 0 : no token
+		{Token: c.Config.Users.User.Token,
+			RespContains: []string{`Données d'une copropriété, requête copro :`},
+			ID:           0,
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
+		{Token: c.Config.Users.User.Token,
+			RespContains:  []string{`"Copro"`, `"Commitment"`, `"Payment"`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			ID:            ID,
+			StatusCode:    http.StatusOK}, // 2 : ok
+	}
+	for i, tc := range tcc {
+		response := c.E.GET("/api/copro/"+strconv.Itoa(tc.ID)+"/datas").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+		chkBodyStatusAndCount(t, tc, i, response, "GetCoprosDatas")
 	}
 }
 

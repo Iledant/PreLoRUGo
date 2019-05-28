@@ -152,6 +152,32 @@ func (p *Payments) GetLinkedToRenewProject(ID int64, db *sql.DB) (err error) {
 	return err
 }
 
+// GetLinkedToCopro fetches all Payments from database
+func (p *Payments) GetLinkedToCopro(ID int64, db *sql.DB) (err error) {
+	rows, err := db.Query(`SELECT p.id,p.commitment_id,p.commitment_year,p.commitment_code,
+	p.commitment_number,p.commitment_line,p.year,p.creation_date,p.modification_date,
+	p.number,p.value FROM payment p
+	JOIN commitment c ON p.commitment_id = c.id WHERE c.copro_id=$1`, ID)
+	if err != nil {
+		return err
+	}
+	var row Payment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.CommitmentID, &row.CommitmentYear,
+			&row.CommitmentCode, &row.CommitmentNumber, &row.CommitmentLine, &row.Year,
+			&row.CreationDate, &row.ModificationDate, &row.Number, &row.Value); err != nil {
+			return err
+		}
+		p.Payments = append(p.Payments, row)
+	}
+	err = rows.Err()
+	if len(p.Payments) == 0 {
+		p.Payments = []Payment{}
+	}
+	return err
+}
+
 // Save insert a batch of PaymentLine into database
 func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 	tx, err := db.Begin()

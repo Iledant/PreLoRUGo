@@ -49,6 +49,44 @@ func CreateCopro(ctx iris.Context) {
 	ctx.JSON(c)
 }
 
+// coproDatasResp embeddes the different datas for the get copro datas request
+type coproDatasResp struct {
+	Copro                         models.Copro `json:"Copro"`
+	models.CoproLinkedCommitments `json:"Commitment"`
+	models.Payments               `json:"Payment"`
+}
+
+// GetCoproDatas handle the get request to fetch copro fields, commitments and
+// payments linked to that copro
+func GetCoproDatas(ctx iris.Context) {
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, paramètre : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp coproDatasResp
+	resp.Copro.ID = ID
+	if err = resp.Copro.Get(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête copro : " + err.Error()})
+		return
+	}
+	if err = resp.CoproLinkedCommitments.Get(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête commitment : " + err.Error()})
+		return
+	}
+	if err = resp.Payments.GetLinkedToCopro(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête payment : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // ModifyCopro handles the put request to modify a copro
 func ModifyCopro(ctx iris.Context) {
 	var c coproReq

@@ -168,6 +168,33 @@ type RPLinkedCommitments struct {
 	Commitments []RPLinkedCommitment `json:"Commitment"`
 }
 
+// CoproLinkedCommitment is used for the renew project linked data project and add
+// beneficiary name to the commitment fields
+type CoproLinkedCommitment struct {
+	ID               int64      `json:"ID"`
+	Year             int64      `json:"Year"`
+	Code             string     `json:"Code"`
+	Number           int64      `json:"Number"`
+	Line             int64      `json:"Line"`
+	CreationDate     time.Time  `json:"CreationDate"`
+	ModificationDate time.Time  `json:"ModificationDate"`
+	Name             string     `json:"Name"`
+	Value            int64      `json:"Value"`
+	SoldOut          bool       `json:"SoldOut"`
+	BeneficiaryID    int64      `json:"BeneficiaryID"`
+	BeneficiaryName  string     `json:"BeneficiaryName"`
+	ActionID         int64      `json:"ActionID"`
+	IrisCode         NullString `json:"IrisCode"`
+	HousingID        NullInt64  `json:"HousingID"`
+	CoproID          NullInt64  `json:"CoproID"`
+	RenewProjectID   NullInt64  `json:"RenewProjectID"`
+}
+
+// CoproLinkedCommitments embeddes an array of RPLinkedCommitment for json export
+type CoproLinkedCommitments struct {
+	Commitments []CoproLinkedCommitment `json:"Commitment"`
+}
+
 // Get fetches the results of a paginated commitment query
 func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	var count int64
@@ -300,6 +327,34 @@ func (c *RPLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	err = rows.Err()
 	if len(c.Commitments) == 0 {
 		c.Commitments = []RPLinkedCommitment{}
+	}
+	return err
+}
+
+// Get fetches all Commitments from database linked to a copro whose ID is given
+func (c *CoproLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
+	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
+	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
+	b.name,c.iris_code,c.action_id FROM commitment c
+	JOIN beneficiary b on c.beneficiary_id=b.id 
+	WHERE copro_id=$1`, ID)
+	if err != nil {
+		return err
+	}
+	var row CoproLinkedCommitment
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
+			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
+			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
+			&row.ActionID); err != nil {
+			return err
+		}
+		c.Commitments = append(c.Commitments, row)
+	}
+	err = rows.Err()
+	if len(c.Commitments) == 0 {
+		c.Commitments = []CoproLinkedCommitment{}
 	}
 	return err
 }
