@@ -19,6 +19,7 @@ type renewProjectDataResp struct {
 	models.RPLinkedCommitments
 	models.Payments
 	models.RenewProjectForecasts
+	models.Commissions
 }
 
 // GetRenewProjectDatas handles the get request to get renew project fields and
@@ -51,6 +52,11 @@ func GetRenewProjectDatas(ctx iris.Context) {
 	if err = resp.RenewProjectForecasts.Get(ID, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête forecasts : " + err.Error()})
+		return
+	}
+	if err = resp.Commissions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête commissions : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
