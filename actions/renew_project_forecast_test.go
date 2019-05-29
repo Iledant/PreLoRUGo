@@ -58,7 +58,7 @@ func testCreateRenewProjectForecast(t *testing.T, c *TestContext) (ID int) {
 			strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token: c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`"RenewProjectForecast":{"ID":1,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","RenewProjectID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":1000000,"Comment":"Essai","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID))},
 			StatusCode: http.StatusCreated}, // 5 : ok
 	}
@@ -119,7 +119,7 @@ func testUpdateRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 			strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token: c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`"RenewProjectForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","RenewProjectID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + `}`},
 			StatusCode: http.StatusOK}, // 6 : ok
 	}
@@ -143,7 +143,7 @@ func testGetRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 			ID:           0}, // 1 : bad ID
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RenewProjectForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","RenewProjectID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + `}`},
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
@@ -164,7 +164,7 @@ func testGetRenewProjectForecasts(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RenewProjectForecast":[{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","RenewProjectID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + `}]}`},
 			Count:         1,
 			CountItemName: `"ID"`,
