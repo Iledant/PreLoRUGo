@@ -93,6 +93,32 @@ func (r *RenewProjectForecast) Update(db *sql.DB) (err error) {
 	return err
 }
 
+// Get fetches all forecasts of a renew projects whose ID is given
+func (r *RenewProjectForecasts) Get(ID int64, db *sql.DB) (err error) {
+	rows, err := db.Query(`SELECT r.id,r.commission_id,c.date,c.name,r.value,
+	r.comment,r.renew_project_id 
+	FROM renew_project_forecast r
+	JOIN commission c ON c.id=r.commission_id
+	WHERE r.renew_project_id=$1`, ID)
+	if err != nil {
+		return err
+	}
+	var row RenewProjectForecast
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.CommissionID, &row.CommissionDate,
+			&row.CommissionName, &row.Value, &row.Comment, &row.RenewProjectID); err != nil {
+			return err
+		}
+		r.RenewProjectForecasts = append(r.RenewProjectForecasts, row)
+	}
+	err = rows.Err()
+	if len(r.RenewProjectForecasts) == 0 {
+		r.RenewProjectForecasts = []RenewProjectForecast{}
+	}
+	return err
+}
+
 // GetAll fetches all RenewProjectForecasts from database
 func (r *RenewProjectForecasts) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT r.id,r.commission_id,c.date,c.name,r.value,
