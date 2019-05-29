@@ -4,14 +4,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"time"
 )
 
 // RenewProjectForecast model
 type RenewProjectForecast struct {
 	ID             int64      `json:"ID"`
 	CommissionID   int64      `json:"CommissionID"`
-	CommissionDate time.Time  `json:"CommissionDate"`
+	CommissionDate NullTime   `json:"CommissionDate"`
 	CommissionName string     `json:"CommissionName"`
 	Value          int64      `json:"Value"`
 	Comment        NullString `json:"Comment"`
