@@ -47,6 +47,8 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 		ADD CONSTRAINT zip_code_copro_insee_code_city_fkey FOREIGN KEY (zip_code) 
 		REFERENCES city (insee_code) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION`,
+	`ALTER TABLE copro
+		ALTER COLUMN reference TYPE varchar(150)`,
 }
 
 // HandleMigrations check if new migrations have been created and launches them
