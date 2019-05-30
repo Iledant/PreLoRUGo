@@ -145,7 +145,9 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			address varchar(200) NOT NULL,
 			zip_code int NOT NULL,
 			label_date date,
-			budget bigint
+			budget bigint,
+			FOREIGN KEY (zip_code) REFERENCES city (insee_code) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 5 : copro
 		`CREATE TABLE temp_copro (
 			reference varchar(150) NOT NULL,

@@ -2,7 +2,6 @@ package actions
 
 import (
 	"net/http"
-	"strings"
 	"testing"
 )
 
@@ -38,26 +37,17 @@ func testLinkCommitment(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad copro ID
 		{Token: c.Config.Users.Admin.Token,
 			Sent:         []byte(`{"DestID":2,"IDs":[2,3,5],"Type":"Copro"}`),
-			RespContains: []string{`Liens d'engagements, requête : Impossible de lier tous les engagements`},
+			RespContains: []string{`Liens d'engagements, requête :`},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad commitment ID
 		{Token: c.Config.Users.Admin.Token,
-			Sent:         []byte(`{"DestID":2,"IDs":[2,3],"Type":"Copro"}`),
+			Sent:         []byte(`{"DestID":3,"IDs":[2,3],"Type":"Copro"}`),
 			RespContains: []string{`Liens d'engagements mis à jour`},
 			StatusCode:   http.StatusOK}, // 6 : ok
 	}
 	for i, tc := range tcc {
 		response := c.E.POST("/api/commitments/link").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("SetCommitmentLink[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("SetCommitmentLink[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "SetCommitmentLink")
 	}
 }
 
@@ -84,15 +74,6 @@ func testUnlinkCommitment(t *testing.T, c *TestContext) {
 	for i, tc := range tcc {
 		response := c.E.POST("/api/commitments/unlink").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UnlinkCommitmentLink[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UnlinkCommitmentLink[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
+		chkBodyStatusAndCount(t, tc, i, response, "UnlinkCommitmentLink")
 	}
 }

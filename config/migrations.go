@@ -43,6 +43,10 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 		ADD column city_code1 int NOT NULL,
 		ADD column city_code2 int,
 		ADD column city_code3 int`,
+	`ALTER TABLE copro 
+		ADD CONSTRAINT zip_code_copro_insee_code_city_fkey FOREIGN KEY (zip_code) 
+		REFERENCES city (insee_code) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION`,
 }
 
 // HandleMigrations check if new migrations have been created and launches them
