@@ -231,21 +231,21 @@ func testBatchCopros(t *testing.T, c *TestContext) {
 			Sent: []byte(`{"Copro":[{"Reference":"","Name":"copro3","Address":"adresse3",` +
 				`"ZipCode":77001,"LabelDate":null,"Budget":null},
 			{"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75000,` +
-				`"LabelDate":"2016-04-01T12:00:00Z","Budget":3000000}]}`),
+				`"LabelDate":42461,"Budget":3000000}]}`),
 			RespContains: []string{`Batch de copropriétés, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 1 : reference empty
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Copro":[{"Reference":"","Name":"copro3","Address":"adresse3",` +
 				`"ZipCode":77001,"LabelDate":null,"Budget":null},
 			{"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75000,` +
-				`"LabelDate":"2016-04-01T12:00:00Z","Budget":3000000}]}`),
+				`"LabelDate":42461,"Budget":3000000}]}`),
 			RespContains: []string{`Batch de copropriétés, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad zip code
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Copro":[{"Reference":"CO003","Name":"copro3",` +
 				`"Address":"adresse3","ZipCode":77001,"LabelDate":null,"Budget":null},
 			{"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75101,` +
-				`"LabelDate":"2016-04-01T12:00:00Z","Budget":3000000}]}`),
+				`"LabelDate":42461,"Budget":3000000}]}`),
 			RespContains: []string{`Batch de copropriétés importé`},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}

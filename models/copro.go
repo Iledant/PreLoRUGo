@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Copro is the model for a labelled condominium
@@ -29,7 +30,7 @@ type CoproLine struct {
 	Name      string    `json:"Name"`
 	Address   string    `json:"Address"`
 	ZipCode   int       `json:"ZipCode"`
-	LabelDate NullTime  `json:"LabelDate"`
+	LabelDate NullInt64 `json:"LabelDate"`
 	Budget    NullInt64 `json:"Budget"`
 }
 
@@ -133,6 +134,19 @@ func (c *Copros) GetAll(db *sql.DB) (err error) {
 	return err
 }
 
+// nullExcel2NullTime convert a null int64 corresponding to an Excel integer
+// date to a NullTime struct
+func nullExcel2NullTime(i NullInt64) NullTime {
+	var n NullTime
+	if !i.Valid {
+		return n
+	}
+	n.Valid = true
+	n.Time = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC).
+		Add(time.Duration(i.Int64*24) * time.Hour)
+	return n
+}
+
 // Save insert a batch of CoproLine into database
 func (c *CoproBatch) Save(db *sql.DB) (err error) {
 	for i, r := range c.Lines {
@@ -153,7 +167,7 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 	defer stmt.Close()
 	for _, r := range c.Lines {
 		if _, err = stmt.Exec(r.Reference, r.Name, r.Address, r.ZipCode,
-			r.LabelDate, r.Budget); err != nil {
+			nullExcel2NullTime(r.LabelDate), r.Budget); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
