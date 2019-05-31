@@ -45,6 +45,7 @@ func testCreateBudgetAction(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{Sent: []byte(`{"BudgetAction":{"Code":1234567890,"Name":"Action"}}`),
 			Token:        c.Config.Users.Admin.Token,
+			IDName:       `{"ID"`,
 			RespContains: []string{`"BudgetAction"`, `"Code":1234567890,"Name":"Action"`},
 			StatusCode:   http.StatusCreated}, // 4 : ok
 	}

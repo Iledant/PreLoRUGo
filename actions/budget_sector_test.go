@@ -42,6 +42,7 @@ func testCreateBudgetSector(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 2 : empty name
 		{Sent: []byte(`{"BudgetSector":{"Name":"Essai","FullName":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
+			IDName:       `{"ID"`,
 			RespContains: []string{`"BudgetSector":{"ID":2,"Name":"Essai","FullName":"Essai"`},
 			StatusCode:   http.StatusCreated}, // 3 : ok
 	}

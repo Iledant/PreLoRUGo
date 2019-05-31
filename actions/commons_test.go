@@ -35,6 +35,7 @@ type TestCase struct {
 	ID            int
 	Count         int
 	CountItemName string
+	IDName        string
 }
 
 // TestAll embeddes all test functions and is the only test entry point
@@ -469,9 +470,9 @@ func chkFactory(t *testing.T, tcc []TestCase, f tcRespFunc, name string, b ...*i
 			}
 		}
 		if status == http.StatusCreated && tc.StatusCode == http.StatusCreated && len(b) > 0 {
-			index := strings.Index(body, `{"ID"`)
+			index := strings.Index(body, tc.IDName)
 			if index > 0 {
-				fmt.Sscanf(body[index:], `{"ID":%d`, b[0])
+				fmt.Sscanf(body[index:], tc.IDName+":%d", b[0])
 			}
 		}
 	}

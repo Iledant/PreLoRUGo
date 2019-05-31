@@ -1,14 +1,13 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/Iledant/PreLoRUGo/models"
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testCommission is the entry point for testing all renew projet requests
@@ -56,26 +55,15 @@ func testCreateCommission(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
 		{Sent: []byte(`{"Commission":{"Name":"Essai","Date":"2019-03-01T00:00:00Z"}}`),
 			Token:        c.Config.Users.Admin.Token,
+			IDName:       `{"ID"`,
 			RespContains: []string{`"Commission":{"ID":1,"Name":"Essai","Date":"2019-03-01T00:00:00Z"`},
 			StatusCode:   http.StatusCreated}, // 3 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/commission").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/commission").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateCommission[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateCommission[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"Commission":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateCommission", &ID)
 	return ID
 }
 
@@ -104,20 +92,11 @@ func testUpdateCommission(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"Commission":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","Date":null}`},
 			StatusCode:   http.StatusOK}, // 4 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/commission").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/commission").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UpdateCommission[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UpdateCommission[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "UpdateCommission")
 }
 
 // testGetCommission checks if route is user protected and Commission correctly sent back
@@ -136,20 +115,11 @@ func testGetCommission(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/commission/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/commission/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetCommission[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetCommission[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "GetCommission")
 }
 
 // testGetCommissions checks if route is user protected and Commissions correctly sent back
@@ -160,30 +130,16 @@ func testGetCommissions(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"Commission":[{"ID":1,"Name":"Essai2","Date":null}]}`},
-			Count:        1,
-			StatusCode:   http.StatusOK}, // 1 : ok
+			RespContains:  []string{`{"Commission":[{"ID":1,"Name":"Essai2","Date":null}]}`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/commissions").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/commissions").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetCommissions[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetCommissions[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetCommissions[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetCommissions")
 }
 
 // testDeleteCommission checks if route is user protected and commissions correctly sent back
@@ -201,18 +157,9 @@ func testDeleteCommission(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/commission/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/commission/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("DeleteCommission[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("DeleteCommission[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "DeleteCommission")
 }

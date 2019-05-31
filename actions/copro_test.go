@@ -76,7 +76,8 @@ func testCreateCopro(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusInternalServerError}, // 5 : zipcode doesn't exist
 		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
 			`"ZipCode":78146,"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000}}`),
-			Token: c.Config.Users.Admin.Token,
+			Token:  c.Config.Users.Admin.Token,
+			IDName: `{"ID"`,
 			RespContains: []string{`"Copro":{"ID":2,"Reference":"CO001","Name":"Copro",` +
 				`"Address":"adresse","ZipCode":78146,"CityName":"CHATOU",` +
 				`"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000`},

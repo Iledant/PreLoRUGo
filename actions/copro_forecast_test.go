@@ -57,7 +57,8 @@ func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":` +
 			strconv.Itoa(int(c.CoproID)) + "}}"),
-			Token: c.Config.Users.CoproUser.Token,
+			Token:  c.Config.Users.CoproUser.Token,
+			IDName: `{"ID"`,
 			RespContains: []string{`"CoproForecast":{"ID":1,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
 				`"CommissionName":"Commission test","Value":1000000,"Comment":"Essai","CoproID":` +

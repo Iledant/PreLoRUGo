@@ -61,6 +61,7 @@ func testCreateUser(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 6 : email already exists
 		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
+			IDName:       `{"ID"`,
 			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Rights":0`},
 			StatusCode:   http.StatusCreated}, // 7 : correct test case
 	}

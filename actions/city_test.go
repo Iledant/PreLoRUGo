@@ -1,11 +1,11 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testCity is the entry point for testing all renew projet requests
@@ -48,26 +48,15 @@ func testCreateCity(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{Sent: []byte(`{"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":2,"QPV":true}}`),
 			Token:        c.Config.Users.Admin.Token,
+			IDName:       `{"InseeCode"`,
 			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":2,"CommunityName":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)","QPV":true`},
 			StatusCode:   http.StatusCreated}, // 4 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/city").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/city").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateCity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateCity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"City":{"InseeCode":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateCity", &ID)
 	return ID
 }
 
@@ -100,20 +89,11 @@ func testUpdateCity(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false`},
 			StatusCode:   http.StatusOK}, // 5 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/city").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/city").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UpdateCity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UpdateCity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "UpdateCity")
 }
 
 // testGetCity checks if route is user protected and City correctly sent back
@@ -132,20 +112,11 @@ func testGetCity(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/city/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/city/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetCity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetCity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "GetCity")
 }
 
 // testGetCities checks if route is user protected and Cities correctly sent back
@@ -156,30 +127,16 @@ func testGetCities(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"City":[{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false}]}`},
-			Count:        1,
-			StatusCode:   http.StatusOK}, // 1 : ok
+			RespContains:  []string{`{"City":[{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false}]}`},
+			Count:         1,
+			CountItemName: `"InseeCode"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/cities").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/cities").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetCities[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetCities[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"InseeCode"`)
-			if count != tc.Count {
-				t.Errorf("GetCities[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetCities")
 }
 
 // testDeleteCity checks if route is user protected and cities correctly sent back
@@ -197,20 +154,11 @@ func testDeleteCity(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/city/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/city/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("DeleteCity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("DeleteCity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "DeleteCity")
 }
 
 // testBatchCities check route is limited to admin and batch import succeeds
@@ -230,30 +178,16 @@ func testBatchCities(t *testing.T, c *TestContext) {
 			Sent: []byte(`{"City":[{"InseeCode":75101,"Name":"PARIS 1","CommunityCode":"217500016","QPV":false},
 			{"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityCode":"247700123","QPV":true},
 			{"InseeCode":78146,"Name":"CHATOU","CommunityCode":"200058519.78","QPV":false}]}`),
-			Count:        3,
-			RespContains: []string{`"InseeCode":75101,"Name":"PARIS 1"`, `"InseeCode":78146,"Name":"CHATOU","CommunityID":4,"CommunityName":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)","QPV":false`},
-			StatusCode:   http.StatusOK}, // 2 : ok
+			Count:         3,
+			CountItemName: `"InseeCode"`,
+			RespContains:  []string{`"InseeCode":75101,"Name":"PARIS 1"`, `"InseeCode":78146,"Name":"CHATOU","CommunityID":4,"CommunityName":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)","QPV":false`},
+			StatusCode:    http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/cities").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/cities").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("BatchCity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("BatchCity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"InseeCode"`)
-			if count != tc.Count {
-				t.Errorf("BatchCity[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "BatchCity")
 }
 
 // testGetPaginatedCities checks if route is user protected and Cities correctly sent back
@@ -271,27 +205,13 @@ func testGetPaginatedCities(t *testing.T, c *TestContext) {
 				`"InseeCode":77001,"Name":"ACHERES-LA-FORET","QPV":true,"CommunityID":null,"CommunityName":null`,
 				//cSpell: enable
 			},
-			Count:      1,
-			StatusCode: http.StatusOK}, // 1 : ok
+			Count:         1,
+			CountItemName: `"InseeCode"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/cities/paginated").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/cities/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetPaginatedCities[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetPaginatedCities[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"InseeCode"`)
-			if count != tc.Count {
-				t.Errorf("GetPaginatedCities[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetPaginatedCities")
 }
