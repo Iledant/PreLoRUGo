@@ -1,11 +1,11 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testBudgetAction is the entry point for testing all budget action related routes
@@ -48,23 +48,11 @@ func testCreateBudgetAction(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`"BudgetAction"`, `"Code":1234567890,"Name":"Action"`},
 			StatusCode:   http.StatusCreated}, // 4 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/budget_action").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/budget_action").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateBudgetAction[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateBudgetAction[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"BudgetAction":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateBudgetAction", &ID)
 	return ID
 }
 
@@ -75,30 +63,16 @@ func testGetBudgetActions(t *testing.T, c *TestContext) {
 			RespContains: []string{`Token absent`},
 			StatusCode:   http.StatusInternalServerError}, // 0 : token null
 		{Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`BudgetAction`, `Name`, `Code`},
-			Count:        1,
-			StatusCode:   http.StatusOK}, // 1 : ok
+			RespContains:  []string{`BudgetAction`, `Name`, `Code`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/budget_actions").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/budget_actions").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetBudgetActions[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetBudgetActions[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetBudgetActions[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetBudgetActions")
 }
 
 // testUpdateBudgetAction checks if route is admin protected and budget action
@@ -130,20 +104,11 @@ func testUpdateBudgetAction(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":23456789,"Name":"Action modifiée","SectorID":null}}`},
 			StatusCode:   http.StatusOK}, // 5 : name empty
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/budget_action").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/budget_action").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UpdateBudgetAction[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UpdateBudgetAction[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "UpdateBudgetAction")
 }
 
 // testDeleteBudgetAction check route is admin protected and delete requests returns ok
@@ -161,18 +126,9 @@ func testDeleteBudgetAction(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Action budgétaire supprimée`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/budget_action/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/budget_action/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("DeleteBudgetAction[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("DeleteBudgetAction[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "DeleteBudgetAction")
 }
