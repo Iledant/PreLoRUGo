@@ -1,11 +1,11 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testBudgetSector is the entry point for testing all renew projet requests
@@ -45,23 +45,11 @@ func testCreateBudgetSector(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`"BudgetSector":{"ID":2,"Name":"Essai","FullName":"Essai"`},
 			StatusCode:   http.StatusCreated}, // 3 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/budget_sector").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/budget_sector").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateBudgetSector[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateBudgetSector[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"BudgetSector":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateBudgetSector", &ID)
 	return ID
 }
 
@@ -90,20 +78,11 @@ func testUpdateBudgetSector(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"BudgetSector":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","FullName":null}`},
 			StatusCode:   http.StatusOK}, // 4 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/budget_sector").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/budget_sector").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UpdateBudgetSector[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UpdateBudgetSector[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "UpdateBudgetSector")
 }
 
 // testGetBudgetSector checks if route is user protected and BudgetSector correctly sent back
@@ -122,20 +101,11 @@ func testGetBudgetSector(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/budget_sector/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/budget_sector/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetBudgetSector[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetBudgetSector[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "GetBudgetSector")
 }
 
 // testGetBudgetSectors checks if route is user protected and BudgetSectors correctly sent back
@@ -146,30 +116,16 @@ func testGetBudgetSectors(t *testing.T, c *TestContext) {
 			Count:        2,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"BudgetSector":[{"ID":1,"Name":"LO","FullName":null},{"ID":2,"Name":"Essai2","FullName":null}]}`},
-			Count:        2,
-			StatusCode:   http.StatusOK}, // 1 : ok
+			RespContains:  []string{`{"BudgetSector":[{"ID":1,"Name":"LO","FullName":null},{"ID":2,"Name":"Essai2","FullName":null}]}`},
+			Count:         2,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/budget_sectors").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/budget_sectors").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetBudgetSectors[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetBudgetSectors[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetBudgetSectors[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetBudgetSectors")
 }
 
 // testDeleteBudgetSector checks if route is user protected and budget_sectors correctly sent back
@@ -187,18 +143,9 @@ func testDeleteBudgetSector(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/budget_sector/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/budget_sector/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("DeleteBudgetSector[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("DeleteBudgetSector[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "DeleteBudgetSector")
 }
