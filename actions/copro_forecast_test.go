@@ -1,11 +1,12 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testCoproForecast is the entry point for testing all renew projet requests
@@ -58,27 +59,16 @@ func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 			strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token: c.Config.Users.CoproUser.Token,
 			RespContains: []string{`"CoproForecast":{"ID":1,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
+				`"CommissionName":"Commission test","Value":1000000,"Comment":"Essai","CoproID":` +
 				strconv.Itoa(int(c.CoproID))},
 			StatusCode: http.StatusCreated}, // 5 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/copro_forecast").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/copro_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateCoproForecast[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateCoproForecast[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"CoproForecast":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateCoproForecast", &ID)
 	return ID
 }
 
@@ -119,15 +109,16 @@ func testUpdateCoproForecast(t *testing.T, c *TestContext, ID int) {
 			strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token: c.Config.Users.CoproUser.Token,
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
+				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `}`},
 			StatusCode: http.StatusOK}, // 6 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/copro_forecast").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/copro_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "UpdateCoproForecast")
 	}
+	chkFactory(t, tcc, f, "UpdateCoproForecast")
 }
 
 // testGetCoproForecast checks if route is user protected and copro forecast correctly sent back
@@ -143,16 +134,17 @@ func testGetCoproForecast(t *testing.T, c *TestContext, ID int) {
 			ID:           0}, // 1 : bad ID
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
+				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `}`},
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/copro_forecast/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/copro_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetCoproForecast")
 	}
+	chkFactory(t, tcc, f, "GetCoproForecast")
 }
 
 // testGetCoproForecasts checks if route is user protected and CoproForecasts correctly sent back
@@ -164,16 +156,17 @@ func testGetCoproForecasts(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"CoproForecast":[{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
+				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `}]}`},
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/copro_forecasts").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/copro_forecasts").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetCoproForecasts")
 	}
+	chkFactory(t, tcc, f, "GetCoproForecasts")
 }
 
 // testDeleteCoproForecast checks if route is user protected and CoproForecasts correctly sent back
@@ -191,11 +184,11 @@ func testDeleteCoproForecast(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/copro_forecast/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/copro_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "DeleteCoproForecast")
 	}
+	chkFactory(t, tcc, f, "DeleteCoproForecast")
 }
 
 // testBatchCoproForecasts check route is limited to admin and batch import succeeds
