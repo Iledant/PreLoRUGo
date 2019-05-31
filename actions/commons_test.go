@@ -443,3 +443,36 @@ func chkBodyStatusAndCount(t *testing.T, tc TestCase, i int,
 	}
 
 }
+
+type tcRespFunc func(TestCase) *httpexpect.Response
+
+// chkFactory launch the test cases against the callback function and check the status
+//  and the content of a response according. If test field CountItemName is filled,
+// it also checks that the count of such elements is the one give in the Count field
+func chkFactory(t *testing.T, tcc []TestCase, f tcRespFunc, name string, b ...*int) {
+	for i, tc := range tcc {
+		response := f(tc)
+		body := string(response.Content)
+		for _, r := range tc.RespContains {
+			if !strings.Contains(body, r) {
+				t.Errorf("%s[%d]\n  ->attendu %s\n  ->reçu: %s", name, i, r, body)
+			}
+		}
+		status := response.Raw().StatusCode
+		if status != tc.StatusCode {
+			t.Errorf("%s[%d]  ->status attendu %d  ->reçu: %d", name, i, tc.StatusCode, status)
+		}
+		if status == http.StatusOK && tc.CountItemName != "" {
+			count := strings.Count(body, tc.CountItemName)
+			if count != tc.Count {
+				t.Errorf("%s[%d]  ->nombre attendu %d  ->reçu: %d", name, i, tc.Count, count)
+			}
+		}
+		if status == http.StatusCreated && tc.StatusCode == http.StatusCreated && len(b) > 0 {
+			index := strings.Index(body, `{"ID"`)
+			if index > 0 {
+				fmt.Sscanf(body[index:], `{"ID":%d`, b[0])
+			}
+		}
+	}
+}

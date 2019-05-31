@@ -2,11 +2,12 @@ package actions
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testUser is the entry point for testing all user related routes
@@ -63,23 +64,11 @@ func testCreateUser(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Rights":0`},
 			StatusCode:   http.StatusCreated}, // 7 : correct test case
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/user").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/user").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateUser[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateUser[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"User":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateUser", &ID)
 	return ID
 }
 
