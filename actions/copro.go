@@ -51,9 +51,11 @@ func CreateCopro(ctx iris.Context) {
 
 // coproDatasResp embeddes the different datas for the get copro datas request
 type coproDatasResp struct {
-	Copro                         models.Copro `json:"Copro"`
-	models.CoproLinkedCommitments `json:"Commitment"`
-	models.Payments               `json:"Payment"`
+	Copro models.Copro `json:"Copro"`
+	models.CoproLinkedCommitments
+	models.Payments
+	models.Commissions
+	models.CoproForecasts
 }
 
 // GetCoproDatas handle the get request to fetch copro fields, commitments and
@@ -81,6 +83,16 @@ func GetCoproDatas(ctx iris.Context) {
 	if err = resp.Payments.GetLinkedToCopro(ID, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données d'une copropriété, requête payment : " + err.Error()})
+		return
+	}
+	if err = resp.Commissions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête commissions : " + err.Error()})
+		return
+	}
+	if err = resp.CoproForecasts.Get(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête forecasts : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

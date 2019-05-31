@@ -103,6 +103,29 @@ func (r *CoproForecasts) GetAll(db *sql.DB) (err error) {
 	return err
 }
 
+// Get fetches all copro linked CoproForecasts from database
+func (r *CoproForecasts) Get(ID int64, db *sql.DB) (err error) {
+	rows, err := db.Query(`SELECT id,commission_id,value,comment,copro_id 
+	FROM copro_forecast WHERE copro_id=$1`, ID)
+	if err != nil {
+		return err
+	}
+	var row CoproForecast
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.CommissionID, &row.Value, &row.Comment,
+			&row.CoproID); err != nil {
+			return err
+		}
+		r.CoproForecasts = append(r.CoproForecasts, row)
+	}
+	err = rows.Err()
+	if len(r.CoproForecasts) == 0 {
+		r.CoproForecasts = []CoproForecast{}
+	}
+	return err
+}
+
 // Delete removes CoproForecast whose ID is given from database
 func (r *CoproForecast) Delete(db *sql.DB) (err error) {
 	res, err := db.Exec("DELETE FROM copro_forecast WHERE id = $1", r.ID)
