@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testCommitment is the entry point for testing all renew projet requests
@@ -37,12 +39,12 @@ func testBatchCommitments(t *testing.T, c *TestContext) {
 			RespContains: []string{"Batch de Engagements importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/commitments").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/commitments").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "BatchCommitment")
-		// the testGetCommitments is used to check datas have benne correctly imported
 	}
+	chkFactory(t, tcc, f, "BatchCommitment")
+	// the testGetCommitments is used to check datas have been correctly imported
 }
 
 // testGetCommitments checks if route is user protected and Commitments correctly sent back
@@ -60,11 +62,11 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/commitments").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/commitments").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetCommitments")
 	}
+	chkFactory(t, tcc, f, "GetCommitments")
 }
 
 // testGetPaginatedCommitments checks if route is user protected and paginated
@@ -91,11 +93,11 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/commitments/paginated").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/commitments/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, `"ID"`)
 	}
+	chkFactory(t, tcc, f, "GetPaginatedCommitments")
 }
 
 // testGetUnlinkedCommitments checks if route is user protected and paginated
@@ -118,14 +120,15 @@ func testGetUnlinkedCommitments(t *testing.T, c *TestContext) {
 			RespContains: []string{`"Commitment"`, `"Year":2015,"Code":"IRIS ","Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":"2015-04-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU - 65 PLUS/PLAI","Value":30000000,"SoldOut":false,"BeneficiaryID":3,"BeneficiaryName":"IMMOBILIERE 3F","ActionName":"Aide à la création de logements locatifs très sociaux","Sector":"LO","IrisCode":"14004240","HousingID":null,"CoproID":null,"RenewProjectID":null`,
 				`"Page":1`, `"ItemsCount":1`},
 			// cSpell: enable
-			Count:      1,
-			StatusCode: http.StatusOK}, // 2 : ok
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/commitments/unlinked").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/commitments/unlinked").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetPaginatedCommitments")
 	}
+	chkFactory(t, tcc, f, "GetPaginatedCommitments")
 }
 
 // testExportedCommitments checks if route is user protected and exported
@@ -151,9 +154,9 @@ func testExportedCommitments(t *testing.T, c *TestContext) {
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/commitments/export").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/commitments/export").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetExportedCommitments")
 	}
+	chkFactory(t, tcc, f, "GetExportedCommitments")
 }

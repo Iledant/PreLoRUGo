@@ -2,8 +2,9 @@ package actions
 
 import (
 	"net/http"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testPmtRatio is the entry point for testing all renew projet requests
@@ -29,31 +30,17 @@ func testGetPmtRatios(t *testing.T, c *TestContext) {
 			Sent:         []byte(`Year=a`),
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad year parameter format
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"PmtRatio":[{"Index":0,"SectorID":1,"SectorName":"LO","Ratio":0.8},{"Index":1,"SectorID":1,"SectorName":"LO","Ratio":0.2}]`},
-			Count:        2,
-			Sent:         []byte(`Year=2010`),
-			StatusCode:   http.StatusOK}, // 2 : ok
+			RespContains:  []string{`"PmtRatio":[{"Index":0,"SectorID":1,"SectorName":"LO","Ratio":0.8},{"Index":1,"SectorID":1,"SectorName":"LO","Ratio":0.2}]`},
+			Count:         2,
+			CountItemName: `"Index"`,
+			Sent:          []byte(`Year=2010`),
+			StatusCode:    http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/ratios").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/ratios").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetPmtRatios[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetPmtRatios[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"Index"`)
-			if count != tc.Count {
-				t.Errorf("GetPmtRatios[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetPmtRatios")
 }
 
 // testBatchPmtRatios check route is limited to admin and batch import succeeds
@@ -70,33 +57,23 @@ func testBatchPmtRatios(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			Sent:         []byte(`{"Year":2009,"Ratios":[{"Index":0,"SectorID":1,"Ratio":0.1},{"Index":1,"SectorID":1,"Ratio":0.2},{"Index":2,"SectorID":1,"Ratio":0.3}]}`),
 			RespContains: []string{"Batch de ratios de paiement traité"},
-			Count:        3,
 			StatusCode:   http.StatusOK}, // 2 : OK
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/ratios").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/ratios").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("BatchRatios[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
+	}
+	if chkFactory(t, tcc, f, "BatchRatios") {
+		var count int
+		if err := c.DB.QueryRow(`SELECT count(1) FROM ratio WHERE year=2009`).
+			Scan(&count); err != nil {
+			t.Errorf("BatchRatios[final]\n  ->impossible de vérifier %v", err)
+			return
 		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("BatchRatios[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
+		if count != 3 {
+			t.Errorf("BatchRatios[final]  ->nombre attendu %d  ->trouvé: %d", 3, count)
 		}
-		if status == http.StatusOK && tc.StatusCode == http.StatusOK {
-			var count int
-			if err := c.DB.QueryRow(`SELECT count(1) FROM ratio WHERE year=2009`).
-				Scan(&count); err != nil {
-				t.Errorf("BatchRatios[%d]\n  ->impossible de vérifier %v", i, err)
-				return
-			}
-			if count != tc.Count {
-				t.Errorf("BatchRatios[%d]  ->nombre attendu %d  ->trouvé: %d", i, tc.Count, count)
-			}
-		}
+
 	}
 }
 
@@ -114,18 +91,9 @@ func testGetPmtRatiosYears(t *testing.T, c *TestContext) {
 			RespContains: []string{`"PmtRatiosYear":[2009]`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/ratios/years").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/ratios/years").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetPmtRatiosYears[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetPmtRatiosYears[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "GetPmtRatiosYears")
 }

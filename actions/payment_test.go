@@ -3,8 +3,9 @@ package actions
 import (
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testPayment is the entry point for testing all renew projet requests
@@ -38,21 +39,12 @@ func testBatchPayments(t *testing.T, c *TestContext) {
 			RespContains: []string{"Batch de Paiements importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/payments").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/payments").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("BatchPayment[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("BatchPayment[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		// GelAllTest checks if data are correctly analyzed
 	}
+	chkFactory(t, tcc, f, "BatchPayment")
+	// GelAllTest checks if data are correctly analyzed
 }
 
 // testGetPayments checks if route is user protected and Payments correctly sent back
@@ -65,29 +57,15 @@ func testGetPayments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"ID":1,"CommitmentID":4,"CommitmentYear":2010,"CommitmentCode":"IRIS ","CommitmentNumber":277678,"CommitmentLine":1,"Year":2010,"CreationDate":"2010-02-02T00:00:00Z","ModificationDate":"2010-04-16T00:00:00Z","Number":102717,"Value":1896880`,
 				`"ID":4,"CommitmentID":2,"CommitmentYear":2014,"CommitmentCode":"IRIS ","CommitmentNumber":431370,"CommitmentLine":1,"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","ModificationDate":"2016-09-19T00:00:00Z","Number":141103,"Value":239200`},
-			Count:      4,
-			StatusCode: http.StatusOK}, // 1 : ok
+			Count:         4,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/payments").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/payments").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetPayments[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetPayments[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetPayments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetPayments")
 }
 
 // testGetPaginatedPayments checks if route is user protected and Payments correctly sent back
@@ -108,29 +86,15 @@ func testGetPaginatedPayments(t *testing.T, c *TestContext) {
 			//cSpell: disable
 			RespContains: []string{`"Payments":[`, `"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","Value":239200,"Number":141103,"CommitmentDate":"2014-02-05T00:00:00Z","CommitmentName":"13021233 - 1","CommitmentValue":239200,"Beneficiary":"CLD IMMOBILIER","Sector":"LO","ActionName":"Aide aux copropriétés en difficulté"`},
 			//cSpell: enable
-			Count:      1,
-			StatusCode: http.StatusOK}, // 1 : ok
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/payments/paginated").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/payments/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetPaginatedPayments[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetPaginatedPayments[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetPaginatedPayments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetPaginatedPayments")
 }
 
 // testExportedPayments checks if route is user protected and Payments correctly sent back
@@ -151,27 +115,13 @@ func testExportedPayments(t *testing.T, c *TestContext) {
 			//cSpell: disable
 			RespContains: []string{`"ExportedPayment":[`, `"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","ModificationDate":"2016-09-19T00:00:00Z","Number":141103,"Value":2392,"CommitmentYear":2014,"CommitmentCode":"IRIS ","CommitmentNumber":431370,"CommitmentCreationDate":"2014-02-05T00:00:00Z","CommitmentValue":2392,"CommitmentName":"13021233 - 1","BeneficiaryName":"CLD IMMOBILIER","Sector":"LO","ActionName":"Aide aux copropriétés en difficulté"`},
 			//cSpell: enable
-			Count:      1,
-			StatusCode: http.StatusOK}, // 1 : ok
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/payments/export").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/payments/export").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("ExportedPayments[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("ExportedPayments[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("ExportedPayments[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "ExportedPayments")
 }

@@ -3,6 +3,8 @@ package actions
 import (
 	"net/http"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 func testCommitmentLink(t *testing.T, c *TestContext) {
@@ -44,11 +46,11 @@ func testLinkCommitment(t *testing.T, c *TestContext) {
 			RespContains: []string{`Liens d'engagements mis à jour`},
 			StatusCode:   http.StatusOK}, // 6 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/commitments/link").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/commitments/link").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "SetCommitmentLink")
 	}
+	chkFactory(t, tcc, f, "SetCommitmentLink")
 }
 
 // testUnlinkCommitment check route is limited to admin and batch import succeeds
@@ -71,9 +73,9 @@ func testUnlinkCommitment(t *testing.T, c *TestContext) {
 			RespContains: []string{`Suppression de liens d'engagements mis à jour`},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/commitments/unlink").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/commitments/unlink").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "UnlinkCommitmentLink")
 	}
+	chkFactory(t, tcc, f, "UnlinkCommitmentLink")
 }

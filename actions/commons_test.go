@@ -421,51 +421,31 @@ func fetchTokens(t *testing.T, ctx *TestContext) {
 	}
 }
 
-// chkBodyStatusAndCount checks the status and the content of a response according
-// to the given test case. If test field CountItemName is filled, chkBodyStatusAndCount
-// checks also that the count of such elements is the one give in the Count field
-func chkBodyStatusAndCount(t *testing.T, tc TestCase, i int,
-	response *httpexpect.Response, name string) {
-	body := string(response.Content)
-	for _, r := range tc.RespContains {
-		if !strings.Contains(body, r) {
-			t.Errorf("%s[%d]\n  ->attendu %s\n  ->reçu: %s", name, i, r, body)
-		}
-	}
-	status := response.Raw().StatusCode
-	if status != tc.StatusCode {
-		t.Errorf("%s[%d]  ->status attendu %d  ->reçu: %d", name, i, tc.StatusCode, status)
-	}
-	if status == http.StatusOK && tc.CountItemName != "" {
-		count := strings.Count(body, tc.CountItemName)
-		if count != tc.Count {
-			t.Errorf("%s[%d]  ->nombre attendu %d  ->reçu: %d", name, i, tc.Count, count)
-		}
-	}
-
-}
-
 type tcRespFunc func(TestCase) *httpexpect.Response
 
 // chkFactory launch the test cases against the callback function and check the status
 //  and the content of a response according. If test field CountItemName is filled,
 // it also checks that the count of such elements is the one give in the Count field
-func chkFactory(t *testing.T, tcc []TestCase, f tcRespFunc, name string, b ...*int) {
+func chkFactory(t *testing.T, tcc []TestCase, f tcRespFunc, name string, b ...*int) bool {
+	ok := true
 	for i, tc := range tcc {
 		response := f(tc)
 		body := string(response.Content)
 		for _, r := range tc.RespContains {
 			if !strings.Contains(body, r) {
+				ok = false
 				t.Errorf("%s[%d]\n  ->attendu %s\n  ->reçu: %s", name, i, r, body)
 			}
 		}
 		status := response.Raw().StatusCode
 		if status != tc.StatusCode {
+			ok = false
 			t.Errorf("%s[%d]  ->status attendu %d  ->reçu: %d", name, i, tc.StatusCode, status)
 		}
 		if status == http.StatusOK && tc.CountItemName != "" {
 			count := strings.Count(body, tc.CountItemName)
 			if count != tc.Count {
+				ok = false
 				t.Errorf("%s[%d]  ->nombre attendu %d  ->reçu: %d", name, i, tc.Count, count)
 			}
 		}
@@ -476,4 +456,5 @@ func chkFactory(t *testing.T, tcc []TestCase, f tcRespFunc, name string, b ...*i
 			}
 		}
 	}
+	return ok
 }

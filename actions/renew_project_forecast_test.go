@@ -1,11 +1,12 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testRenewProjectForecast is the entry point for testing all renew projet requests
@@ -56,29 +57,18 @@ func testCreateRenewProjectForecast(t *testing.T, c *TestContext) (ID int) {
 		{Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","RenewProjectID":` +
 			strconv.Itoa(int(c.RenewProjectID)) + "}}"),
-			Token: c.Config.Users.RenewProjectUser.Token,
+			Token:  c.Config.Users.RenewProjectUser.Token,
+			IDName: `{"ID"`,
 			RespContains: []string{`"RenewProjectForecast":{"ID":1,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":1000000,"Comment":"Essai","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID))},
 			StatusCode: http.StatusCreated}, // 5 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/renew_project_forecast").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/renew_project_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateRenewProjectForecast[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateRenewProjectForecast[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"RenewProjectForecast":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateRenewProjectForecast", &ID)
 	return ID
 }
 
@@ -123,11 +113,11 @@ func testUpdateRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 				strconv.Itoa(int(c.RenewProjectID)) + `}`},
 			StatusCode: http.StatusOK}, // 6 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/renew_project_forecast").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/renew_project_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "UpdateRenewProjectForecast")
 	}
+	chkFactory(t, tcc, f, "UpdateRenewProjectForecast")
 }
 
 // testGetRenewProjectForecast checks if route is user protected and RenewProjectForecast correctly sent back
@@ -148,11 +138,11 @@ func testGetRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/renew_project_forecast/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/renew_project_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetRenewProjectForecast")
 	}
+	chkFactory(t, tcc, f, "GetRenewProjectForecast")
 }
 
 // testGetRenewProjectForecasts checks if route is user protected and RenewProjectForecasts correctly sent back
@@ -170,11 +160,11 @@ func testGetRenewProjectForecasts(t *testing.T, c *TestContext, ID int) {
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/renew_project_forecasts").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/renew_project_forecasts").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetRenewProjectForecasts")
 	}
+	chkFactory(t, tcc, f, "GetRenewProjectForecasts")
 }
 
 // testDeleteRenewProjectForecast checks if route is user protected and renew_project_forecasts correctly sent back
@@ -192,11 +182,11 @@ func testDeleteRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/renew_project_forecast/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/renew_project_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "DeleteRenewProjectForecast")
 	}
+	chkFactory(t, tcc, f, "DeleteRenewProjectForecast")
 }
 
 // testBatchRenewProjectForecasts check route is limited to admin and batch import succeeds
@@ -223,27 +213,17 @@ func testBatchRenewProjectForecasts(t *testing.T, c *TestContext) {
 			RespContains: []string{"Batch de Prévision RUs importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/renew_project_forecasts").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/renew_project_forecasts").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	if chkFactory(t, tcc, f, "BatchRenewProjectForecast") {
+		response := c.E.GET("/api/renew_project_forecasts").
+			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
 		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("BatchRenewProjectForecast[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("BatchRenewProjectForecast[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			response = c.E.GET("/api/renew_project_forecasts").
-				WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-			body = string(response.Content)
-			for _, j := range []string{`"Value":100,"Comment":"Batch1"`, `"Value":200,"Comment":"Batch2"`} {
-				if !strings.Contains(body, j) {
-					t.Errorf("BatchRenewProjectForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
-				}
+		for _, j := range []string{`"Value":100,"Comment":"Batch1"`, `"Value":200,"Comment":"Batch2"`} {
+			if !strings.Contains(body, j) {
+				t.Errorf("BatchRenewProjectForecast[final]\n  ->attendu %s\n  ->reçu: %s", j, body)
 			}
 		}
 	}

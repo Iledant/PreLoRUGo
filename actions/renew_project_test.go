@@ -1,10 +1,11 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testRenewProject is the entry point for testing all renew projet requests
@@ -54,17 +55,15 @@ func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 5 : CityCode1 null
 		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000,"CityCode1":75101}}`),
 			Token:        c.Config.Users.Admin.Token,
+			IDName:       `{"ID"`,
 			RespContains: []string{`"RenewProject":{"ID":1,"Reference":"PRU001","Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,"CityName1":"PARIS 1","CityCode2":null,"CityName2":null,"CityCode3":null,"CityName3":null,"Population":null,"CompositeIndex":null`},
 			StatusCode:   http.StatusCreated}, // 6 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/renew_project").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/renew_project").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "CreateRenewProject")
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(string(response.Content), `{"RenewProject":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateRenewProject", &ID)
 	return ID
 }
 
@@ -101,11 +100,11 @@ func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) + `,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","CityCode2":75101,"CityName2":"PARIS 1","CityCode3":78146,"CityName3":"CHATOU","Population":5400,"CompositeIndex":1}`},
 			StatusCode:   http.StatusCreated}, // 6 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/renew_project").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/renew_project").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "UpdateRenewProject")
 	}
+	chkFactory(t, tcc, f, "UpdateRenewProject")
 }
 
 // testGetRenewProjects checks route is protected and all renew projects are correctly
@@ -122,11 +121,11 @@ func testGetRenewProjects(t *testing.T, c *TestContext) {
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : bad request
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/renew_projects").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/renew_projects").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetRenewProjects")
 	}
+	chkFactory(t, tcc, f, "GetRenewProjects")
 }
 
 // testDeleteRenewProject checks that route is admin protected and delete request
@@ -150,11 +149,11 @@ func testDeleteRenewProject(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Projet de renouvellement supprimé`},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/renew_project/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/renew_project/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "DeleteRenewProject")
 	}
+	chkFactory(t, tcc, f, "DeleteRenewProject")
 }
 
 // testBatchRenewProject checks that route is admin protected and batch request
@@ -183,29 +182,28 @@ func testBatchRenewProject(t *testing.T, c *TestContext) {
 			RespContains: []string{`Batch de projets de renouvellement importé`},
 			StatusCode:   http.StatusOK}, // 4 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/renew_projects").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/renew_projects").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "BatchRenewProject")
-		if tc.StatusCode == http.StatusOK {
-			var count int64
-			err := c.DB.QueryRow("SELECT count(1) FROM renew_project").Scan(&count)
-			if err != nil {
-				t.Errorf("Impossible de lire le nombre d'éléments insérés")
-				t.FailNow()
-				return
-			}
-			if count != 2 {
-				t.Errorf("BatchRenewProject : 2 projets devaient être insérés, trouvés : %d", count)
-				t.FailNow()
-				return
-			}
-			err = c.DB.QueryRow("SELECT id FROM renew_project WHERE reference='PRU003'").Scan(&c.RenewProjectID)
-			if err != nil {
-				t.Errorf("Impossible de récupérer l'ID du projet de renouvellement")
-				t.FailNow()
-				return
-			}
+	}
+	if chkFactory(t, tcc, f, "BatchRenewProject") {
+		var count int64
+		err := c.DB.QueryRow("SELECT count(1) FROM renew_project").Scan(&count)
+		if err != nil {
+			t.Errorf("Impossible de lire le nombre d'éléments insérés")
+			t.FailNow()
+			return
+		}
+		if count != 2 {
+			t.Errorf("BatchRenewProject : 2 projets devaient être insérés, trouvés : %d", count)
+			t.FailNow()
+			return
+		}
+		if err = c.DB.QueryRow("SELECT id FROM renew_project WHERE reference='PRU003'").
+			Scan(&c.RenewProjectID); err != nil {
+			t.Errorf("Impossible de récupérer l'ID du projet de renouvellement")
+			t.FailNow()
+			return
 		}
 	}
 }
@@ -232,10 +230,9 @@ func testGetRenewProjectDatas(t *testing.T, c *TestContext, ID int) {
 			CountItemName: "Reference",
 			StatusCode:    http.StatusOK}, // 2 : ok
 	}
-
-	for i, tc := range tcc {
-		response := c.E.GET("/api/renew_project/"+strconv.Itoa(tc.ID)+"/datas").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/renew_project/"+strconv.Itoa(tc.ID)+"/datas").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetRenewProjectData")
 	}
+	chkFactory(t, tcc, f, "GetRenewProjectData")
 }

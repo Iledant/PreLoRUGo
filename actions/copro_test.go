@@ -238,31 +238,21 @@ func testBatchCopros(t *testing.T, c *TestContext) {
 			RespContains: []string{`Batch de copropriétés importé`},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/copros").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/copros").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	if chkFactory(t, tcc, f, "BatchCopro") {
+		response := c.E.GET("/api/copro").
+			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
 		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("BatchCopro[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("BatchCopro[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			response = c.E.GET("/api/copro").
-				WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-			body = string(response.Content)
-			for _, j := range []string{`"Reference":"CO003","Name":"copro3",` +
-				`"Address":"adresse3","ZipCode":77001,"CityName":"ACHERES-LA-FORET",` +
-				`"LabelDate":null,"Budget":null`,
-				`"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75101,` +
-					`"CityName":"PARIS 1","LabelDate":"2016-04-01T00:00:00Z","Budget":3000000`} {
-				if !strings.Contains(body, j) {
-					t.Errorf("BatchCopro[final]\n  ->attendu %s\n  ->reçu: %s", j, body)
-				}
+		for _, j := range []string{`"Reference":"CO003","Name":"copro3",` +
+			`"Address":"adresse3","ZipCode":77001,"CityName":"ACHERES-LA-FORET",` +
+			`"LabelDate":null,"Budget":null`,
+			`"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75101,` +
+				`"CityName":"PARIS 1","LabelDate":"2016-04-01T00:00:00Z","Budget":3000000`} {
+			if !strings.Contains(body, j) {
+				t.Errorf("BatchCopro[final]\n  ->attendu %s\n  ->reçu: %s", j, body)
 			}
 		}
 	}

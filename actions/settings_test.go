@@ -2,8 +2,9 @@ package actions
 
 import (
 	"net/http"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testSettings is the entry point for testing settings requests
@@ -23,27 +24,13 @@ func testGetSettings(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"BudgetSector":[`, `"BudgetAction":[`, `"Commission":[`,
 				`"PaginatedCity":{`, `"Community":[`, `"PaginatedPayment":{`, `"PaginatedCommitment":{`},
-			Count:      15,
-			StatusCode: http.StatusOK}, // 1 : bad request
+			Count:         15,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : bad request
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/settings").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/settings").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetSettings[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetSettings[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetSettings[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetSettings")
 }

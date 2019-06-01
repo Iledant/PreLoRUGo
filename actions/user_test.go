@@ -123,11 +123,11 @@ func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":3`},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/user/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/user/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "UpdateUser")
 	}
+	chkFactory(t, tcc, f, "UpdateUser")
 }
 
 // testChangeUserPwd checks route is protected and user correctly modified
@@ -158,11 +158,11 @@ func testChangeUserPwd(t *testing.T, c *TestContext) {
 			RespContains: []string{`Mot de passe changé`},
 			StatusCode:   http.StatusOK}, // 5 : check new password works and restore
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/user/password").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/user/password").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "ChangeUserPwd")
 	}
+	chkFactory(t, tcc, f, "ChangeUserPwd")
 }
 
 // testGetUsers checks route is protected for admin and 3 users are sent back
@@ -174,14 +174,14 @@ func testGetUsers(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			RespContains:  []string{`"Christophe Saintillan"`, `"essai2"`, `"Utilisateur"`},
 			Count:         5,
-			CountItemName: "ID",
+			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 0 : user unauthorized
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/users").WithHeader("Authorization", "Bearer "+tc.Token).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/users").WithHeader("Authorization", "Bearer "+tc.Token).
 			Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "GetUsers")
 	}
+	chkFactory(t, tcc, f, "GetUsers")
 }
 
 // testDeleteUser checks route is protected and user correctly modified
@@ -200,11 +200,11 @@ func testDeleteUser(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Utilisateur supprimé`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/user/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/user/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "DeleteUser")
 	}
+	chkFactory(t, tcc, f, "DeleteUser")
 }
 
 // testSignUp checks a the user is created and inactive
@@ -229,8 +229,8 @@ func testSignUp(t *testing.T, c *TestContext) {
 			RespContains: []string{`Utilisateur créé, en attente d'activation`},
 			StatusCode:   http.StatusCreated}, // 5 : created
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/user/sign_up").WithBytes(tc.Sent).Expect()
-		chkBodyStatusAndCount(t, tc, i, response, "SignUp")
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/user/sign_up").WithBytes(tc.Sent).Expect()
 	}
+	chkFactory(t, tcc, f, "SignUp")
 }

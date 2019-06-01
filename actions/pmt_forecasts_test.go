@@ -2,8 +2,9 @@ package actions
 
 import (
 	"net/http"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testPmtForecasts is the entry point for testing all renew projet requests
@@ -33,29 +34,15 @@ func testGetPmtForecasts(t *testing.T, c *TestContext) {
 			Sent:         []byte(`Year=a`),
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad year parameter format
 		{Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"PmtForecast":[]`},
-			Count:        0,
-			Sent:         []byte(`Year=2009`),
-			StatusCode:   http.StatusOK}, // 3 : ok
+			RespContains:  []string{`"PmtForecast":[]`},
+			Count:         0,
+			CountItemName: `"Index"`,
+			Sent:          []byte(`Year=2009`),
+			StatusCode:    http.StatusOK}, // 3 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/payments/forecasts").WithQueryString(string(tc.Sent)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/payments/forecasts").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetPmtForecasts[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetPmtForecasts[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"Index"`)
-			if count != tc.Count {
-				t.Errorf("GetPmtForecasts[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetPmtForecasts")
 }

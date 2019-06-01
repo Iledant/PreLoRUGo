@@ -1,11 +1,11 @@
 package actions
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
+
+	"github.com/iris-contrib/httpexpect"
 )
 
 // testCommunity is the entry point for testing all renew projet requests
@@ -47,26 +47,15 @@ func testCreateCommunity(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{Sent: []byte(`{"Community":{"Code":"Essai","Name":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
+			IDName:       `{"ID"`,
 			RespContains: []string{`"Community":{"ID":1,"Code":"Essai","Name":"Essai"`},
 			StatusCode:   http.StatusCreated}, // 4 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/community").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/community").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("CreateCommunity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("CreateCommunity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if tc.StatusCode == http.StatusCreated {
-			fmt.Sscanf(body, `{"Community":{"ID":%d`, &ID)
-		}
 	}
+	chkFactory(t, tcc, f, "CreateCommunity", &ID)
 	return ID
 }
 
@@ -99,20 +88,11 @@ func testUpdateCommunity(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"Essai2","Name":"Essai2"}`},
 			StatusCode:   http.StatusOK}, // 6 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.PUT("/api/community").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.PUT("/api/community").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("UpdateCommunity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("UpdateCommunity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "UpdateCommunity")
 }
 
 // testGetCommunity checks if route is user protected and Community correctly sent back
@@ -131,20 +111,11 @@ func testGetCommunity(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/community/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/community/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetCommunity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetCommunity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "GetCommunity")
 }
 
 // testGetCommunities checks if route is user protected and Communities correctly sent back
@@ -155,30 +126,16 @@ func testGetCommunities(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"Community":[{"ID":1,"Code":"Essai2","Name":"Essai2"}]}`},
-			Count:        1,
-			StatusCode:   http.StatusOK}, // 1 : ok
+			RespContains:  []string{`{"Community":[{"ID":1,"Code":"Essai2","Name":"Essai2"}]}`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.GET("/api/communities").
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/communities").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("GetCommunities[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("GetCommunities[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("GetCommunities[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "GetCommunities")
 }
 
 // testDeleteCommunity checks if route is user protected and communities correctly sent back
@@ -196,20 +153,11 @@ func testDeleteCommunity(t *testing.T, c *TestContext, ID int) {
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.DELETE("/api/community/"+strconv.Itoa(tc.ID)).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/community/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("DeleteCommunity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("DeleteCommunity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
 	}
+	chkFactory(t, tcc, f, "DeleteCommunity")
 }
 
 // testBatchCommunities check route is limited to admin and batch import succeeds
@@ -227,28 +175,14 @@ func testBatchCommunities(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Community":[{"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"},
 			{"Code":"217500016","Name":"VILLE DE PARIS (EPT1)"},{"Code":"200058519.78","Name":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)"}]}`),
-			Count:        3,
-			RespContains: []string{"Community", `"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"`},
-			StatusCode:   http.StatusOK}, // 2 : ok
+			Count:         3,
+			CountItemName: `"ID"`,
+			RespContains:  []string{"Community", `"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"`},
+			StatusCode:    http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/communities").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/communities").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("BatchCommunity[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("BatchCommunity[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			count := strings.Count(body, `"ID"`)
-			if count != tc.Count {
-				t.Errorf("BatchCommunity[%d]  ->nombre attendu %d  ->reçu: %d", i, tc.Count, count)
-			}
-		}
 	}
+	chkFactory(t, tcc, f, "BatchCommunity")
 }

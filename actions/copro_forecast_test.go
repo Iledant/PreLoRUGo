@@ -216,27 +216,17 @@ func testBatchCoproForecasts(t *testing.T, c *TestContext) {
 			RespContains: []string{"Batch de Prévision copros importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}
-	for i, tc := range tcc {
-		response := c.E.POST("/api/copro_forecasts").WithBytes(tc.Sent).
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/copro_forecasts").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	if chkFactory(t, tcc, f, "BatchCoproForecast") {
+		response := c.E.GET("/api/copro_forecasts").
+			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
 		body := string(response.Content)
-		for _, r := range tc.RespContains {
-			if !strings.Contains(body, r) {
-				t.Errorf("BatchCoproForecast[%d]\n  ->attendu %s\n  ->reçu: %s", i, r, body)
-			}
-		}
-		status := response.Raw().StatusCode
-		if status != tc.StatusCode {
-			t.Errorf("BatchCoproForecast[%d]  ->status attendu %d  ->reçu: %d", i, tc.StatusCode, status)
-		}
-		if status == http.StatusOK {
-			response = c.E.GET("/api/copro_forecasts").
-				WithHeader("Authorization", "Bearer "+tc.Token).Expect()
-			body = string(response.Content)
-			for _, j := range []string{`"Value":100,"Comment":"Batch1"`, `"Value":200,"Comment":"Batch2"`} {
-				if !strings.Contains(body, j) {
-					t.Errorf("BatchCoproForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
-				}
+		for _, j := range []string{`"Value":100,"Comment":"Batch1"`, `"Value":200,"Comment":"Batch2"`} {
+			if !strings.Contains(body, j) {
+				t.Errorf("BatchCoproForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
 			}
 		}
 	}
