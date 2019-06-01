@@ -44,12 +44,13 @@ func testCreateHousing(t *testing.T, c *TestContext) (ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de logement : Champ Reference incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : reference empty
-		{Sent: []byte(`{"Housing":{"Reference":"Essai","Address":"Essai","ZipCode":75101,` +
-			`"PLAI":1000000,"PLUS":1000000,"PLS":1000000,"ANRU":true}}`),
+		{Sent: []byte(`{"Housing":{"Reference":"Essai","Address":"Essai",` +
+			`"ZipCode":75101,"PLAI":1000000,"PLUS":1000000,"PLS":1000000,"ANRU":true}}`),
 			Token:  c.Config.Users.Admin.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"Housing":{"ID":1,"Reference":"Essai","Address":"Essai",` +
-				`"ZipCode":75101,"PLAI":1000000,"PLUS":1000000,"PLS":1000000,"ANRU":true`},
+				`"ZipCode":75101,"CityName":"PARIS 1","PLAI":1000000,"PLUS":1000000,` +
+				`"PLS":1000000,"ANRU":true`},
 			StatusCode: http.StatusCreated}, // 3 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -84,13 +85,13 @@ func testUpdateHousing(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de logement, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
-		{Sent: []byte(`{"Housing":{"ID":` + strconv.Itoa(ID) + `,"Reference":"Essai2",` +
-			`"Address":null,"ZipCode":null,"PLAI":2000000,"PLUS":2000000,"PLS":2000000,` +
-			`"ANRU":false}}`),
+		{Sent: []byte(`{"Housing":{"ID":` + strconv.Itoa(ID) +
+			`,"Reference":"Essai2","Address":null,"ZipCode":null,"PLAI":2000000,` +
+			`"PLUS":2000000,"PLS":2000000,"ANRU":false}}`),
 			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"Housing":{"ID":` + strconv.Itoa(ID) +
-				`,"Reference":"Essai2","Address":null,"ZipCode":null,"PLAI":2000000,` +
-				`"PLUS":2000000,"PLS":2000000,"ANRU":false}`},
+				`,"Reference":"Essai2","Address":null,"ZipCode":null,"CityName":null,` +
+				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}`},
 			StatusCode: http.StatusOK}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -110,8 +111,8 @@ func testGetHousings(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`{"Housing":[{"ID":1,"Reference":"Essai2",` +
-				`"Address":null,"ZipCode":null,"PLAI":2000000,"PLUS":2000000,` +
-				`"PLS":2000000,"ANRU":false}]}`},
+				`"Address":null,"ZipCode":null,"CityName":null,"PLAI":2000000,` +
+				`"PLUS":2000000,"PLS":2000000,"ANRU":false}]}`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -154,15 +155,15 @@ func testBatchHousings(t *testing.T, c *TestContext) {
 			RespContains: []string{"Droits administrateur requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Housing":[{"Reference":"Essai2","Address":null,"ZipCode":null,` +
-				`"PLAI":1,"PLUS":2,"PLS":3,"ANRU":false},
+			Sent: []byte(`{"Housing":[{"Reference":"Essai2","Address":null,` +
+				`"ZipCode":null,"PLAI":1,"PLUS":2,"PLS":3,"ANRU":false},
 			{"Reference":"","Address":"Adresse","ZipCode":77001,"PLAI":4,"PLUS":5,` +
 				`"PLS":6,"ANRU":true}]}`),
 			RespContains: []string{"Batch de Logements, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 1 : validation error
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Housing":[{"Reference":"Essai2","Address":null,"ZipCode":null,` +
-				`"PLAI":1,"PLUS":2,"PLS":3,"ANRU":false},
+			Sent: []byte(`{"Housing":[{"Reference":"Essai2","Address":null,` +
+				`"ZipCode":null,"PLAI":1,"PLUS":2,"PLS":3,"ANRU":false},
 			{"Reference":"Essai3","Address":"Adresse","ZipCode":77001,"PLAI":4,` +
 				`"PLUS":5,"PLS":6,"ANRU":true}]}`),
 			RespContains: []string{"Batch de Logements importé"},
@@ -187,9 +188,9 @@ func testBatchHousings(t *testing.T, c *TestContext) {
 				WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 			body = string(response.Content)
 			for _, j := range []string{`"Reference":"Essai2","Address":null,` +
-				`"ZipCode":null,"PLAI":1,"PLUS":2,"PLS":3,"ANRU":false`,
-				`"Reference":"Essai3","Address":"Adresse","ZipCode":77001,"PLAI":4,` +
-					`"PLUS":5,"PLS":6,"ANRU":true`} {
+				`"ZipCode":null,"CityName":null,"PLAI":1,"PLUS":2,"PLS":3,"ANRU":false`,
+				`"Reference":"Essai3","Address":"Adresse","ZipCode":77001,` +
+					`"CityName":"ACHERES-LA-FORET","PLAI":4,"PLUS":5,"PLS":6,"ANRU":true`} {
 				if !strings.Contains(body, j) {
 					t.Errorf("BatchHousing[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
 				}
@@ -215,8 +216,8 @@ func testGetPaginatedHousings(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Page=2&Search=essai3`),
 			RespContains: []string{`{"Housing":[`, `"Page":1`, `"ItemsCount":1`,
-				`"Reference":"Essai3","Address":"Adresse","ZipCode":77001,"PLAI":4,` +
-					`"PLUS":5,"PLS":6,"ANRU":true`},
+				`"Reference":"Essai3","Address":"Adresse","ZipCode":77001,` +
+					`"CityName":"ACHERES-LA-FORET","PLAI":4,"PLUS":5,"PLS":6,"ANRU":true`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 2 : ok

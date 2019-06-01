@@ -13,6 +13,7 @@ type Housing struct {
 	Reference string     `json:"Reference"`
 	Address   NullString `json:"Address"`
 	ZipCode   NullInt64  `json:"ZipCode"`
+	CityName  NullString `json:"CityName"`
 	PLAI      int64      `json:"PLAI"`
 	PLUS      int64      `json:"PLUS"`
 	PLS       int64      `json:"PLS"`
@@ -61,6 +62,11 @@ func (h *Housing) Create(db *sql.DB) (err error) {
 	(reference,address,zip_code,plai,plus,pls,anru)
 	 VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`, &h.Reference, &h.Address,
 		&h.ZipCode, &h.PLAI, &h.PLUS, &h.PLS, &h.ANRU).Scan(&h.ID)
+	if err != nil {
+		return err
+	}
+	err = db.QueryRow(`SELECT name FROM city WHERE insee_code=$1`, h.ZipCode).
+		Scan(&h.CityName)
 	return err
 }
 
@@ -79,13 +85,20 @@ func (h *Housing) Update(db *sql.DB) (err error) {
 	if count != 1 {
 		return errors.New("Logement introuvable")
 	}
+	err = db.QueryRow(`SELECT name FROM city WHERE insee_code=$1`, h.ZipCode).
+		Scan(&h.CityName)
+	if err == sql.ErrNoRows {
+		h.CityName.Valid = false
+		err = nil
+	}
 	return err
 }
 
 // GetAll fetches all Housings from database
 func (h *Housings) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id,reference,address,zip_code,plai,plus,pls,
-	anru FROM housing`)
+	rows, err := db.Query(`SELECT h.id,h.reference,h.address,h.zip_code,c.name,
+	h.plai,h.plus,h.pls,h.anru FROM housing h
+	LEFT JOIN city c ON h.zip_code=c.insee_code`)
 	if err != nil {
 		return err
 	}
@@ -93,7 +106,7 @@ func (h *Housings) GetAll(db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
-			&row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
+			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
 			return err
 		}
 		h.Housings = append(h.Housings, row)
@@ -176,8 +189,9 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 	}
 	offset, newPage := GetPaginateParams(q.Page, count)
 
-	rows, err := db.Query(`SELECT id, reference, address, zip_code, plai, plus,
-	pls, anru FROM housing
+	rows, err := db.Query(`SELECT h.id,h.reference,h.address,h.zip_code,c.name,
+	h.plai,h.plus,h.pls,h.anru FROM housing h
+	LEFT JOIN city c ON h.zip_code=c.insee_code
 	WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1
 	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
 		"%"+q.Search+"%", offset)
@@ -188,7 +202,7 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
-			&row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
+			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
 			return err
 		}
 		p.Housings = append(p.Housings, row)
