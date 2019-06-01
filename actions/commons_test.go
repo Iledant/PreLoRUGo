@@ -206,7 +206,9 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	    plai int NOT NULL,
 	    plus int NOT NULL,
 	    pls int NOT NULL,
-			anru boolean NOT NULL
+			anru boolean NOT NULL,
+			FOREIGN KEY (zip_code) REFERENCES city (insee_code) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`, // 11 : housing
 		`CREATE TABLE temp_housing (
 	    reference varchar(100) NOT NULL,
