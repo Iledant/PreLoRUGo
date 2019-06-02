@@ -167,6 +167,18 @@ func isRenewProject(ctx iris.Context) (bool, error) {
 		u.Rights&models.SuperAdminBit != 0, nil
 }
 
+// isHousing check an existing token in header and, if succeed,
+// check if user is admin, superadmin or has housing rights
+func isHousing(ctx iris.Context) (bool, error) {
+	u, err := bearerToUser(ctx)
+	if err != nil {
+		return false, err
+	}
+	return u.Rights&models.ActiveHousingMask == models.ActiveHousingMask ||
+		u.Rights&models.ActiveAdminMask == models.ActiveAdminMask ||
+		u.Rights&models.SuperAdminBit != 0, nil
+}
+
 // isAdmin check an existing token in header and, if succeed,
 // parse check if user active and admin
 func isAdmin(ctx iris.Context) (bool, error) {
@@ -257,6 +269,25 @@ func RenewProjectMiddleware(ctx iris.Context) {
 	if !renewProject {
 		ctx.StatusCode(http.StatusUnauthorized)
 		ctx.JSON(jsonError{"Droits sur les projets RU requis"})
+		ctx.StopExecution()
+		return
+	}
+	ctx.Next()
+}
+
+// HousingMiddleware checks if there's a valid token and user is active and
+// has rights on renew projects otherwise prompt error
+func HousingMiddleware(ctx iris.Context) {
+	renewProject, err := isHousing(ctx)
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{err.Error()})
+		ctx.StopExecution()
+		return
+	}
+	if !renewProject {
+		ctx.StatusCode(http.StatusUnauthorized)
+		ctx.JSON(jsonError{"Droits sur les projets logement requis"})
 		ctx.StopExecution()
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Iledant/PreLoRUGo/models"
 	"github.com/iris-contrib/httpexpect"
 )
 
@@ -23,6 +24,21 @@ func testHousing(t *testing.T, c *TestContext) {
 		testDeleteHousing(t, c, ID)
 		testBatchHousings(t, c)
 		testGetPaginatedHousings(t, c)
+		housing := models.Housing{Reference: "RefHousing",
+			Address: models.NullString{Valid: true, String: "Adresse de test"},
+			ZipCode: models.NullInt64{Valid: true, Int64: 77001},
+			PLAI:    10,
+			PLUS:    12,
+			PLS:     2,
+			ANRU:    true,
+		}
+		if err := housing.Create(c.DB); err != nil {
+			t.Error("Impossible de créer le logement de test")
+			t.FailNow()
+			return
+		}
+		c.HousingID = housing.ID
+
 	})
 }
 

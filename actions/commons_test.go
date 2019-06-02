@@ -24,6 +24,7 @@ type TestContext struct {
 	CommissionID   int64
 	RenewProjectID int64
 	CoproID        int64
+	HousingID      int64
 }
 
 // TestCase is used as common structure for all request tests
@@ -57,6 +58,7 @@ func TestAll(t *testing.T) {
 	testCommitmentLink(t, cfg)
 	testCommission(t, cfg)
 	testRenewProjectForecast(t, cfg)
+	testHousingForecast(t, cfg)
 	testCoproForecast(t, cfg)
 	testSettings(t, cfg)
 	testHome(t, cfg)
@@ -99,7 +101,8 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	temp_copro, renew_project, temp_renew_project, housing, temp_housing, commitment , 
 	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
 	community , temp_community, city , temp_city, renew_project_forecast , 
-	temp_renew_project_forecast, copro_forecast, temp_copro_forecast, ratio`,
+	temp_renew_project_forecast, copro_forecast, temp_copro_forecast, ratio, 
+	temp_housing_forecast, housing_forecast`,
 	}
 	for i, q := range dropQueries {
 		if _, err := db.Exec(q); err != nil {
@@ -357,6 +360,22 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			FOREIGN KEY (sector_id) REFERENCES budget_sector (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
 			);`, // 25 : ratio
+		`CREATE TABLE housing_forecast (
+				id SERIAL PRIMARY KEY,
+				commission_id int NOT NULL,
+				value bigint NOT NULL,
+				comment text,
+				housing_id int NOT NULL,
+				FOREIGN KEY (housing_id) REFERENCES housing (id) MATCH SIMPLE
+				ON UPDATE NO ACTION ON DELETE NO ACTION
+			);`, // 26 : renew_project_forecast
+		`CREATE TABLE temp_housing_forecast (
+				id int NOT NULL,
+				commission_id int NOT NULL,
+				value bigint NOT NULL,
+				comment text,
+				housing_id int NOT NULL
+			);`, // 27 : temp_renew_project_forecast
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
@@ -382,6 +401,10 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			Email:    cfg.Users.RenewProjectUser.Email,
 			Password: cfg.Users.RenewProjectUser.Password,
 			Rights:   models.ActiveRenewProjectMask},
+		{Name: "Utilisateur logement",
+			Email:    cfg.Users.HousingUser.Email,
+			Password: cfg.Users.HousingUser.Password,
+			Rights:   models.ActiveHousingMask},
 	}
 	for _, u := range users {
 		if err := createUser(&u, db); err != nil {
@@ -409,7 +432,8 @@ func fetchTokens(t *testing.T, ctx *TestContext) {
 		&ctx.Config.Users.Admin,
 		&ctx.Config.Users.User,
 		&ctx.Config.Users.CoproUser,
-		&ctx.Config.Users.RenewProjectUser} {
+		&ctx.Config.Users.RenewProjectUser,
+		&ctx.Config.Users.HousingUser} {
 		response := ctx.E.POST("/api/user/login").
 			WithBytes([]byte(`{"Email":"` + u.Email + `","Password":"` + u.Password + `"}`)).
 			Expect()

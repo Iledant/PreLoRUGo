@@ -173,7 +173,7 @@ func testGetUsers(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
 			RespContains:  []string{`"Christophe Saintillan"`, `"essai2"`, `"Utilisateur"`},
-			Count:         5,
+			Count:         6,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 0 : user unauthorized
 	}

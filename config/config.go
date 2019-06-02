@@ -25,6 +25,7 @@ type Users struct {
 	User             Credentials
 	CoproUser        Credentials `yaml:"coprouser"`
 	RenewProjectUser Credentials `yaml:"renewprojectuser"`
+	HousingUser      Credentials `yaml:"housinguser"`
 }
 
 // Databases includes the 3 databases settings for production, development and tests.

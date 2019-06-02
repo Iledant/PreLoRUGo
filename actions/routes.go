@@ -73,6 +73,8 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	adminParty.Post("/renew_project_forecasts", BatchRenewProjectForecasts)
 
+	adminParty.Post("/housing_forecasts", BatchHousingForecasts)
+
 	adminParty.Post("/copro_forecasts", BatchCoproForecasts)
 
 	adminParty.Get("/settings", GetSettings)
@@ -89,6 +91,11 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	renewProjectUserParty.Post("/renew_project_forecast", CreateRenewProjectForecast)
 	renewProjectUserParty.Put("/renew_project_forecast", UpdateRenewProjectForecast)
 	renewProjectUserParty.Delete("/renew_project_forecast/{ID}", DeleteRenewProjectForecast)
+
+	housingUserParty := api.Party("", HousingMiddleware)
+	housingUserParty.Post("/housing_forecast", CreateHousingForecast)
+	housingUserParty.Put("/housing_forecast", UpdateHousingForecast)
+	housingUserParty.Delete("/housing_forecast/{ID}", DeleteHousingForecast)
 
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
@@ -131,6 +138,9 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	userParty.Get("/renew_project_forecast/{ID}", GetRenewProjectForecast)
 	userParty.Get("/renew_project_forecasts", GetRenewProjectForecasts)
+
+	userParty.Get("/housing_forecast/{ID}", GetHousingForecast)
+	userParty.Get("/housing_forecasts", GetHousingForecasts)
 
 	userParty.Get("/copro_forecast/{ID}", GetCoproForecast)
 	userParty.Get("/copro_forecasts", GetCoproForecasts)

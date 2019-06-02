@@ -35,6 +35,8 @@ const (
 	RenewProjectBit = 1 << 4
 	// ObserverBit of user's rights field specifies the user has read access to functions
 	ObserverBit = 1 << 5
+	// HousingBit of user's rights field specifies the user has access to housing functions
+	HousingBit = 1 << 6
 	// RightsMask is used to check if user's rights field are correctly filled
 	RightsMask = ActiveBit | SuperAdminBit | AdminBit | CoproBit | RenewProjectBit | ObserverBit
 	// ActiveAdminMask is used to check if a user is an active admin
@@ -45,6 +47,8 @@ const (
 	ActiveCoproMask = ActiveBit | CoproBit
 	// ActiveRenewProjectMask is used to check is a user is active and has renew project rights
 	ActiveRenewProjectMask = ActiveBit | RenewProjectBit
+	// ActiveHousingMask is used to check is a user is active and has renew project rights
+	ActiveHousingMask = ActiveBit | HousingBit
 )
 
 // Validate checks if field are correctly filled for database constraints

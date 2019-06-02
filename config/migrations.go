@@ -54,6 +54,22 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 		ADD CONSTRAINT zip_code_housing_insee_code_city_fkey FOREIGN KEY (zip_code) 
 		REFERENCES city (insee_code) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION`,
+	`CREATE TABLE housing_forecast (
+			id SERIAL PRIMARY KEY,
+			commission_id int NOT NULL,
+			value bigint NOT NULL,
+			comment text,
+			housing_id int NOT NULL,
+			FOREIGN KEY (housing_id) REFERENCES housing (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION
+		);`,
+	`CREATE TABLE temp_housing_forecast (
+			id int NOT NULL,
+			commission_id int NOT NULL,
+			value bigint NOT NULL,
+			comment text,
+			housing_id int NOT NULL
+		);`,
 }
 
 // HandleMigrations check if new migrations have been created and launches them
