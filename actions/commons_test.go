@@ -365,8 +365,10 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 				commission_id int NOT NULL,
 				value bigint NOT NULL,
 				comment text,
-				housing_id int NOT NULL,
-				FOREIGN KEY (housing_id) REFERENCES housing (id) MATCH SIMPLE
+				action_id int NOT NULL,
+				FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
+				ON UPDATE NO ACTION ON DELETE NO ACTION,
+				FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
 				ON UPDATE NO ACTION ON DELETE NO ACTION
 			);`, // 26 : renew_project_forecast
 		`CREATE TABLE temp_housing_forecast (
@@ -374,7 +376,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 				commission_id int NOT NULL,
 				value bigint NOT NULL,
 				comment text,
-				housing_id int NOT NULL
+				action_id int NOT NULL
 			);`, // 27 : temp_renew_project_forecast
 	}
 	for i, q := range queries {

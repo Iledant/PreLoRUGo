@@ -55,15 +55,21 @@ func testCreateHousingForecast(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`Création de prévision logement : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : value nul
 		{Sent: []byte(`{"HousingForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","HousingID":` +
-			strconv.Itoa(int(c.HousingID)) + "}}"),
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai",` +
+			`"ActionID":10}}`),
+			Token:        c.Config.Users.HousingUser.Token,
+			RespContains: []string{`Création de prévision logement, requête :`},
+			StatusCode:   http.StatusInternalServerError}, // 5 : bad budget action
+		{Sent: []byte(`{"HousingForecast":{"CommissionID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai",` +
+			`"ActionID":3}}`),
 			Token:  c.Config.Users.HousingUser.Token,
 			IDName: `{"ID"`,
-			RespContains: []string{`"HousingForecast":{"ID":1,"CommissionID":` +
+			RespContains: []string{`"HousingForecast":{"ID":2,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":1000000,"Comment":"Essai","HousingID":` +
-				strconv.Itoa(int(c.HousingID))},
-			StatusCode: http.StatusCreated}, // 5 : ok
+				`"CommissionName":"Commission test","Value":1000000,"Comment":"Essai",` +
+				`"ActionID":3,"ActionName":"Aide à la création de logements locatifs sociaux"`},
+			StatusCode: http.StatusCreated}, // 6 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/housing_forecast").WithBytes(tc.Sent).
@@ -101,19 +107,24 @@ func testUpdateHousingForecast(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.HousingUser.Token,
 			RespContains: []string{`Modification de prévision logement : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : renew project ID nul
-		{Sent: []byte(`{"HousingForecast":{"ID":0,"CommissionID":2000000,"Value":2000000,"Comment":null,"HousingID":2000000}}`),
+		{Sent: []byte(`{"HousingForecast":{"ID":0,"CommissionID":2000000,` +
+			`"Value":2000000,"Comment":null,"ActionID":2000000}}`),
 			Token:        c.Config.Users.HousingUser.Token,
 			RespContains: []string{`Modification de prévision logement, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad ID
 		{Sent: []byte(`{"HousingForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","HousingID":` +
-			strconv.Itoa(int(c.HousingID)) + "}}"),
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","ActionID":10}}`),
+			Token:        c.Config.Users.HousingUser.Token,
+			RespContains: []string{`Modification de prévision logement, requête :`},
+			StatusCode:   http.StatusInternalServerError}, // 6 : bad budget action ID
+		{Sent: []byte(`{"HousingForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","ActionID":4}}`),
 			Token: c.Config.Users.HousingUser.Token,
 			RespContains: []string{`"HousingForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","HousingID":` +
-				strconv.Itoa(int(c.HousingID)) + `}`},
-			StatusCode: http.StatusOK}, // 6 : ok
+				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2",` +
+				`"ActionID":4,"ActionName":"Aide à la création de logements locatifs très sociaux"}`},
+			StatusCode: http.StatusOK}, // 7 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.PUT("/api/housing_forecast").WithBytes(tc.Sent).
@@ -136,8 +147,8 @@ func testGetHousingForecast(t *testing.T, c *TestContext, ID int) {
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"HousingForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","HousingID":` +
-				strconv.Itoa(int(c.HousingID)) + `}`},
+				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2",` +
+				`"ActionID":4,"ActionName":"Aide à la création de logements locatifs très sociaux"}`},
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
@@ -158,8 +169,8 @@ func testGetHousingForecasts(t *testing.T, c *TestContext, ID int) {
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"HousingForecast":[{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","HousingID":` +
-				strconv.Itoa(int(c.HousingID)) + `}]}`},
+				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2",` +
+				`"ActionID":4,"ActionName":"Aide à la création de logements locatifs très sociaux"}]}`},
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
@@ -201,18 +212,16 @@ func testBatchHousingForecasts(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"HousingForecast":[{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Batch1","HousingID":` +
-				strconv.Itoa(int(c.HousingID)) + `},{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Comment":"Batch2","HousingID":` +
-				strconv.Itoa(int(c.HousingID)) + `}]}`),
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Batch1","ActionID":3},` +
+				`{"ID":0,"CommissionID":` + strconv.Itoa(int(c.CommissionID)) +
+				`,"Value":200,"Comment":"Batch2","ActionID":4}]}`),
 			RespContains: []string{"Batch de Prévision logements, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 1 : value nul
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"HousingForecast":[{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":100,"Comment":"Batch1","HousingID":` +
-				strconv.Itoa(int(c.HousingID)) + `},{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Comment":"Batch2","HousingID":` +
-				strconv.Itoa(int(c.HousingID)) + `}]}`),
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":100,"Comment":"Batch1","ActionID":3},` +
+				`{"ID":0,"CommissionID":` + strconv.Itoa(int(c.CommissionID)) +
+				`,"Value":200,"Comment":"Batch2","ActionID":4}]}`),
 			RespContains: []string{"Batch de Prévision logements importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}

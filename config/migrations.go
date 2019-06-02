@@ -59,8 +59,10 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 			commission_id int NOT NULL,
 			value bigint NOT NULL,
 			comment text,
-			housing_id int NOT NULL,
-			FOREIGN KEY (housing_id) REFERENCES housing (id) MATCH SIMPLE
+			action_id int NOT NULL,
+			FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION,
+			FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION
 		);`,
 	`CREATE TABLE temp_housing_forecast (
@@ -68,7 +70,7 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 			commission_id int NOT NULL,
 			value bigint NOT NULL,
 			comment text,
-			housing_id int NOT NULL
+			action_id int NOT NULL
 		);`,
 }
 
