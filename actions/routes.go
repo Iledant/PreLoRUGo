@@ -96,6 +96,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	housingUserParty.Post("/housing_forecast", CreateHousingForecast)
 	housingUserParty.Put("/housing_forecast", UpdateHousingForecast)
 	housingUserParty.Delete("/housing_forecast/{ID}", DeleteHousingForecast)
+	housingUserParty.Post("/housing/commitments", LinkCommitmentsHousings)
 
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)

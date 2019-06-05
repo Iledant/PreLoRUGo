@@ -65,6 +65,7 @@ func TestAll(t *testing.T) {
 	testBeneficiaryDatas(t, cfg)
 	testPmtRatio(t, cfg)
 	testPmtForecasts(t, cfg)
+	testLinkCommitmentsHousings(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
