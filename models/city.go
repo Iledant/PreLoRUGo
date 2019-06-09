@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+
+	"github.com/lib/pq"
 )
 
 // City model
@@ -163,8 +165,8 @@ func (c *CityBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_city 
-	(insee_code,name,community_code,qpv) VALUES ($1,$2,$3,$4)`)
+	stmt, err := tx.Prepare(pq.CopyIn("temp_city", "insee_code", "name",
+		"community_code", "qpv"))
 	if err != nil {
 		return err
 	}
@@ -174,6 +176,10 @@ func (c *CityBatch) Save(db *sql.DB) (err error) {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement exec flush %v", err)
 	}
 	queries := []string{`UPDATE city SET name=q.name,community_id=q.id,qpv=q.qpv 
 	FROM (SELECT t.*, c.id FROM temp_city t 

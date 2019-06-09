@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+
+	"github.com/lib/pq"
 )
 
 // Housing model
@@ -145,8 +147,8 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_housing (reference,address,zip_code,
-		plai,plus,pls,anru) VALUES ($1,$2,$3,$4,$5,$6,$7)`)
+	stmt, err := tx.Prepare(pq.CopyIn("temp_housing", "reference", "address", 
+	"zip_code", "plai", "plus", "pls", "anru"))
 	if err != nil {
 		return err
 	}
@@ -157,6 +159,10 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement exec flush %v", err)
 	}
 	queries := []string{`UPDATE housing SET address=t.address,zip_code=t.zip_code,
 	plai=t.plai,plus=t.plus,pls=t.pls,anru=t.anru FROM temp_housing t 

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 // Commitment model
@@ -411,34 +413,44 @@ func (c *CoproLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 
 // Save insert a batch of CommitmentLine into database
 func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_commitment (year,code,number,line,
-		creation_date,modification_date,name,value,sold_out,beneficiary_code,
-		beneficiary_name,iris_code,sector,action_code,action_name)
-	VALUES ($1,$2,$3,$4,make_date($5,$6,$7),make_date($8,$9,$10),$11,$12,$13,$14,
-	$15,$16,$17,$18,$19)`)
-	if err != nil {
-		return errors.New("Statement creation " + err.Error())
-	}
-	defer stmt.Close()
 	for _, r := range c.Lines {
 		if r.Year < 2009 || r.Number == 0 || r.Line == 0 || r.CreationDate < 20090101 ||
 			r.ModificationDate < 20090101 || r.Name == "" || r.BeneficiaryCode == 0 ||
 			r.BeneficiaryName == "" || r.Sector == "" {
-			tx.Rollback()
 			return fmt.Errorf("Champs incorrects dans %+v", r)
 		}
-		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, r.CreationDate/10000,
-			r.CreationDate/100%100, r.CreationDate%100, r.ModificationDate/10000,
-			r.ModificationDate/100%100, r.ModificationDate%100, strings.TrimSpace(r.Name),
-			r.Value, r.SoldOut == "O", r.BeneficiaryCode, strings.TrimSpace(r.BeneficiaryName),
-			r.IrisCode, strings.TrimSpace(r.Sector), r.ActionCode, r.ActionName.TrimSpace()); err != nil {
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(pq.CopyIn("temp_commitment", "year", "code", "number",
+		"line", "creation_date", "modification_date", "name", "value", "sold_out",
+		"beneficiary_code", "beneficiary_name", "iris_code", "sector", "action_code",
+		"action_name"))
+	if err != nil {
+		return errors.New("Statement creation " + err.Error())
+	}
+	defer stmt.Close()
+	var cd, md time.Time
+	for _, r := range c.Lines {
+		cd = time.Date(int(r.CreationDate/10000), time.Month(r.CreationDate/100%100),
+			int(r.CreationDate%100), 0, 0, 0, 0, time.UTC)
+		md = time.Date(int(r.ModificationDate/10000),
+			time.Month(r.ModificationDate/100%100), int(r.ModificationDate%100), 0, 0,
+			0, 0, time.UTC)
+		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, cd, md,
+			strings.TrimSpace(r.Name), r.Value, r.SoldOut == "O", r.BeneficiaryCode,
+			strings.TrimSpace(r.BeneficiaryName), r.IrisCode, strings.TrimSpace(r.Sector),
+			r.ActionCode, r.ActionName.TrimSpace()); err != nil {
 			tx.Rollback()
 			return errors.New("Statement execution " + err.Error())
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement exec flush %v", err)
 	}
 	queries := []string{`INSERT INTO beneficiary (code,name) 
 		SELECT DISTINCT beneficiary_code,beneficiary_name 
