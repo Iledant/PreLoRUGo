@@ -55,23 +55,27 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 		REFERENCES city (insee_code) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION`,
 	`CREATE TABLE housing_forecast (
-			id SERIAL PRIMARY KEY,
-			commission_id int NOT NULL,
-			value bigint NOT NULL,
-			comment text,
-			action_id int NOT NULL,
-			FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
-			ON UPDATE NO ACTION ON DELETE NO ACTION,
-			FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
-			ON UPDATE NO ACTION ON DELETE NO ACTION
-		);`,
+		id SERIAL PRIMARY KEY,
+		commission_id int NOT NULL,
+		value bigint NOT NULL,
+		comment text,
+		action_id int NOT NULL,
+		FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION,
+		FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION
+	);`,
 	`CREATE TABLE temp_housing_forecast (
-			id int NOT NULL,
-			commission_id int NOT NULL,
-			value bigint NOT NULL,
-			comment text,
-			action_id int NOT NULL
-		);`,
+		id int NOT NULL,
+		commission_id int NOT NULL,
+		value bigint NOT NULL,
+		comment text,
+		action_id int NOT NULL
+	);`,
+	`CREATE TABLE housing_commitment (
+		iris_code varchar(20),
+		reference varchar(100)
+	);`,
 }
 
 // HandleMigrations check if new migrations have been created and launches them

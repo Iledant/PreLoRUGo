@@ -28,11 +28,11 @@ func testLinkCommitmentsHousings(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.HousingUser.Token,
 			Sent:         []byte(`{"HousingCommitmentBach":[{"Reference":"Essai3","IRISCode":""}]}`),
 			RespContains: []string{`Ligne 1, IRISCode vide`},
-			StatusCode:   http.StatusInternalServerError}, // 3 : IRISCode null
+			StatusCode:   http.StatusInternalServerError}, // 2 : IRISCode null
 		{Token: c.Config.Users.HousingUser.Token,
 			Sent:         []byte(`{"HousingCommitmentBach":[{"Reference":"Essai3","IRISCode":"14004240"}]}`),
 			RespContains: []string{`Liens engagements logements importés`},
-			StatusCode:   http.StatusOK}, // 4 : ok
+			StatusCode:   http.StatusOK}, // 3 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/housing/commitments").WithBytes(tc.Sent).
