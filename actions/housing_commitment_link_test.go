@@ -28,11 +28,7 @@ func testLinkCommitmentsHousings(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.HousingUser.Token,
 			Sent:         []byte(`{"HousingCommitmentBach":[{"Reference":"Essai3","IRISCode":""}]}`),
 			RespContains: []string{`Ligne 1, IRISCode vide`},
-			StatusCode:   http.StatusInternalServerError}, // 2 : ok
-		{Token: c.Config.Users.HousingUser.Token,
-			Sent:         []byte(`{"HousingCommitmentBach":[{"Reference":"Essai3","IRISCode":"1400424"}]}`),
-			RespContains: []string{`Liens engagements logements, requête : ligne 0 Reference ou code IRIS introuvable`},
-			StatusCode:   http.StatusInternalServerError}, // 3 : ok
+			StatusCode:   http.StatusInternalServerError}, // 3 : IRISCode null
 		{Token: c.Config.Users.HousingUser.Token,
 			Sent:         []byte(`{"HousingCommitmentBach":[{"Reference":"Essai3","IRISCode":"14004240"}]}`),
 			RespContains: []string{`Liens engagements logements importés`},

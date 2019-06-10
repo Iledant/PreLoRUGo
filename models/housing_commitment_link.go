@@ -40,19 +40,10 @@ func (h *HousingCommitmentBach) Save(db *sql.DB) error {
 		return fmt.Errorf("statement creation %v", err)
 	}
 	for i, l := range h.Lines {
-		res, err := stmt.Exec(l.Reference, l.IRISCode)
+		_, err := stmt.Exec(l.Reference, l.IRISCode)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("statement exec %d %v", i, err)
-		}
-		count, err := res.RowsAffected()
-		if err != nil {
-			tx.Rollback()
-			return fmt.Errorf("statement %d count %v", i, err)
-		}
-		if count == 0 {
-			tx.Rollback()
-			return fmt.Errorf("ligne %d Reference ou code IRIS introuvable", i)
 		}
 	}
 	tx.Commit()
