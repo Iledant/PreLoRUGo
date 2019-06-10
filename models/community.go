@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 // Community model
@@ -133,7 +135,7 @@ func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_community (code,name) VALUES ($1,$2)`)
+	stmt, err := tx.Prepare(pq.CopyIn("temp_community", "code", "name"))
 	if err != nil {
 		return err
 	}
@@ -143,6 +145,10 @@ func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
 	}
 	queries := []string{`UPDATE community SET name=t.name FROM temp_community t 
 	WHERE t.code = community.code`,

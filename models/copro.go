@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 // Copro is the model for a labelled condominium
@@ -158,9 +160,8 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_copro 
-	(reference,name,address,zip_code,label_date,budget) 
-	VALUES ($1,$2,$3,$4,$5,$6)`)
+	stmt, err := tx.Prepare(pq.CopyIn("temp_copro", "reference", "name", "address",
+		"zip_code", "label_date", "budget"))
 	if err != nil {
 		return err
 	}
@@ -171,6 +172,10 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statementflush exec %v", err)
 	}
 	queries := []string{`UPDATE copro SET name=t.name, address=t.address, zip_code=t.zip_code,
 	label_date=t.label_date,budget=t.budget FROM temp_copro t WHERE t.reference = copro.reference`,

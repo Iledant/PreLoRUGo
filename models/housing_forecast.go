@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 // HousingForecast model
@@ -182,8 +184,8 @@ func (r *HousingForecastBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("début de transaction %v", err)
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_housing_forecast 
-	(id, commission_id,value,comment,action_id) VALUES ($1,$2,$3,$4,$5)`)
+	stmt, err := tx.Prepare(pq.CopyIn("temp_housing_forecast", "id", "commission_id",
+		"value", "comment", "action_id"))
 	if err != nil {
 		return fmt.Errorf("insert statement %v", err)
 	}
@@ -193,6 +195,10 @@ func (r *HousingForecastBatch) Save(db *sql.DB) (err error) {
 			tx.Rollback()
 			return fmt.Errorf("statement execution %v", err)
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
 	}
 	queries := []string{`UPDATE housing_forecast SET commission_id=t.commission_id,
 	value=t.value,comment=t.comment,action_id=t.action_id 

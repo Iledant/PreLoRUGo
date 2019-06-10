@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 // Payment model
@@ -180,31 +182,40 @@ func (p *Payments) GetLinkedToCopro(ID int64, db *sql.DB) (err error) {
 
 // Save insert a batch of PaymentLine into database
 func (p *PaymentBatch) Save(db *sql.DB) (err error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_payment (commitment_year,commitment_code,
-		commitment_number,commitment_line,year,creation_date,modification_date,number, value)
-		VALUES ($1,$2,$3,$4,$5,make_date($6,$7,$8),make_date($9,$10,$11),$12,$13)`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
 	for _, r := range p.Lines {
 		if r.CommitmentYear == 0 || r.CommitmentCode == "" || r.CommitmentNumber == 0 ||
 			r.CommitmentLine == 0 || r.Year == 0 || r.CreationDate < 20090101 ||
 			r.ModificationDate < 20090101 || r.Number == 0 {
-			tx.Rollback()
 			return fmt.Errorf("Champ incorrect dans %+v", r)
 		}
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	stmt, err := tx.Prepare(pq.CopyIn("temp_payment", "commitment_year",
+		"commitment_code", "commitment_number", "commitment_line", "year",
+		"creation_date", "modification_date", "number", "value"))
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	var cd, md time.Time
+	for _, r := range p.Lines {
+		cd = time.Date(int(r.CreationDate/10000), time.Month(r.CreationDate/100%100),
+			int(r.CreationDate%100), 0, 0, 0, 0, time.UTC)
+		md = time.Date(int(r.ModificationDate/10000),
+			time.Month(r.ModificationDate/100%100), int(r.ModificationDate%100), 0, 0,
+			0, 0, time.UTC)
 		if _, err = stmt.Exec(r.CommitmentYear, r.CommitmentCode, r.CommitmentNumber,
-			r.CommitmentLine, r.Year, r.CreationDate/10000, (r.CreationDate/100)%100,
-			r.CreationDate%100, r.ModificationDate/10000, (r.ModificationDate/100)%100,
-			r.ModificationDate%100, r.Number, r.Value); err != nil {
+			r.CommitmentLine, r.Year, cd, md, r.Number, r.Value); err != nil {
 			tx.Rollback()
 			return err
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
 	}
 	queries := []string{`UPDATE payment SET value=t.value, 
 		modification_date=t.modification_date

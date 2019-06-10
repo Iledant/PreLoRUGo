@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 // RenewProjectForecast model
@@ -170,8 +172,8 @@ func (r *RenewProjectForecastBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_renew_project_forecast 
-	(id, commission_id,value,comment,renew_project_id) VALUES ($1,$2,$3,$4,$5)`)
+	stmt, err := tx.Prepare(pq.CopyIn("temp_renew_project_forecast", "id",
+		"commission_id", "value", "comment", "renew_project_id"))
 	if err != nil {
 		return err
 	}
@@ -181,6 +183,10 @@ func (r *RenewProjectForecastBatch) Save(db *sql.DB) (err error) {
 			tx.Rollback()
 			return err
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
 	}
 	queries := []string{`UPDATE renew_project_forecast SET commission_id=t.commission_id,
 	value=t.value,comment=t.comment,renew_project_id=t.renew_project_id 

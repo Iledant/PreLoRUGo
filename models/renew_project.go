@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 // RenewProject model
@@ -62,9 +64,9 @@ func (r *RenewProject) GetByID(db *sql.DB) error {
 	JOIN city c1 ON r.city_code1=c1.insee_code
 	LEFT JOIN city c2 ON r.city_code2=c2.insee_code
 	LEFT JOIN city c3 ON r.city_code3=c3.insee_code
-	WHERE r.id=$1`, r.ID).Scan(&r.Reference, &r.Name, &r.Budget, &r.PRIN, 
-		&r.CityCode1,&r.CityName1,&r.CityCode2, &r.CityName2,&r.CityCode3,
-		&r.CityName3,&r.Population,&r.CompositeIndex)
+	WHERE r.id=$1`, r.ID).Scan(&r.Reference, &r.Name, &r.Budget, &r.PRIN,
+		&r.CityCode1, &r.CityName1, &r.CityCode2, &r.CityName2, &r.CityCode3,
+		&r.CityName3, &r.Population, &r.CompositeIndex)
 }
 
 // Create insert a renew project into database returning it's ID
@@ -167,9 +169,9 @@ func (r *RenewProjectBatch) Save(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(`INSERT INTO temp_renew_project (reference,name,budget,
-		prin,city_code1,city_code2,city_code3,population,composite_index)
-	VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`)
+	stmt, err := tx.Prepare(pq.CopyIn("temp_renew_project", "reference", "name",
+		"budget", "prin", "city_code1", "city_code2", "city_code3", "population",
+		"composite_index"))
 	if err != nil {
 		return err
 	}
@@ -180,6 +182,10 @@ func (r *RenewProjectBatch) Save(db *sql.DB) error {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
 	}
 	queries := []string{`UPDATE renew_project SET name=t.name, budget=t.budget,
 	prin=t.prin, city_code1=t.city_code1, city_code2=t.city_code2,

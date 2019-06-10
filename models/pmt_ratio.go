@@ -3,15 +3,17 @@ package models
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 // PmtRatio is used to calculate one line of payment transformation ratio of
 // commitments for all budget actions
 type PmtRatio struct {
-	Index    int     `json:"Index"`
-	SectorID int     `json:"SectorID"`
-	SectorName string `json:"SectorName"`
-	Ratio    float64 `json:"Ratio"`
+	Index      int     `json:"Index"`
+	SectorID   int     `json:"SectorID"`
+	SectorName string  `json:"SectorName"`
+	Ratio      float64 `json:"Ratio"`
 }
 
 // PmtRatios embeddes an array of PmtRatio for json export
@@ -74,8 +76,8 @@ func (p *PmtRatioBatch) Save(db *sql.DB) error {
 		tx.Rollback()
 		return fmt.Errorf("DELETE %v", err)
 	}
-	stmt, err := tx.Prepare(`INSERT INTO ratio (year, index, sector_id, ratio) 
-	VALUES ($1,$2,$3,$4)`)
+	stmt, err := tx.Prepare(pq.CopyIn("ratio", "year", "index", "sector_id",
+		"ratio"))
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("statement creation %v", err)
@@ -86,6 +88,10 @@ func (p *PmtRatioBatch) Save(db *sql.DB) error {
 			tx.Rollback()
 			return fmt.Errorf("statement execution %v", err)
 		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
 	}
 	tx.Commit()
 	return nil
