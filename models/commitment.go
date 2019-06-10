@@ -213,7 +213,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	offset, newPage := GetPaginateParams(c.Page, count)
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
 	c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,b.name,
-	c.iris_code,a.name,s.name FROM commitment c
+	c.iris_code,a.name,s.name,c.housing_id,c.renew_project_id,c.copro_id FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
@@ -230,7 +230,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
 			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
-			&row.ActionName, &row.Sector); err != nil {
+			&row.ActionName, &row.Sector, &row.HousingID, &row.RenewProjectID, &row.CoproID); err != nil {
 			return err
 		}
 		p.Commitments = append(p.Commitments, row)
