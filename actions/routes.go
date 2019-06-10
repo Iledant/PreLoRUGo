@@ -86,6 +86,7 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
 	coproUserParty.Delete("/copro_forecast/{ID}", DeleteCoproForecast)
+	coproUserParty.Post("/copro/commitments", LinkCommitmentsCopros)
 
 	renewProjectUserParty := api.Party("", RenewProjectMiddleware)
 	renewProjectUserParty.Post("/renew_project_forecast", CreateRenewProjectForecast)
