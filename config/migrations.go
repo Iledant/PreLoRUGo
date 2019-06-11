@@ -76,6 +76,10 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 		iris_code varchar(20),
 		reference varchar(100)
 	);`,
+	`CREATE TABLE copro_commitment (
+		iris_code varchar(20),
+		reference varchar(100)
+	);`,
 }
 
 // HandleMigrations check if new migrations have been created and launches them

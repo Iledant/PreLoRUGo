@@ -30,17 +30,22 @@ func testLinkCommitmentsCopros(t *testing.T, c *TestContext) {
 			RespContains: []string{`Ligne 1, IRISCode vide`},
 			StatusCode:   http.StatusInternalServerError}, // 2 : IRIS code empty
 		{Token: c.Config.Users.CoproUser.Token,
-			Sent:         []byte(`{"CoproCommitmentBach":[{"Reference":"Essai3","IRISCode":"1302123"}]}`),
-			RespContains: []string{`Liens engagements copros, requête : ligne 0 Reference ou code IRIS introuvable`},
-			StatusCode:   http.StatusInternalServerError}, // 3 : bad reference
-		{Token: c.Config.Users.CoproUser.Token,
 			Sent:         []byte(`{"CoproCommitmentBach":[{"Reference":"CO004","IRISCode":"13021233"}]}`),
 			RespContains: []string{`Liens engagements copros importés`},
-			StatusCode:   http.StatusOK}, // 4 : ok
+			StatusCode:   http.StatusOK}, // 3 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/copro/commitments").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "LinkCommitmentsCopros")
+	if chkFactory(t, tcc, f, "LinkCommitmentsCopros") {
+		var count int64
+		if err := c.DB.QueryRow(`SELECT count(1) FROM commitment 
+		WHERE iris_code='13021233' AND copro_id IS NOT NULL`).Scan(&count); err != nil {
+			t.Errorf("LinkCommitmentsCopros, erreur sur la requête de vérification %v", err)
+		}
+		if count != 1 {
+			t.Errorf("LinkCommitmentsCopros: échec de la vérification -> attendu 1  -> reçu %d\n", count)
+		}
+	}
 }

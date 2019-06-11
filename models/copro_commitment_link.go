@@ -3,6 +3,8 @@ package models
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 // CoproCommitmentLine is used to decode a line of a batch of links between
@@ -32,27 +34,40 @@ func (h *CoproCommitmentBach) Save(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("begin transaction %v", err)
 	}
-	stmt, err := tx.Prepare(`UPDATE commitment SET copro_id=copro.id, 
-	housing_id=NULL, renew_project_id=NULL FROM copro 
-	WHERE copro.reference = $1 AND commitment.iris_code=$2`)
+	if _, err = tx.Exec(`DELETE FROM copro_commitment`); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("delete query %v", err)
+	}
+	stmt, err := tx.Prepare(pq.CopyIn("copro_commitment", "reference", "iris_code"))
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("statement creation %v", err)
 	}
-	for i, l := range h.Lines {
-		res, err := stmt.Exec(l.Reference, l.IRISCode)
-		if err != nil {
+	for _, l := range h.Lines {
+		if _, err = stmt.Exec(l.Reference, l.IRISCode); err != nil {
 			tx.Rollback()
-			return fmt.Errorf("statement exec %d %v", i, err)
+			return fmt.Errorf("statement execution %v", err)
 		}
-		count, err := res.RowsAffected()
-		if err != nil {
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
+	}
+	if err = stmt.Close(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement close %v", err)
+	}
+	queries := []string{`UPDATE commitment SET copro_id=q.copro_id, 
+	housing_id=NULL, renew_project_id=NULL FROM
+		(SELECT c.id AS commitment_id, co.id AS copro_id FROM copro co 
+			JOIN copro_commitment cc ON co.reference = cc.reference
+			JOIN commitment c ON cc.iris_code=c.iris_code) q 
+	WHERE commitment.id=q.commitment_id`,
+		`DELETE FROM copro_commitment`}
+	for i, q := range queries {
+		if _, err = tx.Exec(q); err != nil {
 			tx.Rollback()
-			return fmt.Errorf("statement %d count %v", i, err)
-		}
-		if count == 0 {
-			tx.Rollback()
-			return fmt.Errorf("ligne %d Reference ou code IRIS introuvable", i)
+			return fmt.Errorf("query %d %v", i, err)
 		}
 	}
 	tx.Commit()

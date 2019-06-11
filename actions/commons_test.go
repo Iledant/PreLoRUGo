@@ -104,7 +104,7 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	temp_commitment, beneficiary, payment , temp_payment, action, budget_sector, commission, 
 	community , temp_community, city , temp_city, renew_project_forecast , 
 	temp_renew_project_forecast, copro_forecast, temp_copro_forecast, ratio, 
-	temp_housing_forecast, housing_forecast, housing_commitment`,
+	temp_housing_forecast, housing_forecast, housing_commitment, copro_commitment`,
 	}
 	for i, q := range dropQueries {
 		if _, err := db.Exec(q); err != nil {
@@ -384,6 +384,10 @@ func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			iris_code varchar(20),
 	    reference varchar(100)
 			);`, // 28 housing_commitment
+		`CREATE TABLE copro_commitment (
+			iris_code varchar(20),
+	    reference varchar(100)
+			);`, // 29 copro_commitment
 	}
 	for i, q := range queries {
 		if _, err := db.Exec(q); err != nil {
