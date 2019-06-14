@@ -2,6 +2,7 @@ package actions
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/Iledant/PreLoRUGo/models"
@@ -108,9 +109,17 @@ func BatchHousings(ctx iris.Context) {
 	ctx.JSON(jsonMessage{"Batch de Logements importé"})
 }
 
+// PaginatedTedHousingsResp embeddes response for PaginatedHousing in order
+// to optionally add Cities to response
+type PaginatedTedHousingsResp struct {
+	models.PaginatedHousings
+	models.Cities
+}
+
 // GetPaginatedHousings handles the get request to fetch all housings that
 // match the given pattern and return a paginated struct with housings, page
-// number and total page count
+// number and total page count. An optional CitiesList flag is added to embed
+// the datats in a single request/response
 func GetPaginatedHousings(ctx iris.Context) {
 	var req models.PaginatedQuery
 	var err error
@@ -122,11 +131,20 @@ func GetPaginatedHousings(ctx iris.Context) {
 	}
 	req.Search = ctx.URLParam("Search")
 	db := ctx.Values().Get("db").(*sql.DB)
-	var resp models.PaginatedHousings
-	if err = resp.Get(db, &req); err != nil {
+	var resp PaginatedTedHousingsResp
+	if err = resp.PaginatedHousings.Get(db, &req); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Page de logements, requête : " + err.Error()})
 		return
+	}
+	cl, err := ctx.URLParamBool("CitiesList")
+	fmt.Printf("PaginatedHousing CitiesList %v %v\n", err, cl)
+	if err == nil && cl {
+		if err = resp.Cities.GetAll(db); err != nil {
+			ctx.StatusCode(http.StatusInternalServerError)
+			ctx.JSON(jsonError{"Page de logements, requête liste de villes : " + err.Error()})
+			return
+		}
 	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)

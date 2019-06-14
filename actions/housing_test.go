@@ -237,6 +237,15 @@ func testGetPaginatedHousings(t *testing.T, c *TestContext) {
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
+		{Token: c.Config.Users.User.Token,
+			Sent: []byte(`Page=2&Search=essai3&CitiesList=true`),
+			RespContains: []string{`{"Housing":[`, `"Page":1`, `"ItemsCount":1`,
+				`"Reference":"Essai3","Address":"Adresse","ZipCode":77001,` +
+					`"CityName":"ACHERES-LA-FORET","PLAI":4,"PLUS":5,"PLS":6,"ANRU":true`,
+				`"City":[`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 3 : ok with cities
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/housings/paginated").WithQueryString(string(tc.Sent)).
