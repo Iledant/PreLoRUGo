@@ -113,6 +113,8 @@ func BatchHousings(ctx iris.Context) {
 type PaginatedTedHousingsResp struct {
 	models.PaginatedHousings
 	models.Cities
+	models.Commissions
+	models.BudgetActions
 }
 
 // GetPaginatedHousings handles the get request to fetch all housings that
@@ -136,11 +138,21 @@ func GetPaginatedHousings(ctx iris.Context) {
 		ctx.JSON(jsonError{"Page de logements, requête : " + err.Error()})
 		return
 	}
-	cl, err := ctx.URLParamBool("CitiesList")
+	cl, err := ctx.URLParamBool("Lists")
 	if err == nil && cl {
 		if err = resp.Cities.GetAll(db); err != nil {
 			ctx.StatusCode(http.StatusInternalServerError)
 			ctx.JSON(jsonError{"Page de logements, requête liste de villes : " + err.Error()})
+			return
+		}
+		if err = resp.Commissions.GetAll(db); err != nil {
+			ctx.StatusCode(http.StatusInternalServerError)
+			ctx.JSON(jsonError{"Page de logements, requête liste de commissions : " + err.Error()})
+			return
+		}
+		if err = resp.BudgetActions.GetAll(db); err != nil {
+			ctx.StatusCode(http.StatusInternalServerError)
+			ctx.JSON(jsonError{"Page de logements, requête liste d'actions budgétaires : " + err.Error()})
 			return
 		}
 	}
