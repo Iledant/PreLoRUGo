@@ -2,7 +2,6 @@ package actions
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/Iledant/PreLoRUGo/models"
@@ -138,7 +137,6 @@ func GetPaginatedHousings(ctx iris.Context) {
 		return
 	}
 	cl, err := ctx.URLParamBool("CitiesList")
-	fmt.Printf("PaginatedHousing CitiesList %v %v\n", err, cl)
 	if err == nil && cl {
 		if err = resp.Cities.GetAll(db); err != nil {
 			ctx.StatusCode(http.StatusInternalServerError)
