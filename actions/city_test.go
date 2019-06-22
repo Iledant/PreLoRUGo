@@ -30,7 +30,8 @@ func testCity(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateCity(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":1,"QPV":true}}`),
+		{Sent: []byte(`{"City":{"InseeCode":1000000,"Name":"Essai",` +
+			`"CommunityID":1,"QPV":true}}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
@@ -38,19 +39,24 @@ func testCreateCity(t *testing.T, c *TestContext) (ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de ville, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"City":{"InseeCode":0,"Name":"Essai","CommunityID":1,"QPV":true}}`),
+		{Sent: []byte(`{"City":{"InseeCode":0,"Name":"Essai","CommunityID":1,` +
+			`"QPV":true}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de ville : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : insee code nul
-		{Sent: []byte(`{"City":{"InseeCode":100000,"Name":"","CommunityID":1,"QPV":true}}`),
+		{Sent: []byte(`{"City":{"InseeCode":100000,"Name":"","CommunityID":1,` +
+			`"QPV":true}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de ville : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":2,"QPV":true}}`),
-			Token:        c.Config.Users.Admin.Token,
-			IDName:       `{"InseeCode"`,
-			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai","CommunityID":2,"CommunityName":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)","QPV":true`},
-			StatusCode:   http.StatusCreated}, // 4 : ok
+		{Sent: []byte(`{"City":{"InseeCode":1000000,"Name":"Essai",` +
+			`"CommunityID":2,"QPV":true}}`),
+			Token:  c.Config.Users.Admin.Token,
+			IDName: `{"InseeCode"`,
+			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai",` +
+				`"CommunityID":2,"CommunityName":"(EX78) CC DES DEUX RIVES DE LA SEINE` +
+				` (DISSOUTE AU 01/01/2016)","QPV":true`},
+			StatusCode: http.StatusCreated}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/city").WithBytes(tc.Sent).
@@ -64,7 +70,8 @@ func testCreateCity(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateCity(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"City":{"InseeCode":2000000,"Name":"Essai2","CommunityID":null,"QPV":false}}`),
+		{Sent: []byte(`{"City":{"InseeCode":2000000,"Name":"Essai2",` +
+			`"CommunityID":null,"QPV":false}}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
@@ -72,22 +79,27 @@ func testUpdateCity(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de ville, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"City":{"InseeCode":0,"Name":"Essai2","CommunityID":null,"QPV":false}}`),
+		{Sent: []byte(`{"City":{"InseeCode":0,"Name":"Essai2","CommunityID":null,` +
+			`"QPV":false}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de ville : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code nul
-		{Sent: []byte(`{"City":{"InseeCode":2000000,"Name":"","CommunityID":null,"QPV":false}}`),
+		{Sent: []byte(`{"City":{"InseeCode":2000000,"Name":"","CommunityID":null,` +
+			`"QPV":false}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de ville : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"City":{"InseeCode":2000000,"Name":"Essai2","CommunityID":null,"QPV":false}}`),
+		{Sent: []byte(`{"City":{"InseeCode":2000000,"Name":"Essai2",` +
+			`"CommunityID":null,"QPV":false}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de ville, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
-		{Sent: []byte(`{"City":{"InseeCode":` + strconv.Itoa(ID) + `,"Name":"Essai2","CommunityID":null,"QPV":false}}`),
-			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false`},
-			StatusCode:   http.StatusOK}, // 5 : ok
+		{Sent: []byte(`{"City":{"InseeCode":` + strconv.Itoa(ID) +
+			`,"Name":"Essai2","CommunityID":3,"QPV":false}}`),
+			Token: c.Config.Users.Admin.Token,
+			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai2",` +
+				`"CommunityID":3,"CommunityName":"VILLE DE PARIS (EPT1)","QPV":false`},
+			StatusCode: http.StatusOK}, // 5 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.PUT("/api/city").WithBytes(tc.Sent).
@@ -108,9 +120,11 @@ func testGetCity(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Récupération de ville, requête :`},
 			ID:           0}, // 1 : bad ID
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"City":{"InseeCode":` + strconv.Itoa(ID) + `,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false}}`},
-			ID:           ID,
-			StatusCode:   http.StatusOK}, // 2 : ok
+			RespContains: []string{`{"City":{"InseeCode":` + strconv.Itoa(ID) +
+				`,"Name":"Essai2","CommunityID":3,"CommunityName":` +
+				`"VILLE DE PARIS (EPT1)","QPV":false}}`},
+			ID:         ID,
+			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/city/"+strconv.Itoa(tc.ID)).
@@ -127,7 +141,8 @@ func testGetCities(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains:  []string{`{"City":[{"InseeCode":1000000,"Name":"Essai2","CommunityID":null,"CommunityName":null,"QPV":false}]}`},
+			RespContains: []string{`{"City":[{"InseeCode":1000000,"Name":"Essai2",` +
+				`"CommunityID":3,"CommunityName":"VILLE DE PARIS (EPT1)","QPV":false}]}`},
 			Count:         1,
 			CountItemName: `"InseeCode"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -169,19 +184,27 @@ func testBatchCities(t *testing.T, c *TestContext) {
 			RespContains: []string{"Droits administrateur requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"City":[{"InseeCode":75101,"Name":"","CommunityCode":"217500016","QPV":false},
-			{"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityCode":"247700123","QPV":true},
-			{"InseeCode":78146,"Name":"CHATOU","CommunityCode":"200058519.78","QPV":false}]}`),
+			Sent: []byte(`{"City":[{"InseeCode":75101,"Name":"","CommunityCode":` +
+				`"217500016","QPV":false},
+			{"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityCode":` +
+				`"247700123","QPV":true},
+			{"InseeCode":78146,"Name":"CHATOU","CommunityCode":"200058519.78",` +
+				`"QPV":false}]}`),
 			RespContains: []string{"Batch de Villes, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 1 : name empty
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"City":[{"InseeCode":75101,"Name":"PARIS 1","CommunityCode":"217500016","QPV":false},
-			{"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityCode":"247700123","QPV":true},
-			{"InseeCode":78146,"Name":"CHATOU","CommunityCode":"200058519.78","QPV":false}]}`),
+			Sent: []byte(`{"City":[{"InseeCode":75101,"Name":"PARIS 1",` +
+				`"CommunityCode":"217500016","QPV":false},
+			{"InseeCode":77001,"Name":"ACHERES-LA-FORET","CommunityCode":` +
+				`"247700123","QPV":true},
+			{"InseeCode":78146,"Name":"CHATOU","CommunityCode":"200058519.78",` +
+				`"QPV":false}]}`),
 			Count:         3,
 			CountItemName: `"InseeCode"`,
-			RespContains:  []string{`"InseeCode":75101,"Name":"PARIS 1"`, `"InseeCode":78146,"Name":"CHATOU","CommunityID":4,"CommunityName":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)","QPV":false`},
-			StatusCode:    http.StatusOK}, // 2 : ok
+			RespContains: []string{`"InseeCode":75101,"Name":"PARIS 1"`,
+				`"InseeCode":78146,"Name":"CHATOU","CommunityID":4,"CommunityName":` +
+					`"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)","QPV":false`},
+			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/cities").WithBytes(tc.Sent).
@@ -202,7 +225,8 @@ func testGetPaginatedCities(t *testing.T, c *TestContext) {
 			Sent: []byte(`Page=2&Search=acheres`),
 			RespContains: []string{`"City"`, `"Page"`, `"ItemsCount"`,
 				// cSpell: disable
-				`"InseeCode":77001,"Name":"ACHERES-LA-FORET","QPV":true,"CommunityID":null,"CommunityName":null`,
+				`"InseeCode":77001,"Name":"ACHERES-LA-FORET","QPV":true,` +
+					`"CommunityID":null,"CommunityName":null`,
 				//cSpell: enable
 			},
 			Count:         1,

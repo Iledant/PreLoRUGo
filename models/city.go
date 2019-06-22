@@ -108,7 +108,7 @@ func (c *City) Update(db *sql.DB) (err error) {
 		return errors.New("Ville introuvable")
 	}
 	if c.CommunityID.Valid {
-		err = db.QueryRow(`SELECT name FROM community WHERE id$=1`, c.CommunityID).
+		err = db.QueryRow(`SELECT name FROM community WHERE id=$1`, c.CommunityID).
 			Scan(&c.CommunityName)
 	}
 	return err
