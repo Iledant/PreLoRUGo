@@ -28,7 +28,7 @@ func main() {
 	if cfg.App.LoggerLevel != "" {
 		app.Logger().SetLevel(cfg.App.LoggerLevel)
 	}
-	// Configure fetch and autosave token on restart
+	// Configure tokens recover and autosave on stop
 	if cfg.App.TokenFileName != "" {
 		actions.TokenRecover(cfg.App.TokenFileName)
 		iris.RegisterOnInterrupt(func() {
