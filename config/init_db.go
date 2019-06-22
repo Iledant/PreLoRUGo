@@ -271,7 +271,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	    comment text,
 	    copro_id int NOT NULL
 		);`, // 22 : temp_copro_forecast
-	`CREATE VIEW cumulated_commitment AS
+	`CREATE OR REPLACE VIEW cumulated_commitment AS
 		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value,
 			c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
 			c.renew_project_id
@@ -279,7 +279,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
 		ON c.id = q.id;`, // 23 : cumulated_commitment view
-	`CREATE VIEW cumulated_sold_commitment AS
+	`CREATE OR REPLACE VIEW cumulated_sold_commitment AS
 		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value, c.sold_out,
 			c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
 			c.renew_project_id
@@ -334,7 +334,7 @@ func InitDatabase(db *sql.DB) error {
 	for i, q := range initQueries {
 		if _, err = tx.Exec(q); err != nil {
 			tx.Rollback()
-			return fmt.Errorf("InitDatabase %d : %v", i, err)
+			return fmt.Errorf("InitDatabase %d \"%s\" : %v", i, q, err)
 		}
 	}
 	tx.Commit()
