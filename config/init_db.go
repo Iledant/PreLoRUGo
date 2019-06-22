@@ -28,8 +28,8 @@ func getNames(db *sql.DB, tableType string) ([]string, error) {
 	return tables, nil
 }
 
-// DropAllTables delete all table from database for test purpose
-func DropAllTables(db *sql.DB) error {
+// dropAllTables delete all table from database for test purpose
+func dropAllTables(db *sql.DB) error {
 	views, err := getNames(db, "VIEW")
 	if err != nil {
 		return err
@@ -324,28 +324,43 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			);`, // 29 copro_commitment
 }
 
-// InitDatabase fetches all tables in current database and create missing ones
-// in the tables map
-func InitDatabase(cfg *DBConf) (*sql.DB, error) {
+// createTablesAndViews launches the queries against the database to create all
+// tables or replace the views
+func createTablesAndViews(db *sql.DB) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("Transaction begin %v", err)
+	}
+	for i, q := range initQueries {
+		if _, err = tx.Exec(q); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("Query %d %v", i, err)
+		}
+	}
+	tx.Commit()
+	return nil
+}
+
+// InitDatabase connect to database, create tables and view and launch migrations
+func InitDatabase(cfg *DBConf, dropAllTable bool, launchMigrations bool) (*sql.DB, error) {
 	cfgStr := fmt.Sprintf("sslmode=disable host=%s port=%s user=%s dbname=%s password=%s",
 		cfg.Host, cfg.Port, cfg.UserName, cfg.Name, cfg.Password)
 	db, err := sql.Open("postgres", cfgStr)
 	if err != nil {
 		return nil, fmt.Errorf("Database open %v", err)
 	}
-	tx, err := db.Begin()
-	if err != nil {
-		return nil, fmt.Errorf("Transaction begin %v", err)
-	}
-	for i, q := range initQueries {
-		if _, err = tx.Exec(q); err != nil {
-			tx.Rollback()
-			return nil, fmt.Errorf("Query %d %v", i, err)
+	if dropAllTable {
+		if err = dropAllTables(db); err != nil {
+			return nil, err
 		}
 	}
-	tx.Commit()
-	if err = handleMigrations(db); err != nil {
-		return nil, fmt.Errorf("Migrations %v", err)
+	if err = createTablesAndViews(db); err != nil {
+		return nil, err
+	}
+	if launchMigrations {
+		if err = handleMigrations(db); err != nil {
+			return nil, fmt.Errorf("Migrations %v", err)
+		}
 	}
 	return db, nil
 }

@@ -19,7 +19,7 @@ func main() {
 		log.Fatalf("Récupération de la configuration : %v", err)
 	}
 
-	db, err := config.InitDatabase(&cfg.Databases.Development)
+	db, err := config.InitDatabase(&cfg.Databases.Development, false, true)
 	if err != nil {
 		log.Fatalf("Initialisation de la base de données : %v", err)
 	}

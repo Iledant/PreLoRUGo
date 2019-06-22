@@ -81,13 +81,13 @@ func initializeTests(t *testing.T) *TestContext {
 		return nil
 	}
 	testCtx.Config = cfg
-	testCtx.DB, err = config.LaunchDB(&testCtx.Config.Databases.Test)
+	testCtx.DB, err = config.InitDatabase(&testCtx.Config.Databases.Test, true, false)
 	if err != nil {
 		t.Error("Erreur de connexion à postgres : " + err.Error())
 		t.FailNow()
 		return nil
 	}
-	initializeTestDB(t, testCtx.DB, testCtx.Config)
+	createUsers(t, testCtx.DB, testCtx.Config)
 	SetRoutes(testCtx.App, testCtx.DB)
 	testCtx.E = httptest.New(t, testCtx.App)
 	// Fetch admin and user tokens
@@ -95,17 +95,7 @@ func initializeTests(t *testing.T) *TestContext {
 	return testCtx
 }
 
-func initializeTestDB(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
-	if err := config.DropAllTables(db); err != nil {
-		t.Errorf("Suppression des tables/views : %v", err)
-		t.FailNow()
-		return
-	}
-	if err := config.InitDatabase(db); err != nil {
-		t.Errorf("Création des tables %v", err)
-		t.FailNow()
-		return
-	}
+func createUsers(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	users := []models.User{
 		{Name: "Christophe Saintillan",
 			Email:    cfg.Users.Admin.Email,
