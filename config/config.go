@@ -1,7 +1,6 @@
 package config
 
 import (
-	"database/sql"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -99,12 +98,4 @@ func (p *PreLoRuGoConf) Get() error {
 		p = config
 	}
 	return nil
-}
-
-// LaunchDB launch the DB with DBConf parameters
-func LaunchDB(cfg *DBConf) (*sql.DB, error) {
-	cfgStr := "sslmode=disable host=" + cfg.Host + " port=" + cfg.Port + " user=" +
-		cfg.UserName + " dbname=" + cfg.Name + " password=" + cfg.Password
-
-	return sql.Open("postgres", cfgStr)
 }

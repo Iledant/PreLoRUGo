@@ -16,24 +16,19 @@ func main() {
 
 	var cfg config.PreLoRuGoConf
 	if err := cfg.Get(); err != nil {
-		log.Fatalf("Configuration : %v", err)
+		log.Fatalf("Récupération de la configuration : %v", err)
 	}
 
-	db, err := config.LaunchDB(&cfg.Databases.Development)
+	db, err := config.InitDatabase(&cfg.Databases.Development)
 	if err != nil {
-		log.Fatalf("Impossible de se connecter à la base de données : %v", err)
-	}
-	if err = config.InitDatabase(db); err != nil {
-		log.Fatalf("Création des tables : %v", err)
-	}
-	if err = config.HandleMigrations(db); err != nil {
-		log.Fatalf("Migration : %v", err)
+		log.Fatalf("Initialisation de la base de données : %v", err)
 	}
 	defer db.Close()
 	actions.SetRoutes(app, db)
 	if cfg.App.LoggerLevel != "" {
 		app.Logger().SetLevel(cfg.App.LoggerLevel)
 	}
+	// Configure fetch and autosave token on restart
 	if cfg.App.TokenFileName != "" {
 		actions.TokenRecover(cfg.App.TokenFileName)
 		iris.RegisterOnInterrupt(func() {

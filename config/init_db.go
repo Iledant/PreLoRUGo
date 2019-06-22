@@ -326,17 +326,26 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 
 // InitDatabase fetches all tables in current database and create missing ones
 // in the tables map
-func InitDatabase(db *sql.DB) error {
+func InitDatabase(cfg *DBConf) (*sql.DB, error) {
+	cfgStr := fmt.Sprintf("sslmode=disable host=%s port=%s user=%s dbname=%s password=%s",
+		cfg.Host, cfg.Port, cfg.UserName, cfg.Name, cfg.Password)
+	db, err := sql.Open("postgres", cfgStr)
+	if err != nil {
+		return nil, fmt.Errorf("Database open %v", err)
+	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("Transaction begin %v", err)
 	}
 	for i, q := range initQueries {
 		if _, err = tx.Exec(q); err != nil {
 			tx.Rollback()
-			return fmt.Errorf("InitDatabase %d \"%s\" : %v", i, q, err)
+			return nil, fmt.Errorf("Query %d %v", i, err)
 		}
 	}
 	tx.Commit()
-	return nil
+	if err = handleMigrations(db); err != nil {
+		return nil, fmt.Errorf("Migrations %v", err)
+	}
+	return db, nil
 }

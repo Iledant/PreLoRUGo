@@ -82,9 +82,9 @@ var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
 	);`,
 }
 
-// HandleMigrations check if new migrations have been created and launches them
+// handleMigrations check if new migrations have been created and launches them
 // against the database
-func HandleMigrations(db *sql.DB) error {
+func handleMigrations(db *sql.DB) error {
 	var maxIdx *int
 	err := db.QueryRow("SELECT max(index) FROM migration").Scan(&maxIdx)
 	if err != nil {
