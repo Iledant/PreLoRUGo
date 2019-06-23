@@ -5,7 +5,7 @@ tmp/
 tokens.json
 application
 artifact.zip
-buildAndDeploy.ps1
+deploy.ps1
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
