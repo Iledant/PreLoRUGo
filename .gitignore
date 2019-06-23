@@ -3,6 +3,9 @@ tmp/
 .vscode/
 *.test
 tokens.json
+application
+artifact.zip
+buildAndDeploy.ps1
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
