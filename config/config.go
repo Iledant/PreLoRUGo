@@ -63,21 +63,21 @@ var config *PreLoRuGoConf
 func (p *PreLoRuGoConf) Get() error {
 	if config == nil {
 		// Check if RDS environment variables are set
-		name, okDbName := os.LookupEnv("RDS_DB_NAME")
-		host, okHostName := os.LookupEnv("RDS_HOSTNAME")
-		port, okPort := os.LookupEnv("RDS_PORT")
-		username, okUserName := os.LookupEnv("RDS_USERNAME")
-		password, okPwd := os.LookupEnv("RDS_PASSWORD")
+		name := os.Getenv("RDS_DB_NAME")
+		host := os.Getenv("RDS_HOSTNAME")
+		port := os.Getenv("RDS_PORT")
+		username := os.Getenv("RDS_USERNAME")
+		password := os.Getenv("RDS_PASSWORD")
 
-		if okDbName && okHostName && okPort && okUserName && okPwd {
+		if name != "" && host != "" && port != "" && username != "" && password != "" {
 			p = &PreLoRuGoConf{Databases: Databases{Prod: DBConf{
 				Name:     name,
 				Host:     host,
 				Port:     port,
 				UserName: username,
 				Password: password}}}
-			p.App.TokenFileName, _ = os.LookupEnv("TOKEN_FILE_NAME")
-			p.App.LogFileName, _ = os.LookupEnv("LOG_FILE_NAME")
+			p.App.TokenFileName = os.Getenv("TOKEN_FILE_NAME")
+			p.App.LogFileName = os.Getenv("LOG_FILE_NAME")
 			p.App.Prod = true
 			p.App.LoggerLevel = "warn"
 			return nil

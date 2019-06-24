@@ -20,7 +20,13 @@ func main() {
 		log.Fatalf("Récupération de la configuration : %v", err)
 	}
 
-	db, err := config.InitDatabase(&cfg.Databases.Development, false, true)
+	var dbConf *config.DBConf
+	if cfg.App.Prod {
+		dbConf = &cfg.Databases.Prod
+	} else {
+		dbConf = &cfg.Databases.Development
+	}
+	db, err := config.InitDatabase(dbConf, false, true)
 	if err != nil {
 		log.Fatalf("Initialisation de la base de données : %v", err)
 	}
