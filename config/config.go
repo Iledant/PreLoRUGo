@@ -103,13 +103,12 @@ func (p *PreLoRuGoConf) Get(app *iris.Application) (logFile *os.File, err error)
 	password := os.Getenv("RDS_PASSWORD")
 
 	if name != "" && host != "" && port != "" && username != "" && password != "" {
-		app.Logger().Infof("Utilisation des variables d'environnement name %s host %s port %s username %s password %s", name, host, port, username, password)
-		p = &PreLoRuGoConf{Databases: Databases{Prod: DBConf{
-			Name:     name,
-			Host:     host,
-			Port:     port,
-			UserName: username,
-			Password: password}}}
+		app.Logger().Infof("Utilisation des variables d'environnement")
+		p.Databases.Prod.Name = name
+		p.Databases.Prod.Host = host
+		p.Databases.Prod.Port = port
+		p.Databases.Prod.UserName = username
+		p.Databases.Prod.Password = password
 		p.App.TokenFileName = os.Getenv("TOKEN_FILE_NAME")
 		p.App.Prod = true
 		app.Logger().SetLevel("info")
