@@ -75,7 +75,12 @@ func initializeTests(t *testing.T) *TestContext {
 	var err error
 	testCtx.App = iris.New().Configure(iris.WithConfiguration(
 		iris.Configuration{DisablePathCorrection: true}))
-	if err = cfg.Get(); err != nil {
+	logFile, err := cfg.Get(testCtx.App)
+	if logFile != nil {
+		defer logFile.Close()
+	}
+	testCtx.App.Logger().Infof("Lancement des tests\n")
+	if err != nil {
 		t.Error("Configuration : " + err.Error())
 		t.FailNow()
 		return nil

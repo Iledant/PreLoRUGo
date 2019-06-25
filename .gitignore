@@ -6,6 +6,7 @@ tokens.json
 application
 artifact.zip
 deploy.ps1
+preloru.log
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
