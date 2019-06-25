@@ -13,74 +13,7 @@ type migrationEntry struct {
 	Query   string
 }
 
-var migrations = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc;`,
-	`DELETE FROM ratio`,
-	`ALTER TABLE ratio
-	ADD COLUMN sector_id int NOT NULL,
-	ADD CONSTRAINT ratio_sector_id_fkey FOREIGN KEY (sector_id) REFERENCES 
-		budget_sector (id) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`CREATE VIEW cumulated_sold_commitment AS
-		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value, 
-			c.sold_out,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id,
-			c.copro_id,c.renew_project_id
-		FROM commitment c
-		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
-			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
-		ON c.id = q.id`,
-	`ALTER TABLE renew_project
-		ADD column prin bool NOT NULL,
-		ADD column city_code1 int NOT NULL,
-		ADD column city_code2 int,
-		ADD column city_code3 int,
-		ADD CONSTRAINT city_code1_city_insee_code_fkey FOREIGN KEY (city_code1) REFERENCES
-		  city(insee_code) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
-		ADD CONSTRAINT city_code2_city_insee_code_fkey FOREIGN KEY (city_code2) REFERENCES
-		  city(insee_code) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
-		ADD CONSTRAINT city_code3_city_insee_code_fkey FOREIGN KEY (city_code3) REFERENCES
-		  city(insee_code) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`ALTER TABLE temp_renew_project
-		ADD column prin bool NOT NULL,
-		ADD column city_code1 int NOT NULL,
-		ADD column city_code2 int,
-		ADD column city_code3 int`,
-	`ALTER TABLE copro 
-		ADD CONSTRAINT zip_code_copro_insee_code_city_fkey FOREIGN KEY (zip_code) 
-		REFERENCES city (insee_code) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`ALTER TABLE copro
-		ALTER COLUMN reference TYPE varchar(150)`,
-	`DELETE FROM housing`,
-	`ALTER TABLE housing 
-		ADD CONSTRAINT zip_code_housing_insee_code_city_fkey FOREIGN KEY (zip_code) 
-		REFERENCES city (insee_code) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`CREATE TABLE housing_forecast (
-		id SERIAL PRIMARY KEY,
-		commission_id int NOT NULL,
-		value bigint NOT NULL,
-		comment text,
-		action_id int NOT NULL,
-		FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION,
-		FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION
-	);`,
-	`CREATE TABLE temp_housing_forecast (
-		id int NOT NULL,
-		commission_id int NOT NULL,
-		value bigint NOT NULL,
-		comment text,
-		action_id int NOT NULL
-	);`,
-	`CREATE TABLE housing_commitment (
-		iris_code varchar(20),
-		reference varchar(100)
-	);`,
-	`CREATE TABLE copro_commitment (
-		iris_code varchar(20),
-		reference varchar(100)
-	);`,
-}
+var migrations = []string{}
 
 // handleMigrations check if new migrations have been created and launches them
 // against the database

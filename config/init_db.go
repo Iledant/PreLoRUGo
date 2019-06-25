@@ -322,6 +322,12 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			iris_code varchar(20),
 	    reference varchar(100)
 			);`, // 29 copro_commitment
+	`CREATE TABLE IF NOT EXISTS migration (
+		id SERIAL PRIMARY KEY,
+		created timestamp NOT NULL,
+		index int NOT NULL,
+		query text
+	);`, // 30 migration
 }
 
 // createTablesAndViews launches the queries against the database to create all
