@@ -13,11 +13,24 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// PreLoRuGoConf embeddes the configuration to decde yaml file
+// PreLoRuGoConf embeddes the configuration options of the application.
+// It's structure is designed to match to the yaml config file used by tests
+// and development stages.
+// When deployed on production, PreLoRuGoConf uses environnement variables.
+// Databases field embeddes configurations fields for tests, development and
+// production.
+// Users are only for tests purpose to check routes protections.
+// App is used to define stage (production or not), logger configuration and
+// token file name for persisting tokens on server reload.
 type PreLoRuGoConf struct {
 	Databases Databases
 	Users     Users
 	App       App
+}
+
+// Credentials embeddes email and password for a user.
+type Credentials struct {
+	Email, Password, Token string
 }
 
 // Users includes users credentials for test purposes.
@@ -29,21 +42,6 @@ type Users struct {
 	HousingUser      Credentials `yaml:"housinguser"`
 }
 
-// Databases includes the 3 databases settings for production, development and tests.
-type Databases struct {
-	Prod        DBConf
-	Development DBConf
-	Test        DBConf
-}
-
-// App defines global values for the application
-type App struct {
-	Prod          bool   `yaml:"prod"`
-	LogFileName   string `yaml:"logfilename"`
-	LoggerLevel   string `yaml:"loggerlevel"`
-	TokenFileName string `yaml:"tokenfilename"`
-}
-
 // DBConf includes all informations for connecting to a database.
 type DBConf struct {
 	Name     string `yaml:"name"`
@@ -53,9 +51,20 @@ type DBConf struct {
 	Password string `yaml:"password"`
 }
 
-// Credentials keep email ans password for a user.
-type Credentials struct {
-	Email, Password, Token string
+// Databases includes databases settings for production, development and tests.
+type Databases struct {
+	Prod        DBConf
+	Development DBConf
+	Test        DBConf
+}
+
+// App defines global configuration fields for the application (stage, log and
+// token file name).
+type App struct {
+	Prod          bool   `yaml:"prod"`
+	LogFileName   string `yaml:"logfilename"`
+	LoggerLevel   string `yaml:"loggerlevel"`
+	TokenFileName string `yaml:"tokenfilename"`
 }
 
 var config *PreLoRuGoConf

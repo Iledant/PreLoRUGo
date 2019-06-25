@@ -76,15 +76,14 @@ func initializeTests(t *testing.T) *TestContext {
 	testCtx.App = iris.New().Configure(iris.WithConfiguration(
 		iris.Configuration{DisablePathCorrection: true}))
 	logFile, err := cfg.Get(testCtx.App)
+	if err != nil {
+		t.Errorf("Configuration : %v", err)
+		t.FailNow()
+	}
 	if logFile != nil {
 		defer logFile.Close()
 	}
 	testCtx.App.Logger().Infof("Lancement des tests\n")
-	if err != nil {
-		t.Error("Configuration : " + err.Error())
-		t.FailNow()
-		return nil
-	}
 	testCtx.Config = cfg
 	testCtx.DB, err = config.InitDatabase(&testCtx.Config.Databases.Test, true, false)
 	if err != nil {

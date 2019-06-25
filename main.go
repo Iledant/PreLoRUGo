@@ -32,9 +32,11 @@ func main() {
 	if err != nil {
 		app.Logger().Fatalf("Initialisation de la base de données : %v", err)
 	}
+	app.Logger().Infof("Base de données connectée et initialisée")
 	defer db.Close()
 	actions.SetRoutes(app, db)
 	app.StaticWeb("/", "./dist")
+	app.Logger().Infof("Routes et serveur statique configurés")
 	// Configure tokens recover and autosave on stop
 	if cfg.App.TokenFileName != "" {
 		actions.TokenRecover(cfg.App.TokenFileName)
@@ -45,6 +47,7 @@ func main() {
 			actions.TokenSave(cfg.App.TokenFileName)
 			app.Shutdown(ctx)
 		})
+		app.Logger().Infof("Fichier de sauvegarde des tokens configuré")
 	}
 	// Use port 5000 as Elastic beanstalk uses it by default
 	app.Run(iris.Addr(":5000"), iris.WithoutInterruptHandler)
