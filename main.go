@@ -28,6 +28,7 @@ func main() {
 	} else {
 		dbConf = &cfg.Databases.Development
 	}
+	app.Logger().Infof("Initialisation de la base de données avec %+v", *dbConf)
 	db, err := config.InitDatabase(dbConf, false, true)
 	if err != nil {
 		app.Logger().Fatalf("Initialisation de la base de données : %v", err)
