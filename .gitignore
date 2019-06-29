@@ -1,3 +1,5 @@
+Buildfile
+Procfile
 config.yml
 tmp/
 .vscode/
@@ -7,8 +9,6 @@ artifact.zip
 deploy.ps1
 update.ps1
 preloru.log
-Buildfile
-Procfile
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
