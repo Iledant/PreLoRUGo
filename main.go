@@ -9,6 +9,18 @@ import (
 	"github.com/kataras/iris"
 )
 
+func run(app *iris.Application, cfg *config.PreLoRuGoConf) error {
+	// if cfg.App.Prod {
+	// 	domain := os.Getenv("APP_DOMAIN")
+	// 	addr := os.Getenv("APP_ADDR")
+	// 	email := os.Getenv("DOMAIN_OWNER_EMAIL")
+	// 	crtDir := os.Getenv("CRT_DIR")
+	// 	return app.NewHost(&http.Server{Addr: addr}).
+	// 		ListenAndServeAutoTLS(domain, email, crtDir)
+	// }
+	return app.Run(iris.Addr(":5000"))
+}
+
 func main() {
 	app := iris.New().Configure(
 		iris.WithConfiguration(iris.Configuration{DisablePathCorrection: true}))
@@ -21,22 +33,18 @@ func main() {
 	if err != nil {
 		app.Logger().Fatalf("Configuration : %v", err)
 	}
-	app.Logger().Infof("Configuration %+v", cfg)
-	var dbConf *config.DBConf
-	if cfg.App.Prod {
-		dbConf = &cfg.Databases.Prod
-	} else {
-		dbConf = &cfg.Databases.Development
-	}
-	db, err := config.InitDatabase(dbConf, false, true)
+
+	db, err := config.InitDatabase(&cfg, false, true)
 	if err != nil {
 		app.Logger().Fatalf("Initialisation de la base de données : %v", err)
 	}
 	app.Logger().Infof("Base de données connectée et initialisée")
 	defer db.Close()
+
 	actions.SetRoutes(app, db)
 	app.StaticWeb("/", "./dist")
 	app.Logger().Infof("Routes et serveur statique configurés")
+
 	// Configure tokens recover and autosave on stop
 	if cfg.App.TokenFileName != "" {
 		actions.TokenRecover(cfg.App.TokenFileName)
@@ -49,6 +57,6 @@ func main() {
 		})
 		app.Logger().Infof("Fichier de sauvegarde des tokens configuré")
 	}
-	// Use port 5000 as Elastic beanstalk uses it by default
-	app.Run(iris.Addr(":5000"), iris.WithoutInterruptHandler)
+	// Run application according to application stage
+	run(app, &cfg)
 }

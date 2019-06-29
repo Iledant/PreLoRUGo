@@ -72,6 +72,7 @@ func TestAll(t *testing.T) {
 func initializeTests(t *testing.T) *TestContext {
 	testCtx := &TestContext{}
 	cfg := &config.PreLoRuGoConf{}
+	cfg.App.Stage = config.TestStage
 	var err error
 	testCtx.App = iris.New().Configure(iris.WithConfiguration(
 		iris.Configuration{DisablePathCorrection: true}))
@@ -85,7 +86,7 @@ func initializeTests(t *testing.T) *TestContext {
 	}
 	testCtx.App.Logger().Infof("Lancement des tests\n")
 	testCtx.Config = cfg
-	testCtx.DB, err = config.InitDatabase(&testCtx.Config.Databases.Test, true, false)
+	testCtx.DB, err = config.InitDatabase(cfg, true, false)
 	if err != nil {
 		t.Error("Erreur de connexion à postgres : " + err.Error())
 		t.FailNow()

@@ -348,14 +348,23 @@ func createTablesAndViews(db *sql.DB) error {
 }
 
 // InitDatabase connect to database, create tables and view and launch migrations
-func InitDatabase(cfg *DBConf, dropAllTable bool, launchMigrations bool) (*sql.DB, error) {
+func InitDatabase(cfg *PreLoRuGoConf, dropTables bool, migrate bool) (*sql.DB, error) {
+	var dbCfg *DBConf
+	switch cfg.App.Stage {
+	case ProductionStage:
+		dbCfg = &cfg.Databases.Prod
+	case DevelopmentStage:
+		dbCfg = &cfg.Databases.Development
+	case TestStage:
+		dbCfg = &cfg.Databases.Test
+	}
 	cfgStr := fmt.Sprintf("sslmode=disable host=%s port=%s user=%s dbname=%s password=%s",
-		cfg.Host, cfg.Port, cfg.UserName, cfg.Name, cfg.Password)
+		dbCfg.Host, dbCfg.Port, dbCfg.UserName, dbCfg.Name, dbCfg.Password)
 	db, err := sql.Open("postgres", cfgStr)
 	if err != nil {
 		return nil, fmt.Errorf("Database open %v", err)
 	}
-	if dropAllTable {
+	if dropTables {
 		if err = dropAllTables(db); err != nil {
 			return nil, err
 		}
@@ -363,7 +372,7 @@ func InitDatabase(cfg *DBConf, dropAllTable bool, launchMigrations bool) (*sql.D
 	if err = createTablesAndViews(db); err != nil {
 		return nil, err
 	}
-	if launchMigrations {
+	if migrate {
 		if err = handleMigrations(db); err != nil {
 			return nil, fmt.Errorf("Migrations %v", err)
 		}

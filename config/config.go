@@ -13,6 +13,14 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// AppStage defines the if the application is used for test, development or
+// production.
+const (
+	ProductionStage  = 1
+	DevelopmentStage = 2
+	TestStage        = 3
+)
+
 // PreLoRuGoConf embeddes the configuration options of the application.
 // It's structure is designed to match to the yaml config file used by tests
 // and development stages.
@@ -61,7 +69,7 @@ type Databases struct {
 // App defines global configuration fields for the application (stage, log and
 // token file name).
 type App struct {
-	Prod          bool   `yaml:"prod"`
+	Stage         int    `yaml:"stage"`
 	LogFileName   string `yaml:"logfilename"`
 	LoggerLevel   string `yaml:"loggerlevel"`
 	TokenFileName string `yaml:"tokenfilename"`
@@ -110,7 +118,7 @@ func (p *PreLoRuGoConf) Get(app *iris.Application) (logFile *os.File, err error)
 		p.Databases.Prod.UserName = username
 		p.Databases.Prod.Password = password
 		p.App.TokenFileName = os.Getenv("TOKEN_FILE_NAME")
-		p.App.Prod = true
+		p.App.Stage = ProductionStage
 		app.Logger().SetLevel("info")
 		return logFile, nil
 	}
