@@ -1,5 +1,5 @@
-Buildfile
-Procfile
+./Buildfile
+./Procfile
 config.yml
 tmp/
 .vscode/
