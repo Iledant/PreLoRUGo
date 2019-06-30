@@ -34,7 +34,7 @@ func run(app *iris.Application, cfg *config.PreLoRuGoConf) error {
 			app.Logger().Error("Variable d'environnement CRT_DIR vide")
 			return fmt.Errorf("Mauvaise configuration des variables d'environnement")
 		}
-		return app.NewHost(&http.Server{Addr: addr}).
+		return app.NewHost(&http.Server{Addr: ":443"}).
 			ListenAndServeAutoTLS(domain, email, crtDir)
 	}
 	return app.Run(iris.Addr(":5000"))
