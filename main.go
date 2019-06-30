@@ -2,9 +2,6 @@ package main
 
 import (
 	stdContext "context"
-	"fmt"
-	"net/http"
-	"os"
 	"time"
 
 	"github.com/Iledant/PreLoRUGo/actions"
@@ -13,30 +10,30 @@ import (
 )
 
 func run(app *iris.Application, cfg *config.PreLoRuGoConf) error {
-	if cfg.App.Stage == config.ProductionStage {
-		domain := os.Getenv("APP_DOMAIN")
-		if domain == "" {
-			app.Logger().Error("Variable d'environnement APP_DOMAIN vide")
-			return fmt.Errorf("Mauvaise configuration des variables d'environnement")
-		}
-		addr := os.Getenv("APP_ADDR")
-		if addr == "" {
-			app.Logger().Error("Variable d'environnement APP_ADDR vide")
-			return fmt.Errorf("Mauvaise configuration des variables d'environnement")
-		}
-		email := os.Getenv("DOMAIN_OWNER_EMAIL")
-		if email == "" {
-			app.Logger().Error("Variable d'environnement DOMAIN_OWNER_EMAIL vide")
-			return fmt.Errorf("Mauvaise configuration des variables d'environnement")
-		}
-		crtDir := os.Getenv("CRT_DIR")
-		if crtDir == "" {
-			app.Logger().Error("Variable d'environnement CRT_DIR vide")
-			return fmt.Errorf("Mauvaise configuration des variables d'environnement")
-		}
-		return app.NewHost(&http.Server{Addr: ":5443"}).
-			ListenAndServeAutoTLS(domain, email, crtDir)
-	}
+	// if cfg.App.Stage == config.ProductionStage {
+	// 	domain := os.Getenv("APP_DOMAIN")
+	// 	if domain == "" {
+	// 		app.Logger().Error("Variable d'environnement APP_DOMAIN vide")
+	// 		return fmt.Errorf("Mauvaise configuration des variables d'environnement")
+	// 	}
+	// 	addr := os.Getenv("APP_ADDR")
+	// 	if addr == "" {
+	// 		app.Logger().Error("Variable d'environnement APP_ADDR vide")
+	// 		return fmt.Errorf("Mauvaise configuration des variables d'environnement")
+	// 	}
+	// 	email := os.Getenv("DOMAIN_OWNER_EMAIL")
+	// 	if email == "" {
+	// 		app.Logger().Error("Variable d'environnement DOMAIN_OWNER_EMAIL vide")
+	// 		return fmt.Errorf("Mauvaise configuration des variables d'environnement")
+	// 	}
+	// 	crtDir := os.Getenv("CRT_DIR")
+	// 	if crtDir == "" {
+	// 		app.Logger().Error("Variable d'environnement CRT_DIR vide")
+	// 		return fmt.Errorf("Mauvaise configuration des variables d'environnement")
+	// 	}
+	// 	return app.NewHost(&http.Server{Addr: ":5443"}).
+	// 		ListenAndServeAutoTLS(domain, email, crtDir)
+	// }
 	return app.Run(iris.Addr(":5000"))
 }
 
