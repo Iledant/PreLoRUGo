@@ -72,7 +72,6 @@ func TestAll(t *testing.T) {
 func initializeTests(t *testing.T) *TestContext {
 	testCtx := &TestContext{}
 	cfg := &config.PreLoRuGoConf{}
-	cfg.App.Stage = config.TestStage
 	var err error
 	testCtx.App = iris.New().Configure(iris.WithConfiguration(
 		iris.Configuration{DisablePathCorrection: true}))
@@ -81,6 +80,7 @@ func initializeTests(t *testing.T) *TestContext {
 		t.Errorf("Configuration : %v", err)
 		t.FailNow()
 	}
+	cfg.App.Stage = config.TestStage
 	if logFile != nil {
 		defer logFile.Close()
 	}
