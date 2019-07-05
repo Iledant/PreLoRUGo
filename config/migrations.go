@@ -13,7 +13,7 @@ type migrationEntry struct {
 	Query   string
 }
 
-var migrations = []string{}
+var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar(25)`}
 
 // handleMigrations check if new migrations have been created and launches them
 // against the database
