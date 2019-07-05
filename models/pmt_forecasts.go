@@ -29,12 +29,18 @@ func (p *PmtForecasts) Get(db *sql.DB, year int) error {
 	actualYear := time.Now().Year()
 	qry := fmt.Sprintf("SELECT q.action_id, b.code, b.name, greatest(q.y0,0),"+
 		"greatest(q.y1,0),greatest(q.y2,0),greatest(q.y3,0),greatest(q.y4,0)"+
-		"FROM (select * FROM crosstab('SELECT action_id, year, pmt FROM (SELECT c.action_id,"+
+		"FROM (select * FROM crosstab('SELECT action_id, year, 0.01*SUM(pmt) FROM ((SELECT c.action_id,"+
 		"extract(year FROM c.Creation_Date)::int+r.index AS year,"+
 		"SUM(c.value*r.ratio) AS pmt FROM cumulated_sold_commitment c, ratio r, budget_action a"+
 		" WHERE r.year=%d AND c.action_id=a.id AND r.sector_id=a.sector_id AND c.sold_out = false "+
-		"GROUP BY 1,2 ORDER BY 1,2) qry "+
-		"WHERE qry.year>=%d AND qry.year<%d') "+
+		"GROUP BY 1,2) "+
+		"UNION ALL "+
+		"(SELECT h.action_id, extract(year FROM c.date)::int+r.index as year, SUM(h.value*r.ratio) AS pmt "+
+		"FROM housing_forecast h, commission c, ratio r "+
+		"WHERE h.commission_id=c.id AND c.date > (select max(creation_date) FROM cumulated_commitment) "+
+		"GROUP BY 1,2) "+
+		") qry "+
+		"WHERE qry.year>=%d AND qry.year<%d GROUP BY 1,2 ORDER BY 1,2') "+
 		"AS (action_id int, y0 double precision, "+
 		"y1 double precision,y2 double precision, y3 double precision, "+
 		"y4 double precision) ) q "+
