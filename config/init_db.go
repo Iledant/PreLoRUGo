@@ -80,7 +80,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		);`, // 4 : temp_city
 	`CREATE TABLE IF NOT EXISTS copro (
 			id SERIAL PRIMARY KEY,
-			reference varchar(15) NOT NULL,
+			reference varchar(25) NOT NULL,
 			name varchar(150) NOT NULL,
 			address varchar(200) NOT NULL,
 			zip_code int NOT NULL,
@@ -244,8 +244,11 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	    commission_id int NOT NULL,
 	    value bigint NOT NULL,
 	    comment text,
-	    renew_project_id int NOT NULL,
+			renew_project_id int NOT NULL,
+			action_id int NOT NULL,
 			FOREIGN KEY (renew_project_id) REFERENCES renew_project (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
+			FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
 		);`, // 19 : renew_project_forecast
 	`CREATE TABLE IF NOT EXISTS temp_renew_project_forecast (
@@ -253,15 +256,19 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			commission_id int NOT NULL,
 	    value bigint NOT NULL,
 	    comment text,
-	    renew_project_id int NOT NULL
+			renew_project_id int NOT NULL,
+			action_id int NOT NULL
 		);`, // 20 : temp_renew_project_forecast
 	`CREATE TABLE IF NOT EXISTS copro_forecast (
 	    id SERIAL PRIMARY KEY,
 	    commission_id int NOT NULL,
 	    value bigint NOT NULL,
 	    comment text,
-	    copro_id int NOT NULL,
+			copro_id int NOT NULL,
+			action_id int NOT NULL,
 			FOREIGN KEY (copro_id) REFERENCES copro (id) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
+			FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
 		);`, // 21 : copro_forecast
 	`CREATE TABLE IF NOT EXISTS temp_copro_forecast (
@@ -269,7 +276,8 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			commission_id int NOT NULL,
 	    value bigint NOT NULL,
 	    comment text,
-	    copro_id int NOT NULL
+			copro_id int NOT NULL,
+			action_id iny NOT NULL
 		);`, // 22 : temp_copro_forecast
 	`CREATE OR REPLACE VIEW cumulated_commitment AS
 		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value,

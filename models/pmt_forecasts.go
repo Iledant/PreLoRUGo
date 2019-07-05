@@ -39,6 +39,17 @@ func (p *PmtForecasts) Get(db *sql.DB, year int) error {
 		"FROM housing_forecast h, commission c, ratio r "+
 		"WHERE h.commission_id=c.id AND c.date > (select max(creation_date) FROM cumulated_commitment) "+
 		"GROUP BY 1,2) "+
+		"UNION ALL "+
+		"(SELECT co.action_id, extract(year FROM c.date)::int+r.index as year, SUM(co.value*r.ratio) AS pmt "+
+		"FROM copro_forecast co, commission c, ratio r "+
+		"WHERE co.commission_id=c.id AND c.date > (select max(creation_date) FROM cumulated_commitment) "+
+		"GROUP BY 1,2) "+
+		") qry "+
+		"UNION ALL "+
+		"(SELECT rp.action_id, extract(year FROM c.date)::int+r.index as year, SUM(rp.value*r.ratio) AS pmt "+
+		"FROM renew_project_forecast rp, commission c, ratio r "+
+		"WHERE rp.commission_id=c.id AND c.date > (select max(creation_date) FROM cumulated_commitment) "+
+		"GROUP BY 1,2) "+
 		") qry "+
 		"WHERE qry.year>=%d AND qry.year<%d GROUP BY 1,2 ORDER BY 1,2') "+
 		"AS (action_id int, y0 double precision, "+

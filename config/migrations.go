@@ -13,7 +13,17 @@ type migrationEntry struct {
 	Query   string
 }
 
-var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar(25)`}
+var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar(25)`,
+	`ALTER TABLE reject_project_forecast ADD COLUMN action_id int NOT NULL,
+		ADD CONSTRAINT renew_project_action_id_fkey FOREIGN KEY (action_id) 
+		REFERENCES budget_action (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION`,
+	`ALTER TABLE temp_reject_project_forecast ADD COLUMN action_id int NOT NULL`,
+	`ALTER TABLE copro_project_forecast ADD COLUMN action_id int NOT NULL,
+		ADD CONSTRAINT copro_action_id_fkey FOREIGN KEY (action_id) 
+		REFERENCES budget_action (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION`,
+	`ALTER TABLE temp_copro_forecast ADD COLUMN action_id int NOT NULL`}
 
 // handleMigrations check if new migrations have been created and launches them
 // against the database
