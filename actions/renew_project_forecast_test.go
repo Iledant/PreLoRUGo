@@ -42,27 +42,33 @@ func testCreateRenewProjectForecast(t *testing.T, c *TestContext) (ID int) {
 			strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de prévision RU : Champ incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 2 : commission ID nul
+			StatusCode:   http.StatusBadRequest}, // 2 : commission ID null
 		{Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","RenewProjectID":0}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de prévision RU : Champ incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 3 : renew project ID nul
+			StatusCode:   http.StatusBadRequest}, // 3 : renew project ID null
 		{Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai","RenewProjectID":` +
 			strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de prévision RU : Champ incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 4 : value nul
+			StatusCode:   http.StatusBadRequest}, // 4 : value null
 		{Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","RenewProjectID":` +
-			strconv.Itoa(int(c.RenewProjectID)) + "}}"),
+			strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":0}}`),
+			Token:        c.Config.Users.RenewProjectUser.Token,
+			RespContains: []string{`Création de prévision RU : Champ incorrect`},
+			StatusCode:   http.StatusBadRequest}, // 5 : actionID null
+		{Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","RenewProjectID":` +
+			strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":2}}`),
 			Token:  c.Config.Users.RenewProjectUser.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"RenewProjectForecast":{"ID":1,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":1000000,"Comment":"Essai","RenewProjectID":` +
-				strconv.Itoa(int(c.RenewProjectID))},
-			StatusCode: http.StatusCreated}, // 5 : ok
+				strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":2,"ActionCode":15400403,"ActionName":"Aide aux copropriétés en difficulté"`},
+			StatusCode: http.StatusCreated}, // 6 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/renew_project_forecast").WithBytes(tc.Sent).
@@ -100,17 +106,22 @@ func testUpdateRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de prévision RU : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : renew project ID nul
-		{Sent: []byte(`{"RenewProjectForecast":{"ID":0,"CommissionID":2000000,"Value":2000000,"Comment":null,"RenewProjectID":2000000}}`),
+		{Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","RenewProjectID":` + strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":0}}`),
+			Token:        c.Config.Users.RenewProjectUser.Token,
+			RespContains: []string{`Modification de prévision RU : Champ incorrect`},
+			StatusCode:   http.StatusBadRequest}, // 5 : action ID nul
+		{Sent: []byte(`{"RenewProjectForecast":{"ID":0,"CommissionID":2000000,"Value":2000000,"Comment":null,"RenewProjectID":2000000,"ActionID":3}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de prévision RU, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad ID
 		{Sent: []byte(`{"RenewProjectForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","RenewProjectID":` +
-			strconv.Itoa(int(c.RenewProjectID)) + "}}"),
+			strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":3}}`),
 			Token: c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`"RenewProjectForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","RenewProjectID":` +
-				strconv.Itoa(int(c.RenewProjectID)) + `}`},
+				strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":3,"ActionCode":15400202,"ActionName":"Aide à la création de logements locatifs sociaux"}`},
 			StatusCode: http.StatusOK}, // 6 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -134,7 +145,7 @@ func testGetRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RenewProjectForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","RenewProjectID":` +
-				strconv.Itoa(int(c.RenewProjectID)) + `}`},
+				strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":3,"ActionCode":15400202,"ActionName":"Aide à la création de logements locatifs sociaux"}`},
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
@@ -145,7 +156,8 @@ func testGetRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 	chkFactory(t, tcc, f, "GetRenewProjectForecast")
 }
 
-// testGetRenewProjectForecasts checks if route is user protected and RenewProjectForecasts correctly sent back
+// testGetRenewProjectForecasts checks if route is user protected and
+// RenewProjectForecasts correctly sent back
 func testGetRenewProjectForecasts(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
 		{Token: "",
@@ -153,9 +165,12 @@ func testGetRenewProjectForecasts(t *testing.T, c *TestContext, ID int) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"RenewProjectForecast":[{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","RenewProjectID":` +
-				strconv.Itoa(int(c.RenewProjectID)) + `}]}`},
+			RespContains: []string{`"RenewProjectForecast":[{"ID":` + strconv.Itoa(ID) +
+				`,"CommissionID":` + strconv.Itoa(int(c.CommissionID)) +
+				`,"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test",` +
+				`"Value":2000000,"Comment":"Essai2","RenewProjectID":` +
+				strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":3,"ActionCode":15400202,` +
+				`"ActionName":"Aide à la création de logements locatifs sociaux"}]}`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -207,9 +222,9 @@ func testBatchRenewProjectForecasts(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"RenewProjectForecast":[{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":100,"Comment":"Batch1","RenewProjectID":` +
-				strconv.Itoa(int(c.RenewProjectID)) + `},{"ID":0,"CommissionID":` +
+				strconv.Itoa(int(c.RenewProjectID)) + `,"ActionCode":15400202},{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Comment":"Batch2","RenewProjectID":` +
-				strconv.Itoa(int(c.RenewProjectID)) + `}]}`),
+				strconv.Itoa(int(c.RenewProjectID)) + `,"ActionCode":15400202}]}`),
 			RespContains: []string{"Batch de Prévision RUs importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}

@@ -30,7 +30,8 @@ func testCoproForecast(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":0,"Value":1000000,"Comment":"Essai","CoproID":1000000}}`),
+		{Sent: []byte(`{"CoproForecast":{"CommissionID":0,"Value":1000000,` +
+			`"Comment":"Essai","CoproID":1000000}}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les copropriétés requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
@@ -42,28 +43,35 @@ func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 			strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 2 : commission ID nul
+			StatusCode:   http.StatusBadRequest}, // 2 : commission ID null
 		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":0}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 3 : renew project ID nul
+			StatusCode:   http.StatusBadRequest}, // 3 : renew project ID null
 		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai","CoproID":` +
 			strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 4 : value nul
+			StatusCode:   http.StatusBadRequest}, // 4 : value null
 		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + "}}"),
+			strconv.Itoa(int(c.CoproID)) + `,"ActionID":0}}`),
+			Token:        c.Config.Users.CoproUser.Token,
+			RespContains: []string{`Création de prévision copro : Champ incorrect`},
+			StatusCode:   http.StatusBadRequest}, // 5 : action ID null
+		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":` +
+			strconv.Itoa(int(c.CoproID)) + `,"ActionID":2}}`),
 			Token:  c.Config.Users.CoproUser.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"CoproForecast":{"ID":1,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
 				`"CommissionName":"Commission test","Value":1000000,"Comment":"Essai","CoproID":` +
-				strconv.Itoa(int(c.CoproID))},
-			StatusCode: http.StatusCreated}, // 5 : ok
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":2,"ActionCode":15400403,` +
+				`"ActionName":"Aide aux copropriétés en difficulté"}`},
+			StatusCode: http.StatusCreated}, // 6 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/copro_forecast").WithBytes(tc.Sent).
@@ -101,19 +109,28 @@ func testUpdateCoproForecast(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : renew project ID nul
-		{Sent: []byte(`{"CoproForecast":{"ID":0,"CommissionID":2000000,"Value":2000000,"Comment":null,"CoproID":2000000}}`),
-			Token:        c.Config.Users.CoproUser.Token,
-			RespContains: []string{`Modification de prévision copro, requête : `},
-			StatusCode:   http.StatusInternalServerError}, // 5 : bad ID
 		{Sent: []byte(`{"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + "}}"),
+			strconv.Itoa(int(c.CoproID)) + `,"ActionID":0}}`),
+			Token:        c.Config.Users.CoproUser.Token,
+			RespContains: []string{`Modification de prévision copro : Champ incorrect`},
+			StatusCode:   http.StatusBadRequest}, // 5 : action ID nul
+		{Sent: []byte(`{"CoproForecast":{"ID":0,"CommissionID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+			strconv.Itoa(int(c.CoproID)) + `,"ActionID":3}}`),
+			Token:        c.Config.Users.CoproUser.Token,
+			RespContains: []string{`Modification de prévision copro, requête : `},
+			StatusCode:   http.StatusInternalServerError}, // 6 : bad ID
+		{Sent: []byte(`{"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+			strconv.Itoa(int(c.CoproID)) + `,"ActionID":3}}`),
 			Token: c.Config.Users.CoproUser.Token,
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
 				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
-				strconv.Itoa(int(c.CoproID)) + `}`},
-			StatusCode: http.StatusOK}, // 6 : ok
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":3,"ActionCode":15400202,` +
+				`"ActionName":"Aide à la création de logements locatifs sociaux"}`},
+			StatusCode: http.StatusOK}, // 7 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.PUT("/api/copro_forecast").WithBytes(tc.Sent).
@@ -137,7 +154,8 @@ func testGetCoproForecast(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
 				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
-				strconv.Itoa(int(c.CoproID)) + `}`},
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":0,"ActionCode":15400202,` +
+				`"ActionName":"Aide à la création de logements locatifs sociaux"}`},
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
@@ -159,7 +177,8 @@ func testGetCoproForecasts(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"CoproForecast":[{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
 				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
-				strconv.Itoa(int(c.CoproID)) + `}]}`},
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":0,"ActionCode":15400202,` +
+				`"ActionName":"Aide à la création de logements locatifs sociaux"}]}`},
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
@@ -202,17 +221,17 @@ func testBatchCoproForecasts(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"CoproForecast":[{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Batch1","CoproID":` +
-				strconv.Itoa(int(c.CoproID)) + `},{"ID":0,"CommissionID":` +
+				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203},{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Comment":"Batch2","CoproID":` +
-				strconv.Itoa(int(c.CoproID)) + `}]}`),
+				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203}]}`),
 			RespContains: []string{"Batch de Prévision copros, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 1 : value nul
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"CoproForecast":[{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":100,"Comment":"Batch1","CoproID":` +
-				strconv.Itoa(int(c.CoproID)) + `},{"ID":0,"CommissionID":` +
+				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203},{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Comment":"Batch2","CoproID":` +
-				strconv.Itoa(int(c.CoproID)) + `}]}`),
+				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203}]}`),
 			RespContains: []string{"Batch de Prévision copros importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}

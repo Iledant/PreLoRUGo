@@ -32,17 +32,21 @@ func getNames(db *sql.DB, tableType string) ([]string, error) {
 func dropAllTables(db *sql.DB) error {
 	views, err := getNames(db, "VIEW")
 	if err != nil {
-		return err
+		return fmt.Errorf("get view names : %v", err)
 	}
-	if _, err = db.Exec("drop view " + strings.Join(views, ",")); err != nil {
-		return err
+	if len(views) > 0 {
+		if _, err = db.Exec("drop view " + strings.Join(views, ",")); err != nil {
+			return fmt.Errorf("drop views : %v", err)
+		}
 	}
 	tables, err := getNames(db, "BASE TABLE")
 	if err != nil {
-		return err
+		return fmt.Errorf("get table names : %v", err)
 	}
-	if _, err = db.Exec("drop table " + strings.Join(tables, ",")); err != nil {
-		return err
+	if len(tables) > 0 {
+		if _, err = db.Exec("drop table " + strings.Join(tables, ",")); err != nil {
+			return fmt.Errorf("drp tables : %v", err)
+		}
 	}
 	return nil
 }
@@ -257,7 +261,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	    value bigint NOT NULL,
 	    comment text,
 			renew_project_id int NOT NULL,
-			action_id int NOT NULL
+			action_code bigint NOT NULL
 		);`, // 20 : temp_renew_project_forecast
 	`CREATE TABLE IF NOT EXISTS copro_forecast (
 	    id SERIAL PRIMARY KEY,
@@ -277,7 +281,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	    value bigint NOT NULL,
 	    comment text,
 			copro_id int NOT NULL,
-			action_id iny NOT NULL
+			action_code bigint NOT NULL
 		);`, // 22 : temp_copro_forecast
 	`CREATE OR REPLACE VIEW cumulated_commitment AS
 		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value,
@@ -369,6 +373,7 @@ func InitDatabase(cfg *PreLoRuGoConf, dropTables bool, migrate bool) (*sql.DB, e
 	cfgStr := fmt.Sprintf("sslmode=disable host=%s port=%s user=%s dbname=%s password=%s",
 		dbCfg.Host, dbCfg.Port, dbCfg.UserName, dbCfg.Name, dbCfg.Password)
 	db, err := sql.Open("postgres", cfgStr)
+	fmt.Printf("Base de données connectée\n")
 	if err != nil {
 		return nil, fmt.Errorf("Database open %v", err)
 	}

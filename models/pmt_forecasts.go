@@ -44,7 +44,6 @@ func (p *PmtForecasts) Get(db *sql.DB, year int) error {
 		"FROM copro_forecast co, commission c, ratio r "+
 		"WHERE co.commission_id=c.id AND c.date > (select max(creation_date) FROM cumulated_commitment) "+
 		"GROUP BY 1,2) "+
-		") qry "+
 		"UNION ALL "+
 		"(SELECT rp.action_id, extract(year FROM c.date)::int+r.index as year, SUM(rp.value*r.ratio) AS pmt "+
 		"FROM renew_project_forecast rp, commission c, ratio r "+
