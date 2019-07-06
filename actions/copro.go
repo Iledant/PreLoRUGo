@@ -8,13 +8,23 @@ import (
 	"github.com/kataras/iris"
 )
 
+type getCoprosResp struct {
+	models.Copros
+	models.Cities
+}
+
 // GetCopros handles the get request to fetch all copros
 func GetCopros(ctx iris.Context) {
-	var resp models.Copros
+	var resp getCoprosResp
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := resp.GetAll(db); err != nil {
+	if err := resp.Copros.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Liste des copropriétés : " + err.Error()})
+		ctx.JSON(jsonError{"Liste des copropriétés, copros : " + err.Error()})
+		return
+	}
+	if err := resp.Cities.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des copropriétés, copros : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

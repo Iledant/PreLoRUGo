@@ -373,7 +373,6 @@ func InitDatabase(cfg *PreLoRuGoConf, dropTables bool, migrate bool) (*sql.DB, e
 	cfgStr := fmt.Sprintf("sslmode=disable host=%s port=%s user=%s dbname=%s password=%s",
 		dbCfg.Host, dbCfg.Port, dbCfg.UserName, dbCfg.Name, dbCfg.Password)
 	db, err := sql.Open("postgres", cfgStr)
-	fmt.Printf("Base de données connectée\n")
 	if err != nil {
 		return nil, fmt.Errorf("Database open %v", err)
 	}
