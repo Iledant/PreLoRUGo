@@ -173,7 +173,8 @@ func testGetCoproDatas(t *testing.T, c *TestContext, ID int) {
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
 		{Token: c.Config.Users.User.Token,
-			RespContains:  []string{`"Copro"`, `"Commitment":[],"Payment":[],"Commission":[],"CoproForecast":[]`},
+			RespContains: []string{`"Copro"`, `"Commitment":[],"Payment":[],` +
+				`"Commission":[],"CoproForecast":[]`, `"BudgetAction"`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			ID:            ID,

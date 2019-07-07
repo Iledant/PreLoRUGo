@@ -66,6 +66,7 @@ type coproDatasResp struct {
 	models.Payments
 	models.Commissions
 	models.CoproForecasts
+	models.BudgetActions
 }
 
 // GetCoproDatas handle the get request to fetch copro fields, commitments and
@@ -103,6 +104,11 @@ func GetCoproDatas(ctx iris.Context) {
 	if err = resp.CoproForecasts.Get(ID, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données d'une copropriété, requête forecasts : " + err.Error()})
+		return
+	}
+	if err = resp.BudgetActions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête actions : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
