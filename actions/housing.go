@@ -71,6 +71,50 @@ func GetHousings(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
+// HousingsDatasResp embeddes all datas for housings frontend page
+type HousingsDatasResp struct {
+	models.PaginatedHousings
+	models.Cities
+	models.BudgetActions
+	models.Commissions
+	models.HousingForecasts
+}
+
+// GetHousingsDatas handles the get request to fetch all datas for the frontend page
+// dealing with housings including forecasts
+func GetHousingsDatas(ctx iris.Context) {
+	var resp HousingsDatasResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.Cities.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données logement, requête cities : " + err.Error()})
+		return
+	}
+	if err := resp.BudgetActions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données logement, requête budget actions : " + err.Error()})
+		return
+	}
+	if err := resp.Commissions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données logement, requête commissions : " + err.Error()})
+		return
+	}
+	if err := resp.HousingForecasts.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données logement, requête housings forecasts : " + err.Error()})
+		return
+	}
+	var req models.PaginatedQuery
+	if err := resp.PaginatedHousings.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données logement, requête paginated housings : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // DeleteHousing handles the get request to fetch all housings
 func DeleteHousing(ctx iris.Context) {
 	ID, err := ctx.Params().GetInt64("ID")
@@ -108,19 +152,9 @@ func BatchHousings(ctx iris.Context) {
 	ctx.JSON(jsonMessage{"Batch de Logements importé"})
 }
 
-// PaginatedTedHousingsResp embeddes response for PaginatedHousing in order
-// to optionally add Cities to response
-type PaginatedTedHousingsResp struct {
-	models.PaginatedHousings
-	models.Cities
-	models.Commissions
-	models.BudgetActions
-}
-
 // GetPaginatedHousings handles the get request to fetch all housings that
 // match the given pattern and return a paginated struct with housings, page
-// number and total page count. An optional CitiesList flag is added to embed
-// the datats in a single request/response
+// number and total page count
 func GetPaginatedHousings(ctx iris.Context) {
 	var req models.PaginatedQuery
 	var err error
@@ -132,29 +166,11 @@ func GetPaginatedHousings(ctx iris.Context) {
 	}
 	req.Search = ctx.URLParam("Search")
 	db := ctx.Values().Get("db").(*sql.DB)
-	var resp PaginatedTedHousingsResp
-	if err = resp.PaginatedHousings.Get(db, &req); err != nil {
+	var resp models.PaginatedHousings
+	if err = resp.Get(db, &req); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Page de logements, requête : " + err.Error()})
 		return
-	}
-	cl, err := ctx.URLParamBool("Lists")
-	if err == nil && cl {
-		if err = resp.Cities.GetAll(db); err != nil {
-			ctx.StatusCode(http.StatusInternalServerError)
-			ctx.JSON(jsonError{"Page de logements, requête liste de villes : " + err.Error()})
-			return
-		}
-		if err = resp.Commissions.GetAll(db); err != nil {
-			ctx.StatusCode(http.StatusInternalServerError)
-			ctx.JSON(jsonError{"Page de logements, requête liste de commissions : " + err.Error()})
-			return
-		}
-		if err = resp.BudgetActions.GetAll(db); err != nil {
-			ctx.StatusCode(http.StatusInternalServerError)
-			ctx.JSON(jsonError{"Page de logements, requête liste d'actions budgétaires : " + err.Error()})
-			return
-		}
 	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
