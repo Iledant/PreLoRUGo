@@ -32,7 +32,7 @@ func testBatchCommitments(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
 			Sent:         []byte(`{"Commitment":[{"Year":2010}]}`),
-			RespContains: []string{"Batch de Engagements, requête : Champs incorrects"},
+			RespContains: []string{"Batch de Engagements, requête : Ligne 1 : champs incorrects"},
 			StatusCode:   http.StatusInternalServerError}, // 1 : validation error
 		{Token: c.Config.Users.Admin.Token,
 			Sent:         correctBatch,
