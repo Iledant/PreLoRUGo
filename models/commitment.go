@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -170,8 +169,8 @@ type RPLinkedCommitments struct {
 	Commitments []RPLinkedCommitment `json:"Commitment"`
 }
 
-// CoproLinkedCommitment is used for the renew project linked data project and add
-// beneficiary name to the commitment fields
+// CoproLinkedCommitment is used for the renew project linked data project and
+// add beneficiary name to the commitment fields
 type CoproLinkedCommitment struct {
 	ID               int64      `json:"ID"`
 	Year             int64      `json:"Year"`
@@ -208,12 +207,13 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 			(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
 				OR b.name ILIKE $2 OR a.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
 		Scan(&count); err != nil {
-		return errors.New("count query failed " + err.Error())
+		return fmt.Errorf("count query failed %v", err)
 	}
 	offset, newPage := GetPaginateParams(c.Page, count)
-	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
-	c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,b.name,
-	c.iris_code,a.name,s.name,c.housing_id,c.renew_project_id,c.copro_id FROM commitment c
+	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
+	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
+	b.name,c.iris_code,a.name,s.name,c.housing_id,c.renew_project_id,c.copro_id 
+	FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
@@ -230,7 +230,8 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
 			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
-			&row.ActionName, &row.Sector, &row.HousingID, &row.RenewProjectID, &row.CoproID); err != nil {
+			&row.ActionName, &row.Sector, &row.HousingID, &row.RenewProjectID,
+			&row.CoproID); err != nil {
 			return err
 		}
 		p.Commitments = append(p.Commitments, row)
@@ -245,7 +246,7 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 }
 
 // GetUnlinked fetches the commitments whose housing_id, copro_id and
-// renew_project_id are null and that matches the query using the paginated format
+// renew_project_id are null and that matches the query using paginated format
 func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error {
 	var count int64
 	if err := db.QueryRow(`SELECT count(1) FROM commitment c 
@@ -257,12 +258,13 @@ func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error 
 			(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
 				OR b.name ILIKE $2 OR a.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
 		Scan(&count); err != nil {
-		return errors.New("count query failed " + err.Error())
+		return fmt.Errorf("count query failed %v", err)
 	}
 	offset, newPage := GetPaginateParams(c.Page, count)
-	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
-	c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,b.name,
-	c.iris_code,a.name,s.name FROM commitment c
+	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
+	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
+	b.name,c.iris_code,a.name,s.name
+	FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id 
@@ -296,9 +298,10 @@ func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error 
 
 // Get fetches the results of exported commitments
 func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
-	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,c.creation_date,
-	c.modification_date,c.name,c.value * 0.01,c.sold_out, b.name, c.iris_code,a.name,
-	s.name, copro.name, housing.address,renew_project.name FROM commitment c
+	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
+	c.creation_date,c.modification_date,c.name,c.value*0.01,c.sold_out, b.name,
+	c.iris_code,a.name,s.name,copro.name,housing.address,renew_project.name
+	FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
 	JOIN budget_sector s ON s.id=a.sector_id
@@ -317,7 +320,8 @@ func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
 			&row.SoldOut, &row.BeneficiaryName, &row.IrisCode, &row.ActionName,
-			&row.Sector, &row.CoproName, &row.HousingName, &row.RenewProjectName); err != nil {
+			&row.Sector, &row.CoproName, &row.HousingName,
+			&row.RenewProjectName); err != nil {
 			return err
 		}
 		e.ExportedCommitments = append(e.ExportedCommitments, row)
@@ -342,7 +346,8 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
 			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.IrisCode, &row.ActionID); err != nil {
+			&row.SoldOut, &row.BeneficiaryID, &row.IrisCode,
+			&row.ActionID); err != nil {
 			return err
 		}
 		c.Commitments = append(c.Commitments, row)
@@ -358,8 +363,9 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 // project whose ID is given
 func (c *RPLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
-	b.name,c.iris_code,c.action_id FROM commitment c
+	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,
+	c.beneficiary_id,b.name,c.iris_code,c.action_id
+	FROM commitment c
 	JOIN beneficiary b on c.beneficiary_id=b.id 
 	WHERE renew_project_id=$1`, ID)
 	if err != nil {
@@ -386,8 +392,9 @@ func (c *RPLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 // Get fetches all Commitments from database linked to a copro whose ID is given
 func (c *CoproLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
-	b.name,c.iris_code,c.action_id FROM commitment c
+	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,
+	c.beneficiary_id,b.name,c.iris_code,c.action_id
+	FROM commitment c
 	JOIN beneficiary b on c.beneficiary_id=b.id 
 	WHERE copro_id=$1`, ID)
 	if err != nil {
@@ -413,14 +420,14 @@ func (c *CoproLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 
 // Save insert a batch of CommitmentLine into database
 func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
-	for _, r := range c.Lines {
-		if r.Year < 2009 || r.Number == 0 || r.Line == 0 || r.CreationDate < 20090101 ||
-			r.ModificationDate < 20090101 || r.Name == "" || r.BeneficiaryCode == 0 ||
-			r.BeneficiaryName == "" || r.Sector == "" {
-			return fmt.Errorf("Champs incorrects dans %+v", r)
+	for i, r := range c.Lines {
+		if r.Year < 2009 || r.Number == 0 || r.Line == 0 ||
+			r.CreationDate < 20090101 || r.ModificationDate < 20090101 ||
+			r.Name == "" || r.BeneficiaryCode == 0 || r.BeneficiaryName == "" ||
+			r.Sector == "" {
+			return fmt.Errorf("Ligne %d : champs incorrects dans %+v", i+1, r)
 		}
 	}
-
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -430,11 +437,11 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		"beneficiary_code", "beneficiary_name", "iris_code", "sector", "action_code",
 		"action_name"))
 	if err != nil {
-		return errors.New("Statement creation " + err.Error())
+		return fmt.Errorf("Statement creation %v", err)
 	}
 	defer stmt.Close()
 	var cd, md time.Time
-	for _, r := range c.Lines {
+	for i, r := range c.Lines {
 		cd = time.Date(int(r.CreationDate/10000), time.Month(r.CreationDate/100%100),
 			int(r.CreationDate%100), 0, 0, 0, 0, time.UTC)
 		md = time.Date(int(r.ModificationDate/10000),
@@ -442,10 +449,11 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			0, 0, time.UTC)
 		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, cd, md,
 			strings.TrimSpace(r.Name), r.Value, r.SoldOut == "O", r.BeneficiaryCode,
-			strings.TrimSpace(r.BeneficiaryName), r.IrisCode, strings.TrimSpace(r.Sector),
-			r.ActionCode, r.ActionName.TrimSpace()); err != nil {
+			strings.TrimSpace(r.BeneficiaryName), r.IrisCode,
+			strings.TrimSpace(r.Sector), r.ActionCode,
+			r.ActionName.TrimSpace()); err != nil {
 			tx.Rollback()
-			return errors.New("Statement execution " + err.Error())
+			return fmt.Errorf("Ligne %d statement execution %v", i+1, err)
 		}
 	}
 	if _, err = stmt.Exec(); err != nil {
@@ -454,7 +462,8 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 	}
 	queries := []string{`INSERT INTO beneficiary (code,name) 
 		SELECT DISTINCT beneficiary_code,beneficiary_name 
-		FROM temp_commitment WHERE beneficiary_code not in (SELECT code from beneficiary)`,
+		FROM temp_commitment
+		WHERE beneficiary_code not in (SELECT code from beneficiary)`,
 		`INSERT INTO budget_sector (name) SELECT DISTINCT sector
 			FROM temp_commitment WHERE sector not in (SELECT name from budget_sector)`,
 		`INSERT INTO budget_action (code,name,sector_id) 
@@ -462,15 +471,15 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			FROM temp_commitment ic
 			LEFT JOIN budget_sector s ON ic.sector = s.name
 			WHERE action_code not in (SELECT code from budget_action)`,
-		`INSERT INTO commitment (year,code,number,line,creation_date,modification_date,
-			name,value,sold_out,beneficiary_id,iris_code,action_id)
-  		(SELECT ic.year,ic.code,ic.number,ic.line,ic.creation_date,ic.modification_date,
-				ic.name,ic.value,ic.sold_out,b.id,ic.iris_code,a.id
-  		FROM temp_commitment ic
-			JOIN beneficiary b on ic.beneficiary_code=b.code
-			LEFT JOIN budget_action a on ic.action_code = a.code
-			WHERE (ic.year,ic.code,ic.number,ic.line,ic.creation_date,ic.modification_date,
-				ic.name, ic.value) NOT IN
+		`INSERT INTO commitment (year,code,number,line,creation_date,
+			modification_date,name,value,sold_out,beneficiary_id,iris_code,action_id)
+			(SELECT ic.year,ic.code,ic.number,ic.line,ic.creation_date,
+				ic.modification_date,ic.name,ic.value,ic.sold_out,b.id,ic.iris_code,a.id
+  		 FROM temp_commitment ic
+			 JOIN beneficiary b on ic.beneficiary_code=b.code
+			 LEFT JOIN budget_action a on ic.action_code = a.code
+			 WHERE (ic.year,ic.code,ic.number,ic.line,ic.creation_date,
+				ic.modification_date,ic.name, ic.value) NOT IN
 					(SELECT year,code,number,line,creation_date,modification_date,
 						name,value FROM commitment))`,
 		`DELETE FROM temp_commitment`}
@@ -478,7 +487,7 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		_, err = tx.Exec(q)
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("requête %d : %s", i, err.Error())
+			return fmt.Errorf("requête %d : %v", i, err)
 		}
 	}
 	tx.Commit()
