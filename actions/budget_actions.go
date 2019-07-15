@@ -8,13 +8,23 @@ import (
 	"github.com/kataras/iris"
 )
 
+type budgetActionsResp struct {
+	models.BudgetActions
+	models.BudgetSectors
+}
+
 // GetBudgetActions handles the get request to fetch all budget actions
 func GetBudgetActions(ctx iris.Context) {
-	var resp models.BudgetActions
+	var resp budgetActionsResp
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := resp.GetAll(db); err != nil {
+	if err := resp.BudgetActions.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Liste des actions budgétaires : " + err.Error()})
+		ctx.JSON(jsonError{"Liste des actions budgétaires, actions : " + err.Error()})
+		return
+	}
+	if err := resp.BudgetSectors.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des actions budgétaires, secteurs : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

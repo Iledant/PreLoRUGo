@@ -64,7 +64,7 @@ func testGetBudgetActions(t *testing.T, c *TestContext) {
 			RespContains: []string{`Token absent`},
 			StatusCode:   http.StatusInternalServerError}, // 0 : token null
 		{Token: c.Config.Users.Admin.Token,
-			RespContains:  []string{`BudgetAction`, `Name`, `Code`},
+			RespContains:  []string{`BudgetAction`, `Name`, `Code`, `BudgetSector`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
