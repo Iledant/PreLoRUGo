@@ -29,7 +29,8 @@ type CmtForecasts struct {
 // greater than the leatest commitment date
 func (c *CmtForecasts) GetAll(db *sql.DB) error {
 	actualYear := time.Now().Year()
-	qry := fmt.Sprintf(`SELECT t.action_id, b.code,b.name,t.y0,t.y1,t.y2,t.y3,t.y4
+	qry := fmt.Sprintf(`SELECT t.action_id, b.code,b.name,greatest(t.y0,0),
+		greatest(t.y1,0),greatest(t.y2,0),greatest(t.y3,0),greatest(t.y4,0)
 	FROM
 	(SELECT * FROM 
 		crosstab('SELECT action_id, year, SUM(cmt)::bigint FROM
