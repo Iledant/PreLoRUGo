@@ -120,6 +120,7 @@ func UpdateRenewProject(ctx iris.Context) {
 type renewProjectsResp struct {
 	models.Cities
 	models.RenewProjects
+	models.RPEventTypes
 }
 
 // GetRenewProjects handles the get request to handle all renew projets. In order
@@ -134,6 +135,11 @@ func GetRenewProjects(ctx iris.Context) {
 		return
 	}
 	if err := resp.Cities.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête villes : " + err.Error()})
+		return
+	}
+	if err := resp.RPEventTypes.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête villes : " + err.Error()})
 		return
