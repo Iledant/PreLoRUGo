@@ -100,12 +100,11 @@ func (c *Community) Delete(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	// TODO : remove comment to update city table
-	// if _, err := tx.Exec("UPDATE city SET community_id=NULL where community_id = $1",
-	// 	c.ID); err != nil {
-	// 	tx.Rollback()
-	// 	return err
-	// }
+	if _, err := tx.Exec("UPDATE city SET community_id=NULL where community_id = $1",
+		c.ID); err != nil {
+		tx.Rollback()
+		return err
+	}
 	res, err := tx.Exec("DELETE FROM community WHERE id = $1", c.ID)
 	if err != nil {
 		tx.Rollback()

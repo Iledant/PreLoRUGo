@@ -347,6 +347,10 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		index int NOT NULL,
 		query text
 	);`, // 30 migration
+	`CREATE TABLE IF NOT EXISTS rp_event_type (
+		id SERIAL PRIMARY KEY,
+		name varchar(100) NOT NULL
+	);`, // 31 rp_event_type
 }
 
 // createTablesAndViews launches the queries against the database to create all

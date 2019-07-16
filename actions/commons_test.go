@@ -68,6 +68,7 @@ func TestAll(t *testing.T) {
 	testCmtForecasts(t, cfg)
 	testLinkCommitmentsHousings(t, cfg)
 	testCoproCommitmentLink(t, cfg)
+	testRPEventType(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
