@@ -87,7 +87,7 @@ func initializeTests(t *testing.T) *TestContext {
 	}
 	testCtx.App.Logger().Infof("Lancement des tests\n")
 	testCtx.Config = cfg
-	testCtx.DB, err = config.InitDatabase(cfg, true, false)
+	testCtx.DB, err = config.InitDatabase(cfg, testCtx.App, true, false)
 	if err != nil {
 		t.Error("Erreur de connexion à postgres : " + err.Error())
 		t.FailNow()

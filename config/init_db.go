@@ -3,7 +3,12 @@ package config
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"strings"
+
+	"github.com/kataras/iris"
+
+	"github.com/Iledant/PreLoRUGo/models"
 )
 
 func getNames(db *sql.DB, tableType string) ([]string, error) {
@@ -29,7 +34,7 @@ func getNames(db *sql.DB, tableType string) ([]string, error) {
 }
 
 // dropAllTables delete all table from database for test purpose
-func dropAllTables(db *sql.DB) error {
+func dropAllTables(db *sql.DB, app *iris.Application) error {
 	views, err := getNames(db, "VIEW")
 	if err != nil {
 		return fmt.Errorf("get view names : %v", err)
@@ -38,6 +43,7 @@ func dropAllTables(db *sql.DB) error {
 		if _, err = db.Exec("drop view " + strings.Join(views, ",")); err != nil {
 			return fmt.Errorf("drop views : %v", err)
 		}
+		app.Logger().Infof("%d views dropped", len(views))
 	}
 	tables, err := getNames(db, "BASE TABLE")
 	if err != nil {
@@ -47,6 +53,7 @@ func dropAllTables(db *sql.DB) error {
 		if _, err = db.Exec("drop table " + strings.Join(tables, ",")); err != nil {
 			return fmt.Errorf("drp tables : %v", err)
 		}
+		app.Logger().Infof("%d tables dropped", len(views))
 	}
 	return nil
 }
@@ -359,8 +366,46 @@ func createTablesAndViews(db *sql.DB) error {
 	return nil
 }
 
+// createSuperAdmin check if the users table creates a super admin user if not exists
+func createSuperAdmin(db *sql.DB, cfg *PreLoRuGoConf, app *iris.Application) error {
+	var pwd, email string
+	switch cfg.App.Stage {
+	case ProductionStage:
+		pwd = os.Getenv("SUPERADMIN_PWS")
+		email = os.Getenv("SUPERADMIN_EMAIL")
+	default:
+		pwd = cfg.Users.SuperAdmin.Password
+		email = cfg.Users.SuperAdmin.Email
+	}
+	if pwd == "" || email == "" {
+		return fmt.Errorf("Impossible de récupérer les credentials super admin")
+	}
+	var count int64
+	if err := db.QueryRow("SELECT count(1) FROM users WHERE email='superadmin'").
+		Scan(&count); err != nil {
+		return fmt.Errorf("Requête vérification super admin %v", err)
+	}
+	if count > 0 {
+		app.Logger().Infof("Super admin déjà présent dans la base de données")
+		return nil
+	}
+	var usr models.User
+	usr.Name = "Super administrateur"
+	usr.Email = email
+	usr.Password = pwd
+	usr.Rights = models.SuperAdminBit | models.ActiveAdminMask
+	if err := usr.CryptPwd(); err != nil {
+		return fmt.Errorf("Codage du mot de passe super admin %v", err)
+	}
+	if err := usr.Create(db); err != nil {
+		return fmt.Errorf("Création du super admin %v", err)
+	}
+	app.Logger().Infof("Super admin créé")
+	return nil
+}
+
 // InitDatabase connect to database, create tables and view and launch migrations
-func InitDatabase(cfg *PreLoRuGoConf, dropTables bool, migrate bool) (*sql.DB, error) {
+func InitDatabase(cfg *PreLoRuGoConf, app *iris.Application, dropTables bool, migrate bool) (*sql.DB, error) {
 	var dbCfg *DBConf
 	switch cfg.App.Stage {
 	case ProductionStage:
@@ -376,12 +421,15 @@ func InitDatabase(cfg *PreLoRuGoConf, dropTables bool, migrate bool) (*sql.DB, e
 	if err != nil {
 		return nil, fmt.Errorf("Database open %v", err)
 	}
-	if dropTables {
-		if err = dropAllTables(db); err != nil {
+	if dropTables == true {
+		if err = dropAllTables(db, app); err != nil {
 			return nil, err
 		}
 	}
 	if err = createTablesAndViews(db); err != nil {
+		return nil, err
+	}
+	if err = createSuperAdmin(db, cfg, app); err != nil {
 		return nil, err
 	}
 	if migrate {

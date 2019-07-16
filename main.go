@@ -50,7 +50,7 @@ func main() {
 		app.Logger().Fatalf("Configuration : %v", err)
 	}
 
-	db, err := config.InitDatabase(&cfg, false, true)
+	db, err := config.InitDatabase(&cfg, app, false, true)
 	if err != nil {
 		app.Logger().Fatalf("Initialisation de la base de données : %v", err)
 	}

@@ -43,6 +43,7 @@ type Credentials struct {
 
 // Users includes users credentials for test purposes.
 type Users struct {
+	SuperAdmin       Credentials `yaml:"superadmin"`
 	Admin            Credentials
 	User             Credentials
 	CoproUser        Credentials `yaml:"coprouser"`
