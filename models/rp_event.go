@@ -21,6 +21,21 @@ type RPEvents struct {
 	RPEvents []RPEvent `json:"RPEvent"`
 }
 
+// FullRPEvent is used to fetch all events linked to a renew project with full
+// event type name
+type FullRPEvent struct {
+	ID              int64     `json:"ID"`
+	RPEventTypeID   int64     `json:"RPEventTypeID"`
+	RPEventTypeName string    `json:"RPEventTypeName"`
+	Date            time.Time `json:"Date"`
+	Comment         string    `json:"Comment"`
+}
+
+// FullRPEvents embeddes an array of FullRPEvent for json export
+type FullRPEvents struct {
+	FullRPEvents []FullRPEvent `json:"FullRPEvent"`
+}
+
 // Create insert a new RPEvent into database
 func (r *RPEvent) Create(db *sql.DB) (err error) {
 	err = db.QueryRow(`INSERT INTO rp_event (renew_project_id,rp_event_type_id,date,
@@ -97,4 +112,29 @@ func (r *RPEvent) Delete(db *sql.DB) (err error) {
 		return errors.New("Événement introuvable")
 	}
 	return nil
+}
+
+// GetLinked fetches all events linked to a renew project with their full name
+func (f *FullRPEvents) GetLinked(db *sql.DB, rpID int64) error {
+	rows, err := db.Query(`SELECT r.id,r.rp_event_type_id,rt.name,r.date,r.comment
+	 FROM rp_event r
+	 JOIN rp_event_type rt ON r.rp_event_type_id=rt.id
+	  WHERE renew_project_id=$1`, rpID)
+	if err != nil {
+		return err
+	}
+	var row FullRPEvent
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.RPEventTypeID, &row.RPEventTypeName, &row.Date,
+			&row.Comment); err != nil {
+			return err
+		}
+		f.FullRPEvents = append(f.FullRPEvents, row)
+	}
+	err = rows.Err()
+	if len(f.FullRPEvents) == 0 {
+		f.FullRPEvents = []FullRPEvent{}
+	}
+	return err
 }
