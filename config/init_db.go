@@ -396,7 +396,7 @@ func createSuperAdmin(db *sql.DB, cfg *PreLoRuGoConf, app *iris.Application) err
 		return fmt.Errorf("Impossible de récupérer les credentials super admin")
 	}
 	var count int64
-	if err := db.QueryRow("SELECT count(1) FROM users WHERE email='superadmin'").
+	if err := db.QueryRow("SELECT count(1) FROM users WHERE email=$1", email).
 		Scan(&count); err != nil {
 		return fmt.Errorf("Requête vérification super admin %v", err)
 	}
