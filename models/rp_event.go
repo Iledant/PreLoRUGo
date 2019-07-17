@@ -9,11 +9,12 @@ import (
 
 // RPEvent model for storing events linked to a renew project and a event type
 type RPEvent struct {
-	ID             int64      `json:"ID"`
-	RenewProjectID int64      `json:"RenewProjectID"`
-	RPEventTypeID  int64      `json:"RPEventTypeID"`
-	Date           time.Time  `json:"Date"`
-	Comment        NullString `json:"Comment"`
+	ID              int64      `json:"ID"`
+	RenewProjectID  int64      `json:"RenewProjectID"`
+	RPEventTypeID   int64      `json:"RPEventTypeID"`
+	RPEventTypeName string     `json:"RPEventTypeName"`
+	Date            time.Time  `json:"Date"`
+	Comment         NullString `json:"Comment"`
 }
 
 // RPEvents embeddes an array of RPEvent for json export
@@ -24,11 +25,11 @@ type RPEvents struct {
 // FullRPEvent is used to fetch all events linked to a renew project with full
 // event type name
 type FullRPEvent struct {
-	ID              int64     `json:"ID"`
-	RPEventTypeID   int64     `json:"RPEventTypeID"`
-	RPEventTypeName string    `json:"RPEventTypeName"`
-	Date            time.Time `json:"Date"`
-	Comment         string    `json:"Comment"`
+	ID            int64     `json:"ID"`
+	RPEventTypeID int64     `json:"RPEventTypeID"`
+	Name          string    `json:"Name"`
+	Date          time.Time `json:"Date"`
+	Comment       string    `json:"Comment"`
 }
 
 // FullRPEvents embeddes an array of FullRPEvent for json export
@@ -41,6 +42,11 @@ func (r *RPEvent) Create(db *sql.DB) (err error) {
 	err = db.QueryRow(`INSERT INTO rp_event (renew_project_id,rp_event_type_id,date,
 		comment) VALUES($1,$2,$3,$4) RETURNING id`, r.RenewProjectID, r.RPEventTypeID,
 		r.Date, r.Comment).Scan(&r.ID)
+	if err != nil {
+		return err
+	}
+	err = db.QueryRow(`SELECT name FROM rp_event_type WHERE id=$1`,
+		r.RPEventTypeID).Scan(&r.RPEventTypeName)
 	return err
 }
 
@@ -54,9 +60,12 @@ func (r *RPEvent) Validate() error {
 
 // Get fetches a RPEvent from database using ID field
 func (r *RPEvent) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT renew_project_id,rp_event_type_id,date,comment
-	FROM rp_event WHERE ID=$1`, r.ID).
-		Scan(&r.RenewProjectID, &r.RPEventTypeID, &r.Date, &r.Comment)
+	err = db.QueryRow(`SELECT r.renew_project_id,r.rp_event_type_id,rt.name,
+		r.date,r.comment
+	FROM rp_event r
+	JOIN rp_event_type rt ON rt.id=r.rp_event_type_id
+	WHERE r.id=$1`, r.ID).Scan(&r.RenewProjectID, &r.RPEventTypeID,
+		&r.RPEventTypeName, &r.Date, &r.Comment)
 	return err
 }
 
@@ -72,21 +81,24 @@ func (r *RPEvent) Update(db *sql.DB) (err error) {
 	if count != 1 {
 		return errors.New("Événement introuvable")
 	}
-	return nil
+	err = db.QueryRow(`SELECT name FROM rp_event_type WHERE id=$1`,
+		r.RPEventTypeID).Scan(&r.RPEventTypeName)
+	return err
 }
 
 // GetAll fetches all RPEvent from database
 func (r *RPEvents) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id,renew_project_id,rp_event_type_id,date,comment
-	 FROM rp_event`)
+	rows, err := db.Query(`SELECT r.id,r.renew_project_id,r.rp_event_type_id,
+	 rt.name,r.date,r.comment
+	 FROM rp_event r JOIN rp_event_type rt ON rt.id=r.rp_event_type_id`)
 	if err != nil {
 		return err
 	}
 	var row RPEvent
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.RenewProjectID, &row.RPEventTypeID, &row.Date,
-			&row.Comment); err != nil {
+		if err = rows.Scan(&row.ID, &row.RenewProjectID, &row.RPEventTypeID,
+			&row.RPEventTypeName, &row.Date, &row.Comment); err != nil {
 			return err
 		}
 		r.RPEvents = append(r.RPEvents, row)
@@ -126,7 +138,7 @@ func (f *FullRPEvents) GetLinked(db *sql.DB, rpID int64) error {
 	var row FullRPEvent
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.RPEventTypeID, &row.RPEventTypeName, &row.Date,
+		if err = rows.Scan(&row.ID, &row.RPEventTypeID, &row.Name, &row.Date,
 			&row.Comment); err != nil {
 			return err
 		}

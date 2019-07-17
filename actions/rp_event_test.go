@@ -54,8 +54,9 @@ func testCreateRPEvent(t *testing.T, c *TestContext) (ID int) {
 			Token:  c.Config.Users.RenewProjectUser.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"RPEvent":{"ID":1,"RenewProjectID":` +
-				strconv.FormatInt(c.RenewProjectID, 10) + `,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-				`,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`},
+				strconv.FormatInt(c.RenewProjectID, 10) + `,"RPEventTypeID":` +
+				strconv.FormatInt(c.RPEventTypeID, 10) + `,"RPEventTypeName":` +
+				`"Comité d'engagement","Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`},
 			StatusCode: http.StatusCreated}, // 3 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -98,7 +99,7 @@ func testUpdateRPEvent(t *testing.T, c *TestContext, ID int) {
 			`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification d'événement RP, requête : Événement introuvable`},
-			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
+			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
 		{Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
 			strconv.FormatInt(c.RPEventTypeID, 10) +
 			`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
@@ -107,8 +108,8 @@ func testUpdateRPEvent(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-				`,"Date":"2016-04-13T00:00:00Z","Comment":null}`},
-			StatusCode: http.StatusOK}, // 4 : ok
+				`,"RPEventTypeName":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
+			StatusCode: http.StatusOK}, // 5 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.PUT("/api/rp_event").WithBytes(tc.Sent).
@@ -134,7 +135,7 @@ func testGetRPEvent(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-				`,"Date":"2016-04-13T00:00:00Z","Comment":null}`},
+				`,"RPEventTypeName":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
 			StatusCode: http.StatusOK}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -156,7 +157,7 @@ func testGetRPEvents(t *testing.T, c *TestContext) {
 			RespContains: []string{`"RPEvent"`, `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-				`,"Date":"2016-04-13T00:00:00Z","Comment":null}`},
+				`,"RPEventTypeName":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
