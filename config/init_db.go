@@ -351,6 +351,17 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		id SERIAL PRIMARY KEY,
 		name varchar(100) NOT NULL
 	);`, // 31 rp_event_type
+	`CREATE TABLE IF NOT EXISTS rp_event (
+		id SERIAL PRIMARY KEY,
+		renew_project_id int NOT NULL,
+		rp_event_type_id int NOT NULL,
+		date date NOT NULL,
+		comment text,
+		FOREIGN KEY (renew_project_id) REFERENCES renew_project (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
+		FOREIGN KEY (rp_event_type_id) REFERENCES rp_event_type (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
+	);`, // 32 rp_event
 }
 
 // createTablesAndViews launches the queries against the database to create all

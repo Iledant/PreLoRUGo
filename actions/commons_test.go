@@ -25,6 +25,7 @@ type TestContext struct {
 	RenewProjectID int64
 	CoproID        int64
 	HousingID      int64
+	RPEventTypeID  int64
 }
 
 // TestCase is used as common structure for all request tests
@@ -69,6 +70,7 @@ func TestAll(t *testing.T) {
 	testLinkCommitmentsHousings(t, cfg)
 	testCoproCommitmentLink(t, cfg)
 	testRPEventType(t, cfg)
+	testRPEvent(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

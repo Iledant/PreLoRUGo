@@ -1,8 +1,10 @@
 package actions
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/iris-contrib/httpexpect"
@@ -21,6 +23,7 @@ func testRPEventType(t *testing.T, c *TestContext) {
 		testGetRPEventType(t, c, ID)
 		testGetRPEventTypes(t, c)
 		testDeleteRPEventType(t, c, ID)
+		fetchRPEventTypeID(t, c)
 	})
 }
 
@@ -157,4 +160,26 @@ func testDeleteRPEventType(t *testing.T, c *TestContext, ID int) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "DeleteRPEventType")
+}
+
+// fetchRPEventTypeID create an RPEventType and fetches its ID to store in the
+// TestContext variable for further use
+func fetchRPEventTypeID(t *testing.T, c *TestContext) {
+	resp := c.E.POST("/api/rp_event_type").
+		WithBytes([]byte(`{"Name":"Comité d'engagement"}`)).
+		WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
+	body := string(resp.Content)
+	status := resp.Raw().StatusCode
+	if status != http.StatusCreated {
+		t.Error("Impossible de créer le type d'événement pérenne")
+		t.FailNow()
+		return
+	}
+	index := strings.Index(body, `{"ID"`)
+	fmt.Sscanf(body[index:], `{"ID":%d`, &c.RPEventTypeID)
+	if c.RPEventTypeID == 0 {
+		t.Error("Impossible de récupérer l'ID de type d'événement pérenne")
+		t.FailNow()
+		return
+	}
 }
