@@ -386,7 +386,7 @@ func createSuperAdmin(db *sql.DB, cfg *PreLoRuGoConf, app *iris.Application) err
 	var pwd, email string
 	switch cfg.App.Stage {
 	case ProductionStage:
-		pwd = os.Getenv("SUPERADMIN_PWS")
+		pwd = os.Getenv("SUPERADMIN_PWD")
 		email = os.Getenv("SUPERADMIN_EMAIL")
 	default:
 		pwd = cfg.Users.SuperAdmin.Password
