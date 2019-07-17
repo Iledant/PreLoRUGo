@@ -9,12 +9,12 @@ import (
 
 // RPEvent model for storing events linked to a renew project and a event type
 type RPEvent struct {
-	ID              int64      `json:"ID"`
-	RenewProjectID  int64      `json:"RenewProjectID"`
-	RPEventTypeID   int64      `json:"RPEventTypeID"`
-	RPEventTypeName string     `json:"RPEventTypeName"`
-	Date            time.Time  `json:"Date"`
-	Comment         NullString `json:"Comment"`
+	ID             int64      `json:"ID"`
+	RenewProjectID int64      `json:"RenewProjectID"`
+	RPEventTypeID  int64      `json:"RPEventTypeID"`
+	Name           string     `json:"Name"`
+	Date           time.Time  `json:"Date"`
+	Comment        NullString `json:"Comment"`
 }
 
 // RPEvents embeddes an array of RPEvent for json export
@@ -46,7 +46,7 @@ func (r *RPEvent) Create(db *sql.DB) (err error) {
 		return err
 	}
 	err = db.QueryRow(`SELECT name FROM rp_event_type WHERE id=$1`,
-		r.RPEventTypeID).Scan(&r.RPEventTypeName)
+		r.RPEventTypeID).Scan(&r.Name)
 	return err
 }
 
@@ -65,7 +65,7 @@ func (r *RPEvent) Get(db *sql.DB) (err error) {
 	FROM rp_event r
 	JOIN rp_event_type rt ON rt.id=r.rp_event_type_id
 	WHERE r.id=$1`, r.ID).Scan(&r.RenewProjectID, &r.RPEventTypeID,
-		&r.RPEventTypeName, &r.Date, &r.Comment)
+		&r.Name, &r.Date, &r.Comment)
 	return err
 }
 
@@ -82,7 +82,7 @@ func (r *RPEvent) Update(db *sql.DB) (err error) {
 		return errors.New("Événement introuvable")
 	}
 	err = db.QueryRow(`SELECT name FROM rp_event_type WHERE id=$1`,
-		r.RPEventTypeID).Scan(&r.RPEventTypeName)
+		r.RPEventTypeID).Scan(&r.Name)
 	return err
 }
 
@@ -98,7 +98,7 @@ func (r *RPEvents) GetAll(db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.RenewProjectID, &row.RPEventTypeID,
-			&row.RPEventTypeName, &row.Date, &row.Comment); err != nil {
+			&row.Name, &row.Date, &row.Comment); err != nil {
 			return err
 		}
 		r.RPEvents = append(r.RPEvents, row)

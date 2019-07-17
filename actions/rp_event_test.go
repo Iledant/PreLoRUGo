@@ -55,7 +55,7 @@ func testCreateRPEvent(t *testing.T, c *TestContext) (ID int) {
 			IDName: `{"ID"`,
 			RespContains: []string{`"RPEvent":{"ID":1,"RenewProjectID":` +
 				strconv.FormatInt(c.RenewProjectID, 10) + `,"RPEventTypeID":` +
-				strconv.FormatInt(c.RPEventTypeID, 10) + `,"RPEventTypeName":` +
+				strconv.FormatInt(c.RPEventTypeID, 10) + `,"Name":` +
 				`"Comité d'engagement","Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`},
 			StatusCode: http.StatusCreated}, // 3 : ok
 	}
@@ -108,7 +108,7 @@ func testUpdateRPEvent(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-				`,"RPEventTypeName":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
+				`,"Name":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
 			StatusCode: http.StatusOK}, // 5 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -135,7 +135,7 @@ func testGetRPEvent(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-				`,"RPEventTypeName":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
+				`,"Name":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
 			StatusCode: http.StatusOK}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -157,7 +157,7 @@ func testGetRPEvents(t *testing.T, c *TestContext) {
 			RespContains: []string{`"RPEvent"`, `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-				`,"RPEventTypeName":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
+				`,"Name":"Comité d'engagement","Date":"2016-04-13T00:00:00Z","Comment":null}`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
