@@ -131,6 +131,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/beneficiaries", GetBeneficiaries)
 	userParty.Get("/beneficiaries/paginated", GetPaginatedBeneficiaries)
 	userParty.Get("/beneficiary/{ID}/datas", GetPaginatedBeneficiaryDatas)
+	userParty.Get("/beneficiary/{ID}/export", GetExportBeneficiaryDatas)
 
 	userParty.Get("/payments", GetPayments)
 	userParty.Get("/payments/paginated", GetPaginatedPayments)
