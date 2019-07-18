@@ -57,7 +57,7 @@ func main() {
 	app.Logger().Infof("Base de données connectée et initialisée")
 	defer db.Close()
 
-	actions.SetRoutes(app, db)
+	actions.SetRoutes(app, cfg.Users.SuperAdmin.Email, db)
 	app.StaticWeb("/", "./dist")
 	app.Logger().Infof("Routes et serveur statique configurés")
 

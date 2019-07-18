@@ -89,8 +89,9 @@ func (u *User) ValidatePwd(pwd string) error {
 }
 
 // GetAll fetches all users from database.
-func (users *Users) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id, name, email, rights FROM users`)
+func (users *Users) GetAll(db *sql.DB, superAdminMail string) (err error) {
+	rows, err := db.Query(`SELECT id, name, email, rights FROM users 
+	WHERE email!=$1`, superAdminMail)
 	if err != nil {
 		return err
 	}

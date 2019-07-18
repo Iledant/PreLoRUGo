@@ -97,7 +97,7 @@ func initializeTests(t *testing.T) *TestContext {
 		return nil
 	}
 	createUsers(t, testCtx.DB, testCtx.Config)
-	SetRoutes(testCtx.App, testCtx.DB)
+	SetRoutes(testCtx.App, testCtx.Config.Users.SuperAdmin.Email, testCtx.DB)
 	testCtx.E = httptest.New(t, testCtx.App)
 	// Fetch admin and user tokens
 	fetchTokens(t, testCtx)

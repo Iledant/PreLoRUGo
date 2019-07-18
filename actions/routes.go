@@ -8,7 +8,7 @@ import (
 )
 
 // SetRoutes initialize all routes for the application
-func SetRoutes(app *iris.Application, db *sql.DB) {
+func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	crs := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -18,9 +18,9 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 
 	crsParty := app.Party("/api", crs).AllowMethods(iris.MethodOptions)
 
-	crsParty.Post("/user/sign_up", setDBMiddleware(db), SignUp)
-	crsParty.Post("/user/login", setDBMiddleware(db), Login)
-	api := crsParty.Party("", setDBMiddleware(db))
+	crsParty.Post("/user/sign_up", setDBMiddleware(db, superAdminEmail), SignUp)
+	crsParty.Post("/user/login", setDBMiddleware(db, superAdminEmail), Login)
+	api := crsParty.Party("", setDBMiddleware(db, superAdminEmail))
 
 	adminParty := api.Party("", AdminMiddleware)
 	adminParty.Post("/user", CreateUser)
@@ -169,9 +169,10 @@ func SetRoutes(app *iris.Application, db *sql.DB) {
 }
 
 // setDBMiddleware return a middleware to add db to context values
-func setDBMiddleware(db *sql.DB) func(iris.Context) {
+func setDBMiddleware(db *sql.DB, superAdminEmail string) func(iris.Context) {
 	return func(ctx iris.Context) {
 		ctx.Values().Set("db", db)
+		ctx.Values().Set("superAdminEmail", superAdminEmail)
 		ctx.Next()
 	}
 }
