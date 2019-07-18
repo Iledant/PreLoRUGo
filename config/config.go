@@ -119,6 +119,8 @@ func (p *PreLoRuGoConf) Get(app *iris.Application) (logFile *os.File, err error)
 		p.Databases.Prod.UserName = username
 		p.Databases.Prod.Password = password
 		p.App.TokenFileName = os.Getenv("TOKEN_FILE_NAME")
+		p.Users.SuperAdmin.Email = os.Getenv("SUPERADMIN_PWD")
+		p.Users.SuperAdmin.Password = os.Getenv("SUPERADMIN_EMAIL")
 		p.App.Stage = ProductionStage
 		app.Logger().SetLevel("info")
 		return logFile, nil

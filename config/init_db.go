@@ -3,7 +3,6 @@ package config
 import (
 	"database/sql"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/kataras/iris"
@@ -383,15 +382,9 @@ func createTablesAndViews(db *sql.DB) error {
 
 // createSuperAdmin check if the users table creates a super admin user if not exists
 func createSuperAdmin(db *sql.DB, cfg *PreLoRuGoConf, app *iris.Application) error {
-	var pwd, email string
-	switch cfg.App.Stage {
-	case ProductionStage:
-		pwd = os.Getenv("SUPERADMIN_PWD")
-		email = os.Getenv("SUPERADMIN_EMAIL")
-	default:
-		pwd = cfg.Users.SuperAdmin.Password
-		email = cfg.Users.SuperAdmin.Email
-	}
+	pwd := cfg.Users.SuperAdmin.Password
+	email := cfg.Users.SuperAdmin.Email
+
 	if pwd == "" || email == "" {
 		return fmt.Errorf("Impossible de récupérer les credentials super admin")
 	}
@@ -404,11 +397,13 @@ func createSuperAdmin(db *sql.DB, cfg *PreLoRuGoConf, app *iris.Application) err
 		app.Logger().Infof("Super admin déjà présent dans la base de données")
 		return nil
 	}
-	var usr models.User
-	usr.Name = "Super administrateur"
-	usr.Email = email
-	usr.Password = pwd
-	usr.Rights = models.SuperAdminBit | models.ActiveAdminMask
+	usr := models.User{
+		Name:     "Super administrateur",
+		Email:    email,
+		Password: pwd,
+		Rights:   models.SuperAdminBit | models.ActiveAdminMask,
+	}
+
 	if err := usr.CryptPwd(); err != nil {
 		return fmt.Errorf("Codage du mot de passe super admin %v", err)
 	}
