@@ -58,6 +58,26 @@ func UpdateHousing(ctx iris.Context) {
 	ctx.JSON(req)
 }
 
+// GetHousing handles the put request to modify a new housing
+func GetHousing(ctx iris.Context) {
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Récupération d'un logement, paramètre : " + err.Error()})
+		return
+	}
+	var resp housingReq
+	resp.Housing.ID = ID
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.Housing.Get(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Récupération d'un logement, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // GetHousings handles the get request to fetch all housings
 func GetHousings(ctx iris.Context) {
 	resp := models.Housings{}
@@ -170,6 +190,43 @@ func GetPaginatedHousings(ctx iris.Context) {
 	if err = resp.Get(db, &req); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Page de logements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
+type housingDatasResp struct {
+	Housing models.Housing `json:"Housing"`
+	models.HousingLinkedCommitments
+	models.Payments
+}
+
+// GetHousingDatas fetches all datas attached to an housing whose ID is given
+// in URL parameter
+func GetHousingDatas(ctx iris.Context) {
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'un logement, paramètre : " + err.Error()})
+		return
+	}
+	var resp housingDatasResp
+	resp.Housing.ID = ID
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err = resp.Housing.Get(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'un logement, housing get : " + err.Error()})
+		return
+	}
+	if err = resp.HousingLinkedCommitments.Get(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'un logement, commitments get : " + err.Error()})
+		return
+	}
+	if err = resp.Payments.GetLinkedToHousing(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'un logement, payments get : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

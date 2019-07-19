@@ -20,6 +20,8 @@ func testHousing(t *testing.T, c *TestContext) {
 			return
 		}
 		testUpdateHousing(t, c, ID)
+		testGetHousing(t, c, ID)
+		testGetHousingDatas(t, c, ID)
 		testGetHousings(t, c)
 		testDeleteHousing(t, c, ID)
 		testBatchHousings(t, c)
@@ -115,6 +117,57 @@ func testUpdateHousing(t *testing.T, c *TestContext, ID int) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "UpdateHousing")
+}
+
+// testGetHousing checks if route is user protected and Housing correctly
+// sent back
+func testGetHousing(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		{Token: "",
+			RespContains: []string{`Token absent`},
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			ID:           0,
+			RespContains: []string{`Récupération d'un logement, requête :`},
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
+		{Token: c.Config.Users.User.Token,
+			ID: ID,
+			RespContains: []string{`"Housing":{"ID":` + strconv.Itoa(ID) +
+				`,"Reference":"Essai2","Address":null,"ZipCode":null,"CityName":null,` +
+				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}`},
+			StatusCode: http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/housing/"+strconv.Itoa(tc.ID)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	chkFactory(t, tcc, f, "GetHousing")
+}
+
+// testGetHousingDatas checks if route is user protected and Housing correctly
+// sent back
+func testGetHousingDatas(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		{Token: "",
+			RespContains: []string{`Token absent`},
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			ID:           0,
+			RespContains: []string{`Données d'un logement, housing get :`},
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
+		{Token: c.Config.Users.User.Token,
+			ID: ID,
+			RespContains: []string{`"Housing":{"ID":` + strconv.Itoa(ID) +
+				`,"Reference":"Essai2","Address":null,"ZipCode":null,"CityName":null,` +
+				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}`,
+				`"Commitment":[`, `"Payment":[`},
+			StatusCode: http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/housing/"+strconv.Itoa(tc.ID)+"/datas").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	chkFactory(t, tcc, f, "GetHousingDatas")
 }
 
 // testGetHousings checks if route is user protected and Housings correctly

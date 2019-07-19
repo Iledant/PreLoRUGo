@@ -58,6 +58,15 @@ func (h *Housing) Validate() error {
 	return nil
 }
 
+// Get fetches a housing from database using the ID field
+func (h *Housing) Get(db *sql.DB) error {
+	return db.QueryRow(`SELECT h.id,h.reference,h.address,h.zip_code,c.name,
+	h.plai,h.plus,h.pls,h.anru FROM housing h
+	LEFT JOIN city c ON h.zip_code=c.insee_code WHERE id=$1`, h.ID).Scan(&h.ID,
+		&h.Reference, &h.Address, &h.ZipCode, &h.CityName, &h.PLAI, &h.PLUS, &h.PLS,
+		&h.ANRU)
+}
+
 // Create insert a new Housing into database
 func (h *Housing) Create(db *sql.DB) (err error) {
 	err = db.QueryRow(`INSERT INTO housing 
@@ -147,8 +156,8 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(pq.CopyIn("temp_housing", "reference", "address", 
-	"zip_code", "plai", "plus", "pls", "anru"))
+	stmt, err := tx.Prepare(pq.CopyIn("temp_housing", "reference", "address",
+		"zip_code", "plai", "plus", "pls", "anru"))
 	if err != nil {
 		return err
 	}
