@@ -10,9 +10,10 @@ import (
 
 // Community model
 type Community struct {
-	ID   int64  `json:"ID"`
-	Code string `json:"Code"`
-	Name string `json:"Name"`
+	ID           int64     `json:"ID"`
+	Code         string    `json:"Code"`
+	Name         string    `json:"Name"`
+	DepartmentID NullInt64 `json:"DepartmentID"`
 }
 
 // Communities embeddes an array of Community for json export
@@ -22,8 +23,9 @@ type Communities struct {
 
 // CommunityLine is used to decode a line of Community batch
 type CommunityLine struct {
-	Code string `json:"Code"`
-	Name string `json:"Name"`
+	Code           string `json:"Code"`
+	Name           string `json:"Name"`
+	DepartmentCode int    `json:"DepartmentCode"`
 }
 
 // CommunityBatch embeddes an array of CommunityLine for json export
@@ -41,15 +43,15 @@ func (c *Community) Validate() error {
 
 // Create insert a new Community into database
 func (c *Community) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO community (code,name)
- VALUES($1,$2) RETURNING id`, &c.Code, &c.Name).Scan(&c.ID)
+	err = db.QueryRow(`INSERT INTO community (code,name,department_id)
+ VALUES($1,$2,$3) RETURNING id`, &c.Code, &c.Name, &c.DepartmentID).Scan(&c.ID)
 	return err
 }
 
 // Get fetches a Community from database using ID field
 func (c *Community) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT code, name FROM community WHERE ID=$1`, c.ID).
-		Scan(&c.Code, &c.Name)
+	err = db.QueryRow(`SELECT code, name,department_id FROM community WHERE ID=$1`,
+		c.ID).Scan(&c.Code, &c.Name, &c.DepartmentID)
 	if err != nil {
 		return err
 	}
@@ -58,8 +60,8 @@ func (c *Community) Get(db *sql.DB) (err error) {
 
 // Update modifies a community in database
 func (c *Community) Update(db *sql.DB) (err error) {
-	res, err := db.Exec(`UPDATE community SET code=$1,name=$2 WHERE id=$3`,
-		c.Code, c.Name, c.ID)
+	res, err := db.Exec(`UPDATE community SET code=$1,name=$2,department_id=$3 
+	WHERE id=$4`, c.Code, c.Name, c.DepartmentID, c.ID)
 	if err != nil {
 		return err
 	}
@@ -75,14 +77,14 @@ func (c *Community) Update(db *sql.DB) (err error) {
 
 // GetAll fetches all Communities from database
 func (c *Communities) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id,code,name FROM community`)
+	rows, err := db.Query(`SELECT id,code,name,department_id FROM community`)
 	if err != nil {
 		return err
 	}
 	var row Community
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.Code, &row.Name); err != nil {
+		if err = rows.Scan(&row.ID, &row.Code, &row.Name, &row.DepartmentID); err != nil {
 			return err
 		}
 		c.Communities = append(c.Communities, row)
@@ -126,7 +128,7 @@ func (c *Community) Delete(db *sql.DB) (err error) {
 // Save insert a batch of CommunityLine into database
 func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 	for i, r := range c.Lines {
-		if r.Code == "" || r.Name == "" {
+		if r.Code == "" || r.Name == "" || r.DepartmentCode == 0 {
 			return fmt.Errorf("ligne %d, champ incorrect", i+1)
 		}
 	}
@@ -134,13 +136,13 @@ func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	stmt, err := tx.Prepare(pq.CopyIn("temp_community", "code", "name"))
+	stmt, err := tx.Prepare(pq.CopyIn("temp_community", "code", "name", "department_code"))
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
-		if _, err = stmt.Exec(r.Code, r.Name); err != nil {
+		if _, err = stmt.Exec(r.Code, r.Name, r.DepartmentCode); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
@@ -149,11 +151,13 @@ func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 		tx.Rollback()
 		return fmt.Errorf("statement flush exec %v", err)
 	}
-	queries := []string{`UPDATE community SET name=t.name FROM temp_community t 
-	WHERE t.code = community.code`,
-		`INSERT INTO community (code,name)
-	SELECT code,name from temp_community 
-		WHERE code NOT IN (SELECT DISTINCT code from community)`,
+	queries := []string{`UPDATE community SET name=t.name, department_id=d.id 
+	FROM temp_community t, department d 
+	WHERE t.code = community.code AND d.code=t.department_code`,
+		`INSERT INTO community (code,name,department_id)
+	SELECT t.code,t.name,d.id FROM temp_community t 
+	LEFT OUTER JOIN department d ON d.code=t.department_code
+		WHERE t.code NOT IN (SELECT DISTINCT code from community)`,
 		`DELETE FROM temp_community`,
 	}
 	for i, q := range queries {

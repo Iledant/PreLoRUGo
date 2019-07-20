@@ -62,10 +62,15 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Post("/commission", CreateCommission)
 	adminParty.Put("/commission", UpdateCommission)
 	adminParty.Delete("/commission/{ID}", DeleteCommission)
+
 	adminParty.Post("/community", CreateCommunity)
 	adminParty.Put("/community", UpdateCommunity)
 	adminParty.Delete("/community/{ID}", DeleteCommunity)
 	adminParty.Post("/communities", BatchCommunities)
+
+	adminParty.Post("/department", CreateDepartment)
+	adminParty.Put("/department", UpdateDepartment)
+	adminParty.Delete("/department/{ID}", DeleteDepartment)
 
 	adminParty.Post("/city", CreateCity)
 	adminParty.Put("/city", UpdateCity)
@@ -141,8 +146,12 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 
 	userParty.Get("/budget_sectors", GetBudgetSectors)
 	userParty.Get("/budget_sector/{ID}", GetBudgetSector)
+
 	userParty.Get("/community/{ID}", GetCommunity)
 	userParty.Get("/communities", GetCommunities)
+
+	userParty.Get("/department/{ID}", GetDepartment)
+	userParty.Get("/departments", GetDepartments)
 
 	userParty.Get("/commission/{ID}", GetCommission)
 	userParty.Get("/commissions", GetCommissions)

@@ -74,19 +74,20 @@ func testUpdateCommunity(t *testing.T, c *TestContext, ID int) {
 		{Sent: []byte(`{"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"","Name":"Essai2"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'interco : Champ code ou name incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 3 : code empty
+			StatusCode:   http.StatusBadRequest}, // 2 : code empty
 		{Sent: []byte(`{"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"Essai2","Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'interco : Champ code ou name incorrect`},
-			StatusCode:   http.StatusBadRequest}, // 4 : name empty
+			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{Sent: []byte(`{"Community":{"ID":0,"Code":"Essai2","Name":"Essai2"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'interco, requête : `},
-			StatusCode:   http.StatusInternalServerError}, // 5 : bad ID
+			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
 		{Sent: []byte(`{"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"Essai2","Name":"Essai2"}}`),
-			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"Essai2","Name":"Essai2"}`},
-			StatusCode:   http.StatusOK}, // 6 : ok
+			Token: c.Config.Users.Admin.Token,
+			RespContains: []string{`"Community":{"ID":` + strconv.Itoa(ID) +
+				`,"Code":"Essai2","Name":"Essai2","DepartmentID":null}`},
+			StatusCode: http.StatusOK}, // 5 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.PUT("/api/community").WithBytes(tc.Sent).
@@ -107,9 +108,10 @@ func testGetCommunity(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Récupération d'interco, requête :`},
 			ID:           0}, // 1 : bad ID
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"Essai2","Name":"Essai2"}}`},
-			ID:           ID,
-			StatusCode:   http.StatusOK}, // 2 : ok
+			RespContains: []string{`{"Community":{"ID":` + strconv.Itoa(ID) +
+				`,"Code":"Essai2","Name":"Essai2","DepartmentID":null}}`},
+			ID:         ID,
+			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/community/"+strconv.Itoa(tc.ID)).
@@ -126,7 +128,8 @@ func testGetCommunities(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains:  []string{`{"Community":[{"ID":1,"Code":"Essai2","Name":"Essai2"}]}`},
+			RespContains: []string{`{"Community":[{"ID":1,"Code":"Essai2",` +
+				`"Name":"Essai2","DepartmentID":null}]}`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -168,13 +171,17 @@ func testBatchCommunities(t *testing.T, c *TestContext) {
 			RespContains: []string{"Droits administrateur requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Community":[{"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"},
-			{"Code":"","Name":"VILLE DE PARIS (EPT1)"},{"Code":"200058519.78","Name":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)"}]}`),
+			Sent: []byte(`{"Community":[{"Code":"200000321","Name":"(EX78) CC DES DEUX` +
+				` RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)","DepartmentCode":78},
+			{"Code":"","Name":"VILLE DE PARIS (EPT1)","DepartmentCode":75},
+			{"Code":"200058519.78","Name":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)"}]}`),
 			RespContains: []string{"Batch de Intercos, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 1 : code empty
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Community":[{"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"},
-			{"Code":"217500016","Name":"VILLE DE PARIS (EPT1)"},{"Code":"200058519.78","Name":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)"}]}`),
+			Sent: []byte(`{"Community":[{"Code":"200000321","Name":"(EX78) CC DES DEUX` +
+				` RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)","DepartmentCode":78},
+			{"Code":"217500016","Name":"VILLE DE PARIS (EPT1)","DepartmentCode":75},
+			{"Code":"200058519.78","Name":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)","DepartmentCode":78}]}`),
 			Count:         3,
 			CountItemName: `"ID"`,
 			RespContains:  []string{"Community", `"Code":"200000321","Name":"(EX78) CC DES DEUX RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)"`},

@@ -46,6 +46,7 @@ type TestCase struct {
 func TestAll(t *testing.T) {
 	cfg := initializeTests(t)
 	testUser(t, cfg)
+	testDepartment(t, cfg)
 	testCommunity(t, cfg)
 	testCity(t, cfg)
 	testCopro(t, cfg)

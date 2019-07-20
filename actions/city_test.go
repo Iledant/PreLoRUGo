@@ -54,8 +54,8 @@ func testCreateCity(t *testing.T, c *TestContext) (ID int) {
 			Token:  c.Config.Users.Admin.Token,
 			IDName: `{"InseeCode"`,
 			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai",` +
-				`"CommunityID":2,"CommunityName":"(EX78) CC DES DEUX RIVES DE LA SEINE` +
-				` (DISSOUTE AU 01/01/2016)","QPV":true`},
+				`"CommunityID":2,"CommunityName":"CA SAINT GERMAIN BOUCLES DE SEINE ` +
+				`(78-YVELINES)","QPV":true`},
 			StatusCode: http.StatusCreated}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -98,7 +98,8 @@ func testUpdateCity(t *testing.T, c *TestContext, ID int) {
 			`,"Name":"Essai2","CommunityID":3,"QPV":false}}`),
 			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"City":{"InseeCode":1000000,"Name":"Essai2",` +
-				`"CommunityID":3,"CommunityName":"VILLE DE PARIS (EPT1)","QPV":false`},
+				`"CommunityID":3,"CommunityName":"(EX78) CC DES DEUX RIVES DE LA SEINE` +
+				` (DISSOUTE AU 01/01/2016)","QPV":false`},
 			StatusCode: http.StatusOK}, // 5 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -122,7 +123,8 @@ func testGetCity(t *testing.T, c *TestContext, ID int) {
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`{"City":{"InseeCode":` + strconv.Itoa(ID) +
 				`,"Name":"Essai2","CommunityID":3,"CommunityName":` +
-				`"VILLE DE PARIS (EPT1)","QPV":false}}`},
+				`"(EX78) CC DES DEUX RIVES DE LA SEINE ` +
+				`(DISSOUTE AU 01/01/2016)","QPV":false}}`},
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
@@ -142,7 +144,8 @@ func testGetCities(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`{"City":[{"InseeCode":1000000,"Name":"Essai2",` +
-				`"CommunityID":3,"CommunityName":"VILLE DE PARIS (EPT1)","QPV":false}]}`},
+				`"CommunityID":3,"CommunityName":"(EX78) CC DES DEUX` +
+				` RIVES DE LA SEINE (DISSOUTE AU 01/01/2016)","QPV":false}]}`},
 			Count:         1,
 			CountItemName: `"InseeCode"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -202,7 +205,7 @@ func testBatchCities(t *testing.T, c *TestContext) {
 			Count:         3,
 			CountItemName: `"InseeCode"`,
 			RespContains: []string{`"InseeCode":75101,"Name":"PARIS 1"`,
-				`"InseeCode":78146,"Name":"CHATOU","CommunityID":4,"CommunityName":` +
+				`"InseeCode":78146,"Name":"CHATOU","CommunityID":2,"CommunityName":` +
 					`"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)","QPV":false`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
