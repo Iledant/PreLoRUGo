@@ -53,11 +53,16 @@ func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : CityCode1 null
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000,"CityCode1":75101}}`),
-			Token:        c.Config.Users.Admin.Token,
-			IDName:       `{"ID"`,
-			RespContains: []string{`"RenewProject":{"ID":1,"Reference":"PRU001","Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,"CityName1":"PARIS 1","CityCode2":null,"CityName2":null,"CityCode3":null,"CityName3":null,"Population":null,"CompositeIndex":null`},
-			StatusCode:   http.StatusCreated}, // 6 : ok
+		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU",` +
+			`"Budget":250000000,"CityCode1":75101,"BudgetCity1":100000}}`),
+			Token:  c.Config.Users.Admin.Token,
+			IDName: `{"ID"`,
+			RespContains: []string{`"RenewProject":{"ID":1,"Reference":"PRU001",` +
+				`"Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,` +
+				`"CityName1":"PARIS 1","BudgetCity1":100000,"CityCode2":null,` +
+				`"CityName2":null,"BudgetCity2":null,"CityCode3":null,"CityName3":null,` +
+				`"BudgetCity3":null,"Population":null,"CompositeIndex":null`},
+			StatusCode: http.StatusCreated}, // 6 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/renew_project").WithBytes(tc.Sent).
@@ -95,10 +100,17 @@ func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement, requête : Projet de renouvellement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad ID
-		{Sent: []byte(`{"RenewProject":{"ID":` + strconv.Itoa(ID) + `,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityCode2":75101,"CityCode3":78146,"Population":5400,"CompositeIndex":1}}`),
-			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) + `,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","CityCode2":75101,"CityName2":"PARIS 1","CityCode3":78146,"CityName3":"CHATOU","Population":5400,"CompositeIndex":1}`},
-			StatusCode:   http.StatusCreated}, // 6 : ok
+		{Sent: []byte(`{"RenewProject":{"ID":` + strconv.Itoa(ID) +
+			`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,` +
+			`"CityCode1":77001,"CityCode2":75101,"CityCode3":78146,"Population":5400,` +
+			`"CompositeIndex":1,"BudgetCity1":null,"BudgetCity2":200,"BudgetCity3":5}}`),
+			Token: c.Config.Users.Admin.Token,
+			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) +
+				`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,` +
+				`"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","BudgetCity1":null,` +
+				`"CityCode2":75101,"CityName2":"PARIS 1","BudgetCity2":200,"CityCode3":78146,` +
+				`"CityName3":"CHATOU","BudgetCity3":5,"Population":5400,"CompositeIndex":1}`},
+			StatusCode: http.StatusCreated}, // 6 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.PUT("/api/renew_project").WithBytes(tc.Sent).
@@ -115,10 +127,11 @@ func testGetRenewProjects(t *testing.T, c *TestContext) {
 			RespContains: []string{`Token invalide`},
 			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"RenewProject"`, `"Reference":"PRU002","Name":` +
-				`"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityName1":` +
-				`"ACHERES-LA-FORET","CityCode2":75101,"CityName2":"PARIS 1","CityCode3":` +
-				`78146,"CityName3":"CHATOU","Population":5400,"CompositeIndex":1`,
+			RespContains: []string{`"RenewProject"`, `"Reference":"PRU002",` +
+				`"Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,` +
+				`"CityName1":"ACHERES-LA-FORET","BudgetCity1":null,"CityCode2":75101,` +
+				`"CityName2":"PARIS 1","BudgetCity2":200,"CityCode3":78146,"CityName3":` +
+				`"CHATOU","BudgetCity3":5,"Population":5400,"CompositeIndex":1`,
 				`"City":[`, `"RPEventType":[`},
 			Count:         1,
 			CountItemName: `"ID"`,
@@ -225,11 +238,12 @@ func testGetRenewProjectDatas(t *testing.T, c *TestContext, ID int) {
 		{Token: c.Config.Users.User.Token,
 			ID: ID,
 			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) +
-				`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,"` +
-				`CityCode1":77001,"CityName1":"ACHERES-LA-FORET","CityCode2":75101,` +
-				`"CityName2":"PARIS 1","CityCode3":78146,"CityName3":"CHATOU",` +
-				`"Population":5400,"CompositeIndex":1}`,
-				`"Commitment"`, `"Payment"`, `"RenewProjectForecast"`, `"Commission"`,
+				`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,` +
+				`"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","BudgetCity1":null,` +
+				`"CityCode2":75101,"CityName2":"PARIS 1","BudgetCity2":200,` +
+				`"CityCode3":78146,"CityName3":"CHATOU","BudgetCity3":5,"Population":5400,` +
+				`"CompositeIndex":1}`, `"Commitment"`, `"Payment"`,
+				`"RenewProjectForecast"`, `"Commission"`,
 				`"BudgetAction"`, `"RPEventType":[`, `"FullRPEvent":[`},
 			Count:         1,
 			CountItemName: "Reference",

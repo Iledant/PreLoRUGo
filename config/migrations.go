@@ -28,7 +28,16 @@ var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar
 		ADD CONSTRAINT community_department_id_fkey FOREIGN KEY (department_id) 
 		REFERENCES department (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`ALTER TABLE temp_community ADD COLUMN department_code int`}
+	`ALTER TABLE temp_community ADD COLUMN department_code int`,
+	`ALTER TABLE renew_project
+		ADD COLUMN budget_city_1 int,
+		ADD COLUMN budget_city_2 int,
+		ADD COLUMN budget_city_3 int`,
+	`ALTER TABLE temp_renew_project
+		ADD COLUMN budget_city_1 int,
+		ADD COLUMN budget_city_2 int,
+		ADD COLUMN budget_city_3 int`,
+}
 
 // handleMigrations check if new migrations have been created and launches them
 // against the database
