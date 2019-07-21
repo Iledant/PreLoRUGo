@@ -4,14 +4,14 @@ import "database/sql"
 
 // RenewProjectReportLine is used to decode the renew project query line
 type RenewProjectReportLine struct {
-	ProjectID        int64      `json:"ProjectID"`
-	ProjectReference string     `json:"ProjectReference"`
-	ProjectName      string     `json:"ProjectName"`
-	Budget           NullInt64  `json:"Budget"`
-	Commitment       NullInt64  `json:"Commitment"`
-	Payment          NullInt64  `json:"Payment"`
-	LastEventName    NullString `json:"LastEventName"`
-	LastEventDate    NullTime   `json:"LastEventDate"`
+	ID            int64      `json:"ID"`
+	Reference     string     `json:"Reference"`
+	Name          string     `json:"Name"`
+	Budget        NullInt64  `json:"Budget"`
+	Commitment    NullInt64  `json:"Commitment"`
+	Payment       NullInt64  `json:"Payment"`
+	LastEventName NullString `json:"LastEventName"`
+	LastEventDate NullTime   `json:"LastEventDate"`
 }
 
 // RenewProjectReport embeddes a array of RenewProjectLine fro json export
@@ -43,9 +43,8 @@ func (r *RenewProjectReport) Get(db *sql.DB) error {
 	var l RenewProjectReportLine
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&l.ProjectID, &l.ProjectReference, &l.ProjectName,
-			&l.Budget, &l.Commitment, &l.Payment, &l.LastEventName,
-			&l.LastEventDate); err != nil {
+		if err = rows.Scan(&l.ID, &l.Reference, &l.Name, &l.Budget, &l.Commitment,
+			&l.Payment, &l.LastEventName, &l.LastEventDate); err != nil {
 			return err
 		}
 		r.Lines = append(r.Lines, l)
