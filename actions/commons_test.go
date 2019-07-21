@@ -72,6 +72,7 @@ func TestAll(t *testing.T) {
 	testCoproCommitmentLink(t, cfg)
 	testRPEventType(t, cfg)
 	testRPEvent(t, cfg)
+	testRenewProjectReport(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
