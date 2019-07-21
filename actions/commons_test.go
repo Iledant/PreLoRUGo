@@ -73,6 +73,7 @@ func TestAll(t *testing.T) {
 	testRPEventType(t, cfg)
 	testRPEvent(t, cfg)
 	testRenewProjectReport(t, cfg)
+	testRPPerCommunityReport(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

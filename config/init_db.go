@@ -376,6 +376,15 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		FOREIGN KEY (rp_event_type_id) REFERENCES rp_event_type (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
 	);`, // 33 rp_event
+	`CREATE TABLE IF NOT EXISTS rp_cmt_city_join (
+		id SERIAL PRIMARY KEY,
+		commitment_id int NOT NULL UNIQUE,
+		city_code int NOT NULL,
+		FOREIGN KEY (commitment_id) REFERENCES commitment (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
+		FOREIGN KEY (city_code) REFERENCES city (insee_code) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
+	);`,
 }
 
 // createTablesAndViews launches the queries against the database to create all
