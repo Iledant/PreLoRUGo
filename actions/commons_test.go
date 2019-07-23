@@ -74,6 +74,7 @@ func TestAll(t *testing.T) {
 	testRPEvent(t, cfg)
 	testRenewProjectReport(t, cfg)
 	testRPPerCommunityReport(t, cfg)
+	testRPCmtCiyJoin(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

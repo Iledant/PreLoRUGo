@@ -107,6 +107,10 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	renewProjectUserParty.Put("/rp_event", UpdateRPEvent)
 	renewProjectUserParty.Delete("/rp_event/{ID}", DeleteRPEvent)
 
+	renewProjectUserParty.Post("/rp_cmt_city_join", CreateRPCmtCiyJoin)
+	renewProjectUserParty.Put("/rp_cmt_city_join", UpdateRPCmtCiyJoin)
+	renewProjectUserParty.Delete("/rp_cmt_city_join/{ID}", DeleteRPCmtCiyJoin)
+
 	housingUserParty := api.Party("", HousingMiddleware)
 	housingUserParty.Post("/housing_forecast", CreateHousingForecast)
 	housingUserParty.Put("/housing_forecast", UpdateHousingForecast)
@@ -181,6 +185,9 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 
 	userParty.Get("/renew_project/report", GetRenewProjectReport)
 	userParty.Get("/renew_project/report_per_community", GetRPPerCommunityReport)
+
+	userParty.Get("/rp_cmt_city_joins", GetRPCmtCiyJoins)
+	userParty.Get("/rp_cmt_city_join/{ID}", GetRPCmtCiyJoin)
 }
 
 // setDBMiddleware return a middleware to add db to context values
