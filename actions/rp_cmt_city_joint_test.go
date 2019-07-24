@@ -30,7 +30,7 @@ func testRPCmtCityJoin(t *testing.T, c *TestContext) {
 func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":75101}}`),
+			Sent:         []byte(`{"CommitmentID":3,"CityCode":75101}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized!
@@ -40,22 +40,22 @@ func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`Création de lien engagement ville, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":0,"CityCode":75101}}`),
+			Sent:         []byte(`{"CommitmentID":0,"CityCode":75101}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : CommitmentID empty
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":0}}`),
+			Sent:         []byte(`{"CommitmentID":3,"CityCode":0}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : CityCode empty
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":75000}}`),
+			Sent:         []byte(`{"CommitmentID":3,"CityCode":75000}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de lien engagement ville, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 4 : CityCode doesn't exist
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":75101}}`),
+			Sent:         []byte(`{"CommitmentID":3,"CityCode":75101}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			IDName:       `"ID"`,
 			RespContains: []string{`"RPCmtCityJoin":{"ID":2,"CommitmentID":3,"CityCode":75101`},
@@ -74,7 +74,7 @@ func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 func testUpdateRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}}`),
+			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
@@ -84,27 +84,27 @@ func testUpdateRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Modification de lien engagement ville, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":0,"CityCode":77001}}`),
+			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":0,"CityCode":77001}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : commitment ID null
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":0}}`),
+			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":0}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : city code null
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"ID":0,"CommitmentID":4,"CityCode":77001}}`),
+			Sent:         []byte(`{"ID":0,"CommitmentID":4,"CityCode":77001}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
 		{
-			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77000}}`),
+			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77000}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad city code
 		{
-			Sent:  []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}}`),
+			Sent:  []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}`),
 			Token: c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) +
 				`,"CommitmentID":4,"CityCode":77001}`},

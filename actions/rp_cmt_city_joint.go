@@ -16,7 +16,7 @@ type RPCmtCityJoinReq struct {
 // CreateRPCmtCityJoin handles the post request to create a new community
 func CreateRPCmtCityJoin(ctx iris.Context) {
 	var req RPCmtCityJoinReq
-	if err := ctx.ReadJSON(&req); err != nil {
+	if err := ctx.ReadJSON(&req.RPCmtCityJoin); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Création de lien engagement ville, décodage : " + err.Error()})
 		return
@@ -39,7 +39,7 @@ func CreateRPCmtCityJoin(ctx iris.Context) {
 // UpdateRPCmtCityJoin handles the put request to modify a new community
 func UpdateRPCmtCityJoin(ctx iris.Context) {
 	var req RPCmtCityJoinReq
-	if err := ctx.ReadJSON(&req); err != nil {
+	if err := ctx.ReadJSON(&req.RPCmtCityJoin); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Modification de lien engagement ville, décodage : " + err.Error()})
 		return
