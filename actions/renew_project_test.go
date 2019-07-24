@@ -244,7 +244,7 @@ func testGetRenewProjectDatas(t *testing.T, c *TestContext, ID int) {
 				`"CityCode3":78146,"CityName3":"CHATOU","BudgetCity3":5,"Population":5400,` +
 				`"CompositeIndex":1}`, `"Commitment"`, `"Payment"`,
 				`"RenewProjectForecast"`, `"Commission"`,
-				`"BudgetAction"`, `"RPEventType":[`, `"FullRPEvent":[`},
+				`"BudgetAction"`, `"RPEventType":[`, `"FullRPEvent":[`, `"RPCmtCityJoin":[`},
 			Count:         1,
 			CountItemName: "Reference",
 			StatusCode:    http.StatusOK}, // 2 : ok

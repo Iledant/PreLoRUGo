@@ -23,6 +23,7 @@ type renewProjectDataResp struct {
 	models.BudgetActions
 	models.RPEventTypes
 	models.FullRPEvents
+	models.RPCmtCityJoins
 }
 
 // GetRenewProjectDatas handles the get request to get renew project fields and
@@ -75,6 +76,11 @@ func GetRenewProjectDatas(ctx iris.Context) {
 	if err = resp.FullRPEvents.GetLinked(db, ID); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête FullRPEvents : " + err.Error()})
+		return
+	}
+	if err = resp.RPCmtCityJoins.GetLinked(db, ID); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête lien engagements ville : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

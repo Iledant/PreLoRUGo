@@ -8,29 +8,29 @@ import (
 	"github.com/iris-contrib/httpexpect"
 )
 
-// testRPCmtCiyJoin is the entry point for testing all renew projets commitments
+// testRPCmtCityJoin is the entry point for testing all renew projets commitments
 // and cities joints requests
-func testRPCmtCiyJoin(t *testing.T, c *TestContext) {
-	t.Run("RPCmtCiyJoin", func(t *testing.T) {
-		ID := testCreateRPCmtCiyJoin(t, c)
+func testRPCmtCityJoin(t *testing.T, c *TestContext) {
+	t.Run("RPCmtCityJoin", func(t *testing.T) {
+		ID := testCreateRPCmtCityJoin(t, c)
 		if ID == 0 {
 			t.Error("Impossible de créer la liaison ville engagement RU")
 			t.FailNow()
 			return
 		}
-		testUpdateRPCmtCiyJoin(t, c, ID)
-		testGetRPCmtCiyJoin(t, c, ID)
-		testGetRPCmtCiyJoins(t, c)
-		testDeleteRPCmtCiyJoin(t, c, ID)
+		testUpdateRPCmtCityJoin(t, c, ID)
+		testGetRPCmtCityJoin(t, c, ID)
+		testGetRPCmtCityJoins(t, c)
+		testDeleteRPCmtCityJoin(t, c, ID)
 	})
 }
 
-// testCreateRPCmtCiyJoin checks if route is admin protected and created budget action
+// testCreateRPCmtCityJoin checks if route is admin protected and created budget action
 // is properly filled
-func testCreateRPCmtCiyJoin(t *testing.T, c *TestContext) (ID int) {
+func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"CommitmentID":3,"CityCode":75101}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":75101}}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized!
@@ -40,41 +40,41 @@ func testCreateRPCmtCiyJoin(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`Création de lien engagement ville, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"CommitmentID":0,"CityCode":75101}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":0,"CityCode":75101}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : CommitmentID empty
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"CommitmentID":3,"CityCode":0}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":0}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : CityCode empty
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"CommitmentID":3,"CityCode":75000}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":75000}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de lien engagement ville, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 4 : CityCode doesn't exist
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"CommitmentID":3,"CityCode":75101}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"CommitmentID":3,"CityCode":75101}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			IDName:       `"ID"`,
-			RespContains: []string{`"RPCmtCiyJoin":{"ID":2,"CommitmentID":3,"CityCode":75101`},
+			RespContains: []string{`"RPCmtCityJoin":{"ID":2,"CommitmentID":3,"CityCode":75101`},
 			StatusCode:   http.StatusCreated}, // 5 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/rp_cmt_city_join").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateRPCmtCiyJoin", &ID)
+	chkFactory(t, tcc, f, "CreateRPCmtCityJoin", &ID)
 	return ID
 }
 
-// testUpdateRPCmtCiyJoin checks if route is admin protected and Updated budget action
+// testUpdateRPCmtCityJoin checks if route is admin protected and Updated budget action
 // is properly filled
-func testUpdateRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
+func testUpdateRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
@@ -84,29 +84,29 @@ func testUpdateRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Modification de lien engagement ville, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":0,"CityCode":77001}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":0,"CityCode":77001}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : commitment ID null
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":0}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":0}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : city code null
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"ID":0,"CommitmentID":4,"CityCode":77001}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"ID":0,"CommitmentID":4,"CityCode":77001}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
 		{
-			Sent:         []byte(`{"RPCmtCiyJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77000}}`),
+			Sent:         []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77000}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de lien engagement ville, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad city code
 		{
-			Sent:  []byte(`{"RPCmtCiyJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}}`),
+			Sent:  []byte(`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}}`),
 			Token: c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`"RPCmtCiyJoin":{"ID":` + strconv.Itoa(ID) +
+			RespContains: []string{`"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) +
 				`,"CommitmentID":4,"CityCode":77001}`},
 			StatusCode: http.StatusOK}, // 5 : ok
 	}
@@ -114,11 +114,11 @@ func testUpdateRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/rp_cmt_city_join").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateRPCmtCiyJoin")
+	chkFactory(t, tcc, f, "UpdateRPCmtCityJoin")
 }
 
-// testGetRPCmtCiyJoin checks if route is user protected and RPCmtCiyJoin correctly sent back
-func testGetRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
+// testGetRPCmtCityJoin checks if route is user protected and RPCmtCityJoin correctly sent back
+func testGetRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
 		{
 			Token:        "",
@@ -132,7 +132,7 @@ func testGetRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
 			ID:           0}, // 1 : bad ID
 		{
 			Token: c.Config.Users.User.Token,
-			RespContains: []string{`{"RPCmtCiyJoin":{"ID":` + strconv.Itoa(ID) +
+			RespContains: []string{`{"RPCmtCityJoin":{"ID":` + strconv.Itoa(ID) +
 				`,"CommitmentID":4,"CityCode":77001}`},
 			ID:         ID,
 			StatusCode: http.StatusOK}, // 2 : ok
@@ -141,11 +141,11 @@ func testGetRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/rp_cmt_city_join/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPCmtCiyJoin")
+	chkFactory(t, tcc, f, "GetRPCmtCityJoin")
 }
 
-// testGetRPCmtCiyJoins checks if route is user protected and RPCmtCiyJoins correctly sent back
-func testGetRPCmtCiyJoins(t *testing.T, c *TestContext) {
+// testGetRPCmtCityJoins checks if route is user protected and RPCmtCityJoins correctly sent back
+func testGetRPCmtCityJoins(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		{
 			Token:        "",
@@ -154,7 +154,7 @@ func testGetRPCmtCiyJoins(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{
 			Token:         c.Config.Users.User.Token,
-			RespContains:  []string{`{"RPCmtCiyJoin":[{"ID":2,"CommitmentID":4,"CityCode":77001}]}`},
+			RespContains:  []string{`{"RPCmtCityJoin":[{"ID":2,"CommitmentID":4,"CityCode":77001}]}`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -163,11 +163,11 @@ func testGetRPCmtCiyJoins(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rp_cmt_city_joins").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPCmtCiyJoins")
+	chkFactory(t, tcc, f, "GetRPCmtCityJoins")
 }
 
-// testDeleteRPCmtCiyJoin checks if route is user protected and rp_cmt_city_joins correctly sent back
-func testDeleteRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
+// testDeleteRPCmtCityJoin checks if route is user protected and rp_cmt_city_joins correctly sent back
+func testDeleteRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
 		{
 			Token:        c.Config.Users.User.Token,
@@ -188,5 +188,5 @@ func testDeleteRPCmtCiyJoin(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/rp_cmt_city_join/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteRPCmtCiyJoin")
+	chkFactory(t, tcc, f, "DeleteRPCmtCityJoin")
 }
