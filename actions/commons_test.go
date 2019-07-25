@@ -76,6 +76,7 @@ func TestAll(t *testing.T) {
 	testRPPerCommunityReport(t, cfg)
 	testRPCmtCityJoin(t, cfg)
 	testDepartmentReport(t, cfg)
+	testCityReport(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
