@@ -307,17 +307,17 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			action_code bigint NOT NULL
 		);`, // 23 : temp_copro_forecast
 	`CREATE OR REPLACE VIEW cumulated_commitment AS
-		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,
 		  q.value,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
-			c.renew_project_id
+			c.renew_project_id,c.caducity_date
 		FROM commitment c
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
 		ON c.id = q.id;`, // 24 : cumulated_commitment view
 	`CREATE OR REPLACE VIEW cumulated_sold_commitment AS
-		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,
 			q.value, c.sold_out,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id,
-			c.copro_id,c.renew_project_id
+			c.copro_id,c.renew_project_id,c.caducity_date
 		FROM commitment c
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
@@ -462,16 +462,16 @@ func InitDatabase(cfg *PreLoRuGoConf, app *iris.Application, dropTables bool, mi
 			return nil, err
 		}
 	}
+	if migrate {
+		if err = handleMigrations(db); err != nil {
+			return nil, fmt.Errorf("Migrations %v", err)
+		}
+	}
 	if err = createTablesAndViews(db); err != nil {
 		return nil, err
 	}
 	if err = createSuperAdmin(db, cfg, app); err != nil {
 		return nil, err
-	}
-	if migrate {
-		if err = handleMigrations(db); err != nil {
-			return nil, fmt.Errorf("Migrations %v", err)
-		}
 	}
 	return db, nil
 }

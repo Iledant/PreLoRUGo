@@ -13,48 +13,32 @@ type migrationEntry struct {
 	Query   string
 }
 
-var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar(25)`,
+var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar(25)`, // 0
 	`ALTER TABLE renew_project_forecast ADD COLUMN action_id int NOT NULL,
 		ADD CONSTRAINT renew_project_action_id_fkey FOREIGN KEY (action_id) 
 		REFERENCES budget_action (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`ALTER TABLE temp_renew_project_forecast ADD COLUMN action_id int NOT NULL`,
+		ON UPDATE NO ACTION ON DELETE NO ACTION`, // 1
+	`ALTER TABLE temp_renew_project_forecast ADD COLUMN action_id int NOT NULL`, // 2
 	`ALTER TABLE copro_forecast ADD COLUMN action_id int NOT NULL,
 		ADD CONSTRAINT copro_action_id_fkey FOREIGN KEY (action_id) 
 		REFERENCES budget_action (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`ALTER TABLE temp_copro_forecast ADD COLUMN action_code bigint NOT NULL`,
+		ON UPDATE NO ACTION ON DELETE NO ACTION`, // 3
+	`ALTER TABLE temp_copro_forecast ADD COLUMN action_code bigint NOT NULL`, // 4
 	`ALTER TABLE community ADD COLUMN department_id int,
 		ADD CONSTRAINT community_department_id_fkey FOREIGN KEY (department_id) 
 		REFERENCES department (id) MATCH SIMPLE
-		ON UPDATE NO ACTION ON DELETE NO ACTION`,
-	`ALTER TABLE temp_community ADD COLUMN department_code int`,
+		ON UPDATE NO ACTION ON DELETE NO ACTION`, // 5
+	`ALTER TABLE temp_community ADD COLUMN department_code int`, // 6
 	`ALTER TABLE renew_project
 		ADD COLUMN budget_city_1 int,
 		ADD COLUMN budget_city_2 int,
-		ADD COLUMN budget_city_3 int`,
+		ADD COLUMN budget_city_3 int`, // 7
 	`ALTER TABLE temp_renew_project
 		ADD COLUMN budget_city_1 int,
 		ADD COLUMN budget_city_2 int,
-		ADD COLUMN budget_city_3 int`,
+		ADD COLUMN budget_city_3 int`, // 8
 	`ALTER TABLE commitment
-		ADD COLUMN cadicity_date date DEFAULT null`,
-	`CREATE OR REPLACE VIEW cumulated_commitment AS
-		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
-		  q.value,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
-			c.renew_project_id
-		FROM commitment c
-		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
-			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
-		ON c.id = q.id;`,
-	`CREATE OR REPLACE VIEW cumulated_sold_commitment AS
-		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
-			q.value, c.sold_out,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id,
-			c.copro_id,c.renew_project_id
-		FROM commitment c
-		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
-			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
-		ON c.id = q.id;`,
+		ADD COLUMN caducity_date date DEFAULT null`, // 9
 }
 
 // handleMigrations check if new migrations have been created and launches them
