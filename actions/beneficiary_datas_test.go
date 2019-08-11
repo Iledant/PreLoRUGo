@@ -42,7 +42,7 @@ func testGetBeneficiaryDatas(t *testing.T, c *TestContext) {
 			//cSpell: disable
 			RespContains: []string{`"Datas":[{"ID":3,"Date":"2015-04-13T00:00:00Z",` +
 				`"Value":30000000,"Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU - 65 PLUS/PLAI",` +
-				`"IRISCode":"14004240","Available":30000000}],"Page":1,"ItemsCount":1`},
+				`"IRISCode":"14004240","Available":30000000,"Caducity":"2018-06-13T00:00:00Z"}],"Page":1,"ItemsCount":1`},
 			//cSpell: enable
 			ID:            3,
 			Count:         1,
@@ -83,7 +83,7 @@ func testGetExportBeneficiaryDatas(t *testing.T, c *TestContext) {
 			//cSpell: disable
 			RespContains: []string{`"BeneficiaryData":[{"ID":3,"Date":"2015-04-13T00:00:00Z",` +
 				`"Value":30000000,"Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU - 65 PLUS/PLAI",` +
-				`"IRISCode":"14004240","Available":30000000}]`},
+				`"IRISCode":"14004240","Available":30000000,"Caducity":"2018-06-13T00:00:00Z"}]`},
 			//cSpell: enable
 			ID:            3,
 			Count:         1,

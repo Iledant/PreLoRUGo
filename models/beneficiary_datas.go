@@ -15,6 +15,7 @@ type BeneficiaryData struct {
 	Name      string     `json:"Name"`
 	IRISCode  NullString `json:"IRISCode"`
 	Available int64      `json:"Available"`
+	Caducity  NullTime   `json:"Caducity"`
 }
 
 // BeneficiaryDatas is used to embed an array of BeneficiaryData for json export
@@ -41,7 +42,7 @@ func (p *PaginatedBeneficiaryDatas) Get(db *sql.DB, q *PaginatedQuery, ID int) e
 	offset, newPage := GetPaginateParams(q.Page, count)
 
 	rows, err := db.Query(`SELECT c.id, c.value, c.creation_date, c.name, 
-		c.iris_code,c.value-COALESCE(q.added,0) 
+		c.iris_code,c.value-COALESCE(q.added,0), c.caducity_date
 	FROM cumulated_commitment c
 	LEFT JOIN (SELECT sum(value) AS added, commitment_id FROM payment GROUP BY 2) q
 		ON q.commitment_id = c.id
@@ -55,7 +56,7 @@ func (p *PaginatedBeneficiaryDatas) Get(db *sql.DB, q *PaginatedQuery, ID int) e
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Value, &row.Date, &row.Name, &row.IRISCode,
-			&row.Available); err != nil {
+			&row.Available, &row.Caducity); err != nil {
 			return err
 		}
 		p.BeneficiaryDatas = append(p.BeneficiaryDatas, row)
@@ -72,7 +73,7 @@ func (p *PaginatedBeneficiaryDatas) Get(db *sql.DB, q *PaginatedQuery, ID int) e
 // GetAll fetches all beneficiary datas from database that match the paginated query
 func (p *BeneficiaryDatas) GetAll(db *sql.DB, q *PaginatedQuery, ID int) error {
 	rows, err := db.Query(`SELECT c.id, c.value, c.creation_date, c.name, 
-		c.iris_code,c.value-COALESCE(q.added,0) 
+		c.iris_code,c.value-COALESCE(q.added,0), c.caducity_date
 	FROM cumulated_commitment c
 	LEFT JOIN (SELECT sum(value) AS added, commitment_id FROM payment GROUP BY 2) q
 		ON q.commitment_id = c.id
@@ -85,7 +86,7 @@ func (p *BeneficiaryDatas) GetAll(db *sql.DB, q *PaginatedQuery, ID int) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Value, &row.Date, &row.Name, &row.IRISCode,
-			&row.Available); err != nil {
+			&row.Available, &row.Caducity); err != nil {
 			return err
 		}
 		p.BeneficiaryDatas = append(p.BeneficiaryDatas, row)
