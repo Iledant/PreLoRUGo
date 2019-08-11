@@ -20,14 +20,13 @@ func GetPaginateParams(page int64, count int64) (offset int64, newPage int64) {
 		return 0, 1
 	}
 	offset = (page - 1) * PageSize
-	newPage = 1
 	if offset < 0 {
 		offset = 0
 	}
 	if offset >= count {
 		offset = (count - 1) - ((count - 1) % PageSize)
-		newPage = offset/PageSize + 1
 	}
+	newPage = offset/PageSize + 1
 	return offset, newPage
 }
 
