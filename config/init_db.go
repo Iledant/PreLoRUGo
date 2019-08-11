@@ -196,7 +196,8 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	    line int NOT NULL,
 	    creation_date date NOT NULL,
 	    modification_date date NOT NULL,
-	    name varchar(150) NOT NULL,
+			caducity_date date,
+			name varchar(150) NOT NULL,
 	    value bigint NOT NULL,
 	    beneficiary_id int NOT NULL,
 			iris_code varchar(20),
@@ -222,7 +223,8 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	    number int NOT NULL,
 	    line int NOT NULL,
 	    creation_date date NOT NULL,
-	    modification_date date NOT NULL,
+			modification_date date NOT NULL,
+			caducity_date date,
 	    name varchar(150) NOT NULL,
 	    value bigint NOT NULL,
 	    beneficiary_code int NOT NULL,
@@ -305,17 +307,17 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			action_code bigint NOT NULL
 		);`, // 23 : temp_copro_forecast
 	`CREATE OR REPLACE VIEW cumulated_commitment AS
-		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value,
-			c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
+		  q.value,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
 			c.renew_project_id
 		FROM commitment c
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
 		ON c.id = q.id;`, // 24 : cumulated_commitment view
 	`CREATE OR REPLACE VIEW cumulated_sold_commitment AS
-		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,q.value, c.sold_out,
-			c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
-			c.renew_project_id
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
+			q.value, c.sold_out,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id,
+			c.copro_id,c.renew_project_id
 		FROM commitment c
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q

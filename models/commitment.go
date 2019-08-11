@@ -19,6 +19,7 @@ type Commitment struct {
 	Line             int64      `json:"Line"`
 	CreationDate     time.Time  `json:"CreationDate"`
 	ModificationDate time.Time  `json:"ModificationDate"`
+	CaducityDate     NullTime   `json:"CaducityDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	SoldOut          bool       `json:"SoldOut"`
@@ -39,6 +40,7 @@ type PaginatedCommitment struct {
 	Line             int64      `json:"Line"`
 	CreationDate     time.Time  `json:"CreationDate"`
 	ModificationDate time.Time  `json:"ModificationDate"`
+	CaducityDate     NullTime   `json:"CaducityDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	SoldOut          bool       `json:"SoldOut"`
@@ -65,6 +67,7 @@ type CommitmentLine struct {
 	Line             int64      `json:"Line"`
 	CreationDate     int64      `json:"CreationDate"`
 	ModificationDate int64      `json:"ModificationDate"`
+	CaducityDate     int64      `json:"CaducityDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	SoldOut          string     `json:"SoldOut"`
@@ -112,6 +115,7 @@ type ExportedCommitment struct {
 	Line             int64      `json:"Line"`
 	CreationDate     time.Time  `json:"CreationDate"`
 	ModificationDate time.Time  `json:"ModificationDate"`
+	CaducityDate     NullTime   `json:"CaducityDate"`
 	Name             string     `json:"Name"`
 	Value            float64    `json:"Value"`
 	SoldOut          bool       `json:"SoldOut"`
@@ -152,6 +156,7 @@ type RPLinkedCommitment struct {
 	Line             int64      `json:"Line"`
 	CreationDate     time.Time  `json:"CreationDate"`
 	ModificationDate time.Time  `json:"ModificationDate"`
+	CaducityDate     NullTime   `json:"CaducityDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	SoldOut          bool       `json:"SoldOut"`
@@ -179,6 +184,7 @@ type CoproLinkedCommitment struct {
 	Line             int64      `json:"Line"`
 	CreationDate     time.Time  `json:"CreationDate"`
 	ModificationDate time.Time  `json:"ModificationDate"`
+	CaducityDate     NullTime   `json:"CaducityDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	SoldOut          bool       `json:"SoldOut"`
@@ -206,6 +212,7 @@ type HousingLinkedCommitment struct {
 	Line             int64      `json:"Line"`
 	CreationDate     time.Time  `json:"CreationDate"`
 	ModificationDate time.Time  `json:"ModificationDate"`
+	CaducityDate     NullTime   `json:"CaducityDate"`
 	Name             string     `json:"Name"`
 	Value            int64      `json:"Value"`
 	SoldOut          bool       `json:"SoldOut"`
@@ -238,8 +245,9 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	}
 	offset, newPage := GetPaginateParams(c.Page, count)
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
-	b.name,c.iris_code,a.name,s.name,c.housing_id,c.renew_project_id,c.copro_id 
+	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value,c.sold_out,
+	c.beneficiary_id,b.name,c.iris_code,a.name,s.name,c.housing_id,
+	c.renew_project_id,c.copro_id 
 	FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
@@ -255,10 +263,10 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
-			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
-			&row.ActionName, &row.Sector, &row.HousingID, &row.RenewProjectID,
-			&row.CoproID); err != nil {
+			&row.CreationDate, &row.ModificationDate, &row.CaducityDate, &row.Name,
+			&row.Value, &row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName,
+			&row.IrisCode, &row.ActionName, &row.Sector, &row.HousingID,
+			&row.RenewProjectID, &row.CoproID); err != nil {
 			return err
 		}
 		p.Commitments = append(p.Commitments, row)
@@ -289,8 +297,8 @@ func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error 
 	}
 	offset, newPage := GetPaginateParams(c.Page, count)
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,c.beneficiary_id,
-	b.name,c.iris_code,a.name,s.name
+	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value,c.sold_out,
+	c.beneficiary_id,b.name,c.iris_code,a.name,s.name
 	FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
@@ -307,9 +315,9 @@ func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error 
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
-			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
-			&row.ActionName, &row.Sector); err != nil {
+			&row.CreationDate, &row.ModificationDate, &row.CaducityDate, &row.Name,
+			&row.Value, &row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName,
+			&row.IrisCode, &row.ActionName, &row.Sector); err != nil {
 			return err
 		}
 		p.Commitments = append(p.Commitments, row)
@@ -326,8 +334,9 @@ func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error 
 // Get fetches the results of exported commitments
 func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value*0.01,c.sold_out, b.name,
-	c.iris_code,a.name,s.name,copro.name,housing.address,renew_project.name
+	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value*0.01,
+	c.sold_out, b.name, c.iris_code,a.name,s.name,copro.name,housing.address,
+	renew_project.name
 	FROM commitment c
 	JOIN beneficiary b ON c.beneficiary_id = b.id
 	JOIN budget_action a ON a.id = c.action_id
@@ -345,9 +354,9 @@ func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
-			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryName, &row.IrisCode, &row.ActionName,
-			&row.Sector, &row.CoproName, &row.HousingName,
+			&row.CreationDate, &row.ModificationDate, &row.CaducityDate, &row.Name,
+			&row.Value, &row.SoldOut, &row.BeneficiaryName, &row.IrisCode,
+			&row.ActionName, &row.Sector, &row.CoproName, &row.HousingName,
 			&row.RenewProjectName); err != nil {
 			return err
 		}
@@ -363,8 +372,8 @@ func (e *ExportedCommitments) Get(db *sql.DB, q *ExportQuery) error {
 // GetAll fetches all Commitments from database
 func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,year,code,number,line,creation_date,
-	modification_date,name,value,sold_out, beneficiary_id,iris_code, action_id 
-	FROM commitment`)
+	modification_date,caducity_date,name,value,sold_out, beneficiary_id,iris_code, 
+	action_id FROM commitment`)
 	if err != nil {
 		return err
 	}
@@ -372,8 +381,8 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
-			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.IrisCode,
+			&row.CreationDate, &row.ModificationDate, &row.CaducityDate, &row.Name,
+			&row.Value, &row.SoldOut, &row.BeneficiaryID, &row.IrisCode,
 			&row.ActionID); err != nil {
 			return err
 		}
@@ -390,7 +399,7 @@ func (c *Commitments) GetAll(db *sql.DB) (err error) {
 // project whose ID is given
 func (c *RPLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,
+	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value,c.sold_out,
 	c.beneficiary_id,b.name,c.iris_code,c.action_id
 	FROM commitment c
 	JOIN beneficiary b on c.beneficiary_id=b.id 
@@ -402,9 +411,9 @@ func (c *RPLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
-			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
-			&row.ActionID); err != nil {
+			&row.CreationDate, &row.ModificationDate, &row.CaducityDate, &row.Name,
+			&row.Value, &row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName,
+			&row.IrisCode, &row.ActionID); err != nil {
 			return err
 		}
 		c.Commitments = append(c.Commitments, row)
@@ -419,7 +428,7 @@ func (c *RPLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 // Get fetches all Commitments from database linked to a copro whose ID is given
 func (c *CoproLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,
+	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value,c.sold_out,
 	c.beneficiary_id,b.name,c.iris_code,c.action_id
 	FROM commitment c
 	JOIN beneficiary b on c.beneficiary_id=b.id 
@@ -431,9 +440,9 @@ func (c *CoproLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
-			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
-			&row.ActionID); err != nil {
+			&row.CreationDate, &row.ModificationDate, &row.CaducityDate, &row.Name,
+			&row.Value, &row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName,
+			&row.IrisCode, &row.ActionID); err != nil {
 			return err
 		}
 		c.Commitments = append(c.Commitments, row)
@@ -448,7 +457,7 @@ func (c *CoproLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 // Get fetches all Commitments from database linked to a hosing whose ID is given
 func (c *HousingLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
-	c.creation_date,c.modification_date,c.name,c.value,c.sold_out,
+	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value,c.sold_out,
 	c.beneficiary_id,b.name,c.iris_code,c.action_id
 	FROM commitment c
 	JOIN beneficiary b on c.beneficiary_id=b.id 
@@ -460,9 +469,9 @@ func (c *HousingLinkedCommitments) Get(ID int64, db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.Code, &row.Number, &row.Line,
-			&row.CreationDate, &row.ModificationDate, &row.Name, &row.Value,
-			&row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName, &row.IrisCode,
-			&row.ActionID); err != nil {
+			&row.CreationDate, &row.ModificationDate, &row.CaducityDate, &row.Name,
+			&row.Value, &row.SoldOut, &row.BeneficiaryID, &row.BeneficiaryName,
+			&row.IrisCode, &row.ActionID); err != nil {
 			return err
 		}
 		c.Commitments = append(c.Commitments, row)
@@ -479,8 +488,8 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 	for i, r := range c.Lines {
 		if r.Year < 2009 || r.Number == 0 || r.Line == 0 ||
 			r.CreationDate < 20090101 || r.ModificationDate < 20090101 ||
-			r.Name == "" || r.BeneficiaryCode == 0 || r.BeneficiaryName == "" ||
-			r.Sector == "" {
+			r.CaducityDate < 20090101 || r.Name == "" || r.BeneficiaryCode == 0 ||
+			r.BeneficiaryName == "" || r.Sector == "" {
 			return fmt.Errorf("Ligne %d : champs incorrects dans %+v", i+1, r)
 		}
 	}
@@ -489,21 +498,23 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		return err
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_commitment", "year", "code", "number",
-		"line", "creation_date", "modification_date", "name", "value", "sold_out",
-		"beneficiary_code", "beneficiary_name", "iris_code", "sector", "action_code",
-		"action_name"))
+		"line", "creation_date", "modification_date", "caducity_date", "name", "value",
+		"sold_out", "beneficiary_code", "beneficiary_name", "iris_code", "sector",
+		"action_code", "action_name"))
 	if err != nil {
 		return fmt.Errorf("Statement creation %v", err)
 	}
 	defer stmt.Close()
-	var cd, md time.Time
+	var cd, md, ed time.Time
 	for i, r := range c.Lines {
 		cd = time.Date(int(r.CreationDate/10000), time.Month(r.CreationDate/100%100),
 			int(r.CreationDate%100), 0, 0, 0, 0, time.UTC)
 		md = time.Date(int(r.ModificationDate/10000),
 			time.Month(r.ModificationDate/100%100), int(r.ModificationDate%100), 0, 0,
 			0, 0, time.UTC)
-		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, cd, md,
+		ed = time.Date(int(r.CaducityDate/10000), time.Month(r.CaducityDate/100%100),
+			int(r.CreationDate%100), 0, 0, 0, 0, time.UTC)
+		if _, err = stmt.Exec(r.Year, r.Code, r.Number, r.Line, cd, md, ed,
 			strings.TrimSpace(r.Name), r.Value, r.SoldOut == "O", r.BeneficiaryCode,
 			strings.TrimSpace(r.BeneficiaryName), r.IrisCode,
 			strings.TrimSpace(r.Sector), r.ActionCode,
@@ -528,16 +539,17 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			LEFT JOIN budget_sector s ON ic.sector = s.name
 			WHERE action_code not in (SELECT code from budget_action)`,
 		`INSERT INTO commitment (year,code,number,line,creation_date,
-			modification_date,name,value,sold_out,beneficiary_id,iris_code,action_id)
+			modification_date,caducity_date,name,value,sold_out,beneficiary_id,iris_code,action_id)
 			(SELECT ic.year,ic.code,ic.number,ic.line,ic.creation_date,
-				ic.modification_date,ic.name,ic.value,ic.sold_out,b.id,ic.iris_code,a.id
+				ic.modification_date,ic.caducity_date,ic.name,ic.value,ic.sold_out,b.id,
+				ic.iris_code,a.id
   		 FROM temp_commitment ic
 			 JOIN beneficiary b on ic.beneficiary_code=b.code
 			 LEFT JOIN budget_action a on ic.action_code = a.code
 			 WHERE (ic.year,ic.code,ic.number,ic.line,ic.creation_date,
-				ic.modification_date,ic.name, ic.value) NOT IN
+				ic.modification_date,ic.caducity_date,ic.name, ic.value) NOT IN
 					(SELECT year,code,number,line,creation_date,modification_date,
-						name,value FROM commitment))`,
+						caducity_date,name,value FROM commitment))`,
 		`DELETE FROM temp_commitment`}
 	for i, q := range queries {
 		_, err = tx.Exec(q)

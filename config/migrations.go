@@ -37,6 +37,24 @@ var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar
 		ADD COLUMN budget_city_1 int,
 		ADD COLUMN budget_city_2 int,
 		ADD COLUMN budget_city_3 int`,
+	`ALTER TABLE commitment
+		ADD COLUMN cadicity_date date DEFAULT null`,
+	`CREATE OR REPLACE VIEW cumulated_commitment AS
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
+		  q.value,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
+			c.renew_project_id
+		FROM commitment c
+		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
+			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
+		ON c.id = q.id;`,
+	`CREATE OR REPLACE VIEW cumulated_sold_commitment AS
+		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.caducity_date,c.name,
+			q.value, c.sold_out,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id,
+			c.copro_id,c.renew_project_id
+		FROM commitment c
+		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
+			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
+		ON c.id = q.id;`,
 }
 
 // handleMigrations check if new migrations have been created and launches them
