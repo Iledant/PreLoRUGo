@@ -75,7 +75,7 @@ func (d *DptReport) GetAll(db *sql.DB, firstYear, lastYear int64) (err error) {
 	var r DptReportLine
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&r.Code, &r.Name, &r.Commitment, &r.Payment); err != nil {
+		if err = rows.Scan(&r.Code, &r.Name, &r.Year, &r.Commitment, &r.Payment); err != nil {
 			return err
 		}
 		d.Lines = append(d.Lines, r)
