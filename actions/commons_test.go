@@ -65,6 +65,7 @@ func TestAll(t *testing.T) {
 	testSettings(t, cfg)
 	testHome(t, cfg)
 	testBeneficiaryDatas(t, cfg)
+	testBeneficiaryPayments(t, cfg)
 	testPmtRatio(t, cfg)
 	testPmtForecasts(t, cfg)
 	testCmtForecasts(t, cfg)
