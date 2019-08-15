@@ -133,9 +133,9 @@ func (p *PreProgs) GetAllOfKind(year int64, kind string, db *sql.DB) error {
 }
 
 // Save insert a batch of PreProgLine into the database. It checks if the
-// batch includes only one year and one Kind of PreProg, otherwise throw an
-// error. It replaces all the datas of the given year and kinds, deletings
-// PreProgData of that year and kind in the database
+// batch includes only one year, otherwise throw an error. It replaces all
+// the datas of the given year and kinds, deleting PreProgData of that year and
+// kind in the database
 func (p *PreProgBatch) Save(kind string, db *sql.DB) error {
 	for i, l := range p.Lines {
 		if l.CommissionID == 0 {
