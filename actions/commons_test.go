@@ -80,6 +80,7 @@ func TestAll(t *testing.T) {
 	testDepartmentReport(t, cfg)
 	testCityReport(t, cfg)
 	testPreProg(t, cfg)
+	testProg(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

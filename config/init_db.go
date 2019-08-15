@@ -410,6 +410,29 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		comment text,
 		action_id int
 	);`, // 36 temp_pre_prog
+	`CREATE TABLE IF NOT EXISTS prog (
+		id SERIAL PRIMARY KEY,
+		year int NOT NULL,
+		commission_id int NOT NULL,
+		value bigint NOT NULL,
+		kind varchar(15) CHECK (kind IN ('Housing', 'Copro', 'RenewProject')),
+		kind_id int,
+		comment text,
+		action_id int,
+		FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
+		FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
+	);`, // 37 prog
+	`CREATE TABLE IF NOT EXISTS temp_prog (
+		commission_id int NOT NULL,
+		year int NOT NULL,
+		value bigint NOT NULL,
+		kind varchar(15) CHECK (kind IN ('Housing', 'Copro', 'RenewProject')),
+		kind_id int,
+		comment text,
+		action_id int
+	);`, // 38 temp_prog
 }
 
 // createTablesAndViews launches the queries against the database to create all
