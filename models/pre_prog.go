@@ -173,8 +173,8 @@ func (p *PreProgBatch) Save(kind string, db *sql.DB) error {
 		return fmt.Errorf("statement flush exec %v", err)
 	}
 	var yearCount int64
-	if err = tx.QueryRow(`SELECT count(year) FROM temp_pre_prog`).
-		Scan(&yearCount); err != nil {
+	if err = tx.QueryRow(`SELECT COUNT(1) from (SELECT DISTINCT year 
+		FROM temp_pre_prog) q`).Scan(&yearCount); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("count query %v", err)
 	}
