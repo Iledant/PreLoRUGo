@@ -88,11 +88,16 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Post("/ratios", BatchPmtRatios)
 	adminParty.Get("/ratios/years", GetPmtRatiosYears)
 
+	adminParty.Get("/pre_prog", GetPreProgs)
+
 	coproUserParty := api.Party("", CoproMiddleware)
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
 	coproUserParty.Delete("/copro_forecast/{ID}", DeleteCoproForecast)
 	coproUserParty.Post("/copro/commitments", LinkCommitmentsCopros)
+
+	coproUserParty.Get("/pre_prog/copro", GetCoproPreProgs)
+	coproUserParty.Post("/pre_prog/copro", SetCoproPreProgs)
 
 	renewProjectUserParty := api.Party("", RenewProjectMiddleware)
 	renewProjectUserParty.Post("/renew_project_forecast", CreateRenewProjectForecast)
@@ -111,11 +116,17 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	renewProjectUserParty.Put("/rp_cmt_city_join", UpdateRPCmtCityJoin)
 	renewProjectUserParty.Delete("/rp_cmt_city_join/{ID}", DeleteRPCmtCityJoin)
 
+	renewProjectUserParty.Get("/pre_prog/renew_project", GetRPPreProgs)
+	renewProjectUserParty.Post("/pre_prog/renew_project", SetRPPreProgs)
+
 	housingUserParty := api.Party("", HousingMiddleware)
 	housingUserParty.Post("/housing_forecast", CreateHousingForecast)
 	housingUserParty.Put("/housing_forecast", UpdateHousingForecast)
 	housingUserParty.Delete("/housing_forecast/{ID}", DeleteHousingForecast)
 	housingUserParty.Post("/housing/commitments", LinkCommitmentsHousings)
+
+	housingUserParty.Get("/pre_prog/housing", GetHousingPreProgs)
+	housingUserParty.Post("/pre_prog/housing", SetHousingPreProgs)
 
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)

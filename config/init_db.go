@@ -386,7 +386,30 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 		FOREIGN KEY (city_code) REFERENCES city (insee_code) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-	);`,
+	);`, // 34 rp_cmt_city_join
+	`CREATE TABLE IF NOT EXISTS pre_prog (
+		id SERIAL PRIMARY KEY,
+		year int NOT NULL,
+		commission_id int NOT NULL,
+		value bigint NOT NULL,
+		kind varchar(15) CHECK (kind IN ('Housing', 'Copro', 'RenewProject')),
+		kind_id int,
+		comment text,
+		action_id int,
+		FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
+		FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
+	);`, // 35 pre_prog
+	`CREATE TABLE IF NOT EXISTS temp_pre_prog (
+		commission_id int NOT NULL,
+		year int NOT NULL,
+		value bigint NOT NULL,
+		kind varchar(15) CHECK (kind IN ('Housing', 'Copro', 'RenewProject')),
+		kind_id int,
+		comment text,
+		action_id int
+	);`, // 36 temp_pre_prog
 }
 
 // createTablesAndViews launches the queries against the database to create all

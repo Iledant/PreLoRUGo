@@ -32,6 +32,7 @@ type TestContext struct {
 type TestCase struct {
 	Sent          []byte
 	Token         string
+	Params        string
 	RespContains  []string
 	StatusCode    int
 	ID            int
@@ -78,6 +79,7 @@ func TestAll(t *testing.T) {
 	testRPCmtCityJoin(t, cfg)
 	testDepartmentReport(t, cfg)
 	testCityReport(t, cfg)
+	testPreProg(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
