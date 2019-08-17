@@ -30,14 +30,20 @@ func GetProg(ctx iris.Context) {
 
 // SetProg handles the post request to set the programmation of a given year
 func SetProg(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Fixation de la programmation d'une année, décodage année : " + err.Error()})
+		return
+	}
 	var req models.ProgBatch
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Fixation de la programmation d'une année, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Fixation de la programmation d'une année, décodage batch : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := req.Save(db); err != nil {
+	if err := req.Save(year, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Fixation de la programmation d'une année, requête : " + err.Error()})
 		return

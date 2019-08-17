@@ -25,60 +25,61 @@ func testBatchProg(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
 			Sent:         []byte(`{`),
-			RespContains: []string{"Fixation de la programmation d'une année, décodage : "},
+			Params:       "Year=2019",
+			RespContains: []string{"Fixation de la programmation d'une année, décodage batch : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad JSON
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":0,"Year":2019,` +
+			Sent: []byte(`{"Prog":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
-			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
-			StatusCode:   http.StatusInternalServerError}, // 2 : commision ID nul
+			Params:       "Year=a",
+			RespContains: []string{"Fixation de la programmation d'une année, décodage année : "},
+			StatusCode:   http.StatusBadRequest}, // 2 : bad year
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Year":2019,` +
+			Sent: []byte(`{"Prog":[{"CommissionID":0,` +
+				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
+			Params:       "Year=2019",
+			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
+			StatusCode:   http.StatusInternalServerError}, // 3 : commision ID nul
+		{Token: c.Config.Users.Admin.Token,
+			Sent: []byte(`{"Prog":[{"CommissionID":2,` +
 				`"Value":0,"KindID":5,"Comment":null,"ActionID":2}]}`),
+			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
-			StatusCode:   http.StatusInternalServerError}, // 3 : value nul
+			StatusCode:   http.StatusInternalServerError}, // 4 : value nul
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Year":0,` +
-				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
-			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
-			StatusCode:   http.StatusInternalServerError}, // 4 : year nul
-		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Year":2019,` +
+			Sent: []byte(`{"Prog":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null}]}`),
+			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 5 : action ID nul
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Year":2019,` +
+			Sent: []byte(`{"Prog":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
+			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 6 : kind nul
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":3,"Year":2019,` +
+			Sent: []byte(`{"Prog":[{"CommissionID":3,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2,"Kind":"Copro"}]}`),
+			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad commission ID
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Year":2019,` +
+			Sent: []byte(`{"Prog":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":5,"Kind":"Copro"}]}`),
+			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 8 : bad action ID
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Year":2019,"Value":1000000,
-			"KindID":5,"Comment":null,"ActionID":2,"Kind":"Copro"},
-			{"CommissionID":2,"Year":2018,"Value":1000000,"KindID":5,"Comment":null,
-			"ActionID":2,"Kind":"Copro"}]}`),
-			RespContains: []string{"Fixation de la programmation d'une année, " +
-				"requête : more than one year in batch"},
-			StatusCode: http.StatusInternalServerError}, // 9 : two different years in one prog
-		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Year":2019,"Value":1000000,"KindID":5,"Comment":null,"ActionID":2,"Kind":"Copro"},
-			{"CommissionID":2,"Year":2019,"Value":2000000,"KindID":null,"Comment":null,"ActionID":3,"Kind":"Housing"},
-			{"CommissionID":2,"Year":2019,"Value":3000000,"KindID":3,"Comment":"commentaire RU","ActionID":4,"Kind":"RenewProject"}]}`),
+			Sent: []byte(`{"Prog":[{"CommissionID":2,"Value":1000000,"KindID":5,"Comment":null,"ActionID":2,"Kind":"Copro"},
+			{"CommissionID":2,"Value":2000000,"KindID":null,"Comment":null,"ActionID":3,"Kind":"Housing"},
+			{"CommissionID":2,"Value":3000000,"KindID":3,"Comment":"commentaire RU","ActionID":4,"Kind":"RenewProject"}]}`),
+			Params:       "Year=2019",
 			RespContains: []string{"Batch importé"},
-			StatusCode:   http.StatusOK}, // 10 : OK
+			StatusCode:   http.StatusOK}, // 9 : OK
 	}
 	f := func(tc TestCase) *httpexpect.Response {
-		return c.E.POST("/api/prog").WithBytes(tc.Sent).
+		return c.E.POST("/api/prog").WithQueryString(tc.Params).WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "BatchProg")

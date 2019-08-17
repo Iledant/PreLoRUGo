@@ -32,7 +32,6 @@ type Progs struct {
 // ProgLine is used to decode one line of Prog batch
 type ProgLine struct {
 	CommissionID int64      `json:"CommissionID"`
-	Year         int64      `json:"Year"`
 	Value        int64      `json:"Value"`
 	Kind         string     `json:"Kind"`
 	KindID       NullInt64  `json:"KindID"`
@@ -94,16 +93,13 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
 // batch includes only one year , otherwise throw an error. It replaces all the
 //  datas of the given year, deleting the programming data of that year
 // in the database
-func (p *ProgBatch) Save(db *sql.DB) error {
+func (p *ProgBatch) Save(year int64, db *sql.DB) error {
 	for i, l := range p.Lines {
 		if l.CommissionID == 0 {
 			return fmt.Errorf("ligne %d, CommissionID nul", i+1)
 		}
 		if l.Value == 0 {
 			return fmt.Errorf("ligne %d, Value nul", i+1)
-		}
-		if l.Year == 0 {
-			return fmt.Errorf("ligne %d, Year nul", i+1)
 		}
 		if l.ActionID == 0 {
 			return fmt.Errorf("ligne %d, ActionID nul", i+1)
@@ -123,7 +119,7 @@ func (p *ProgBatch) Save(db *sql.DB) error {
 	}
 	defer stmt.Close()
 	for _, l := range p.Lines {
-		if _, err = stmt.Exec(l.CommissionID, l.Year, l.Value, l.Kind, l.KindID,
+		if _, err = stmt.Exec(l.CommissionID, year, l.Value, l.Kind, l.KindID,
 			l.Comment, l.ActionID); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("statement execution %v", err)
@@ -132,21 +128,6 @@ func (p *ProgBatch) Save(db *sql.DB) error {
 	if _, err = stmt.Exec(); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("statement flush exec %v", err)
-	}
-	var yearCount int64
-	if err = tx.QueryRow(`SELECT COUNT(1) FROM (SELECT DISTINCT year
-		FROM temp_prog) q`).Scan(&yearCount); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("count query %v", err)
-	}
-	if yearCount != 1 {
-		tx.Rollback()
-		return fmt.Errorf("more than one year in batch")
-	}
-	var year int64
-	if err = tx.QueryRow(`SELECT year FROM temp_prog LIMIT 1`).Scan(&year); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("year query %v", err)
 	}
 	if _, err = tx.Exec(`DELETE FROM prog WHERE year=$1`, year); err != nil {
 		tx.Rollback()
