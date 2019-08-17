@@ -44,6 +44,12 @@ type ProgBatch struct {
 	Lines []ProgLine `json:"Prog"`
 }
 
+// ProgYears embeddes an array of int64 for json export fetching the available
+// years with programmation data in the database
+type ProgYears struct {
+	Years []int64 `json:"ProgYear"`
+}
+
 // GetAll fetches all Prog of a given year from the database
 func (p *Progs) GetAll(year int64, db *sql.DB) error {
 	rows, err := db.Query(`SELECT DISTINCT p.ID,p.year,p.commission_id,c.date,
@@ -147,4 +153,25 @@ func (p *ProgBatch) Save(year int64, db *sql.DB) error {
 	}
 	tx.Commit()
 	return nil
+}
+
+// GetAll fetches all programmation years in the database
+func (p *ProgYears) GetAll(db *sql.DB) error {
+	rows, err := db.Query(`SELECT DISTINCT year from prog`)
+	if err != nil {
+		return err
+	}
+	var y int64
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&y); err != nil {
+			return err
+		}
+		p.Years = append(p.Years, y)
+	}
+	err = rows.Err()
+	if len(p.Years) == 0 {
+		p.Years = []int64{}
+	}
+	return err
 }

@@ -12,6 +12,7 @@ func testProg(t *testing.T, c *TestContext) {
 	t.Run("Prog", func(t *testing.T) {
 		testBatchProg(t, c)
 		testGetProg(t, c)
+		testGetProgYears(t, c)
 	})
 }
 
@@ -109,4 +110,22 @@ func testGetProg(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "GetProg")
+}
+
+// testGetProgYears checks if route is user protected and programmation years
+// correctly sent back
+func testGetProgYears(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: `fake`,
+			RespContains: []string{`Token invalide`},
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			RespContains: []string{`"ProgYear":[2019]`},
+			StatusCode:   http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/prog/years").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	chkFactory(t, tcc, f, "GetProgYears")
 }

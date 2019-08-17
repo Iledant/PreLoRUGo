@@ -208,6 +208,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/city_report", GetCityReport)
 
 	userParty.Get("/prog", GetProg)
+	userParty.Get("/prog/years", GetProgYears)
 }
 
 // setDBMiddleware return a middleware to add db to context values
