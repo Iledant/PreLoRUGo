@@ -98,7 +98,7 @@ func testGetProg(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Params: `Year=2019`,
 			RespContains: []string{`"Prog":[`, `"Housing"`, `"RenewProject"`, `"Copro"`,
-				`"commetaire RU"`, `"Value":1000000`},
+				`"commentaire RU"`, `"Value":1000000`},
 			Count:         3,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
