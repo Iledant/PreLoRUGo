@@ -41,7 +41,7 @@ func GetCoproPreProgs(ctx iris.Context) {
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetAllOfKind(year, models.KindCopro, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Préprogrammation copro d'une année, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Préprogrammation copro d'une année, requête batch: " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
@@ -91,14 +91,20 @@ func GetHousingPreProgs(ctx iris.Context) {
 // SetCoproPreProgs handles the post request to set the pre programmation of
 // copro operation of a given year
 func SetCoproPreProgs(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Fixation de la préprogrammation copro d'une année, décodage année : " + err.Error()})
+		return
+	}
 	var req models.PreProgBatch
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Fixation de la préprogrammation copro d'une année, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Fixation de la préprogrammation copro d'une année, décodage batch : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := req.Save(models.KindCopro, db); err != nil {
+	if err := req.Save(models.KindCopro, year, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Fixation de la préprogrammation copro d'une année, requête : " + err.Error()})
 		return
@@ -110,14 +116,20 @@ func SetCoproPreProgs(ctx iris.Context) {
 // SetRPPreProgs handles the post request to set the pre programmation of
 // RP operation of a given year
 func SetRPPreProgs(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Fixation de la préprogrammation RU d'une année, décodage année : " + err.Error()})
+		return
+	}
 	var req models.PreProgBatch
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Fixation de la préprogrammation RU d'une année, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Fixation de la préprogrammation RU d'une année, décodage batch : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := req.Save(models.KindRenewProject, db); err != nil {
+	if err := req.Save(models.KindRenewProject, year, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Fixation de la préprogrammation RU d'une année, requête : " + err.Error()})
 		return
@@ -129,14 +141,20 @@ func SetRPPreProgs(ctx iris.Context) {
 // SetHousingPreProgs handles the post request to set the pre programmation of
 // housing operation of a given year
 func SetHousingPreProgs(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Fixation de la préprogrammation logement d'une année, décodage année : " + err.Error()})
+		return
+	}
 	var req models.PreProgBatch
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Fixation de la préprogrammation logement d'une année, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Fixation de la préprogrammation logement d'une année, décodage batch : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := req.Save(models.KindHousing, db); err != nil {
+	if err := req.Save(models.KindHousing, year, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Fixation de la préprogrammation logement d'une année, requête : " + err.Error()})
 		return

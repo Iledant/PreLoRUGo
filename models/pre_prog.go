@@ -136,16 +136,13 @@ func (p *PreProgs) GetAllOfKind(year int64, kind string, db *sql.DB) error {
 // batch includes only one year, otherwise throw an error. It replaces all
 // the datas of the given year and kinds, deleting PreProgData of that year and
 // kind in the database
-func (p *PreProgBatch) Save(kind string, db *sql.DB) error {
+func (p *PreProgBatch) Save(kind string, year int64, db *sql.DB) error {
 	for i, l := range p.Lines {
 		if l.CommissionID == 0 {
 			return fmt.Errorf("ligne %d, CommissionID nul", i+1)
 		}
 		if l.Value == 0 {
 			return fmt.Errorf("ligne %d, Value nul", i+1)
-		}
-		if l.Year == 0 {
-			return fmt.Errorf("ligne %d, Year nul", i+1)
 		}
 		if l.ActionID == 0 {
 			return fmt.Errorf("ligne %d, ActionID nul", i+1)
@@ -162,8 +159,8 @@ func (p *PreProgBatch) Save(kind string, db *sql.DB) error {
 	}
 	defer stmt.Close()
 	for _, l := range p.Lines {
-		if _, err = stmt.Exec(l.CommissionID, l.Year, l.Value, kind,
-			l.KindID, l.Comment, l.ActionID); err != nil {
+		if _, err = stmt.Exec(l.CommissionID, year, l.Value, kind, l.KindID,
+			l.Comment, l.ActionID); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("statement execution %v", err)
 		}
@@ -171,21 +168,6 @@ func (p *PreProgBatch) Save(kind string, db *sql.DB) error {
 	if _, err = stmt.Exec(); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("statement flush exec %v", err)
-	}
-	var yearCount int64
-	if err = tx.QueryRow(`SELECT COUNT(1) from (SELECT DISTINCT year 
-		FROM temp_pre_prog) q`).Scan(&yearCount); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("count query %v", err)
-	}
-	if yearCount != 1 {
-		tx.Rollback()
-		return fmt.Errorf("more than one year in batch")
-	}
-	var year int64
-	if err = tx.QueryRow(`SELECT year FROM temp_pre_prog LIMIT 1`).Scan(&year); err != nil {
-		tx.Rollback()
-		return fmt.Errorf("year query %v", err)
 	}
 	if _, err = tx.Exec(`DELETE FROM pre_prog WHERE year=$1 AND kind=$2`,
 		year, kind); err != nil {
