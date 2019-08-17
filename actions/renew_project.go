@@ -3,6 +3,7 @@ package actions
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/Iledant/PreLoRUGo/models"
 	"github.com/kataras/iris"
@@ -24,6 +25,7 @@ type renewProjectDataResp struct {
 	models.RPEventTypes
 	models.FullRPEvents
 	models.RPCmtCityJoins
+	models.PreProgs
 }
 
 // GetRenewProjectDatas handles the get request to get renew project fields and
@@ -79,6 +81,12 @@ func GetRenewProjectDatas(ctx iris.Context) {
 		return
 	}
 	if err = resp.RPCmtCityJoins.GetLinked(db, ID); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête lien engagements ville : " + err.Error()})
+		return
+	}
+	year := (int64)(time.Now().Year())
+	if err = resp.PreProgs.GetAllOfKind(year, models.KindRenewProject, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête lien engagements ville : " + err.Error()})
 		return

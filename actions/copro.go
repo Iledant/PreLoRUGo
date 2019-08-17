@@ -3,6 +3,7 @@ package actions
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/Iledant/PreLoRUGo/models"
 	"github.com/kataras/iris"
@@ -67,6 +68,7 @@ type coproDatasResp struct {
 	models.Commissions
 	models.CoproForecasts
 	models.BudgetActions
+	models.PreProgs
 }
 
 // GetCoproDatas handle the get request to fetch copro fields, commitments and
@@ -109,6 +111,12 @@ func GetCoproDatas(ctx iris.Context) {
 	if err = resp.BudgetActions.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données d'une copropriété, requête actions : " + err.Error()})
+		return
+	}
+	year := (int64)(time.Now().Year())
+	if err = resp.PreProgs.GetAllOfKind(year, models.KindCopro, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête préprogrammation : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
