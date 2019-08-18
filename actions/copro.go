@@ -13,6 +13,8 @@ type getCoprosResp struct {
 	models.Copros
 	models.Cities
 	models.PreProgs
+	models.Commissions
+	models.BudgetActions
 }
 
 // GetCopros handles the get request to fetch all copros
@@ -29,10 +31,20 @@ func GetCopros(ctx iris.Context) {
 		ctx.JSON(jsonError{"Liste des copropriétés, copros : " + err.Error()})
 		return
 	}
+	if err := resp.Commissions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des copropriétés, commissions : " + err.Error()})
+		return
+	}
+	if err := resp.BudgetActions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des copropriétés, actions budgétaires : " + err.Error()})
+		return
+	}
 	year := (int64)(time.Now().Year())
 	if err := resp.PreProgs.GetAllOfKind(year, models.KindCopro, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Données d'une copropriété, requête préprogrammation : " + err.Error()})
+		ctx.JSON(jsonError{"Liste des copropriétés, requête préprogrammation : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
