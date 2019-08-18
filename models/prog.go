@@ -7,18 +7,21 @@ import (
 	"github.com/lib/pq"
 )
 
-// Prog model includes fields for a better readability in frontend
+// Prog model includes fields for a better readability in frontend and matching
+// pre programmation fields
 type Prog struct {
 	ID             int64      `json:"ID"`
 	Year           int64      `json:"Year"`
 	CommissionID   int64      `json:"CommissionID"`
 	CommissionDate NullTime   `json:"CommissionDate"`
 	CommissionName string     `json:"CommissionName"`
-	Value          int64      `json:"Value"`
+	Value          NullInt64  `json:"Value"`
+	PreProgValue   NullInt64  `json:"PreProgValue"`
 	Kind           string     `json:"Kind"`
 	KindID         NullInt64  `json:"KindID"`
 	KindName       NullString `json:"KindName"`
-	Comment        NullString `json:"Comment"`
+	ProgComment    NullString `json:"ProgComment"`
+	PreProgComment NullString `json:"PreProgComment"`
 	ActionID       int64      `json:"ActionID"`
 	ActionCode     int64      `json:"ActionCode"`
 	ActionName     string     `json:"ActionName"`
@@ -52,38 +55,51 @@ type ProgYears struct {
 
 // GetAll fetches all Prog of a given year from the database
 func (p *Progs) GetAll(year int64, db *sql.DB) error {
-	rows, err := db.Query(`SELECT DISTINCT p.ID,p.year,p.commission_id,c.date,
-	c.name,p.value,p.kind,NULL::int,NULL::varchar(150),p.comment,p.action_id,b.code,b.name 
-	FROM prog p
-	JOIN commission c ON c.id=p.commission_id
-	JOIN budget_action b ON b.id=p.action_id
-	WHERE p.kind='Housing' AND p.year=$1
-	UNION ALL
-	SELECT DISTINCT p.ID,p.year,p.commission_id,c.date,
-	c.name, p.value,p.kind,p.kind_id,copro.name,p.comment,p.action_id,b.code,
-	b.name 
-	FROM prog p
-	JOIN commission c ON c.id=p.commission_id
-	JOIN budget_action b ON b.id=p.action_id
-	LEFT JOIN copro ON copro.id=p.kind_id
-	WHERE p.kind='Copro' AND p.year=$1
-	UNION ALL
-	SELECT DISTINCT p.ID,p.year,p.commission_id,c.date,
-	c.name,p.value,p.kind,p.kind_id,rp.name,p.comment,p.action_id,b.code,b.name 
-	FROM prog p
-	JOIN commission c ON c.id=p.commission_id
-	JOIN budget_action b ON b.id=p.action_id
-	LEFT JOIN renew_project rp ON rp.id=p.kind_id
-	WHERE p.kind='RenewProject' AND p.year=$1`, year)
+	rows, err := db.Query(`WITH p AS (SELECT * FROM prog WHERE year=$1),
+	pp AS (SELECT * FROM pre_prog WHERE year=$1)
+ SELECT q.*,b.code,b.name,c.date,c.name FROM
+ (SELECT p.id,$1 AS year,COALESCE(p.commission_id,pre.commission_id) AS commission_id,
+	 p.value,pre.value AS preprog_value,NULL::int as kind_id,'Housing' as kind,
+	 NULL::varchar(150) as kind_name,p.comment as prog_comment,pre.comment as pre_prog_comment,COALESCE(p.action_id,pre.action_id) as action_id FROM p
+ FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
+	 NULL::int as kind_id,NULL::varchar(150) as name,pp.comment,pp.action_id
+ FROM pp WHERE pp.kind='Housing') pre
+ ON p.commission_id=pre.commission_id AND p.kind=pre.kind AND p.action_id=pre.action_id
+ WHERE p.kind ISNULL or p.kind='Housing'
+ UNION ALL
+ SELECT pc.id,$1 AS year,COALESCE(pc.commission_id,pre.commission_id) AS commission_id,
+	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,'Copro' as kind,
+	 COALESCE(pc.name,pre.name) as kind_name,pc.comment as prog_comment,pre.comment as pre_prog_comment,COALESCE(pc.action_id,pre.action_id) as action_id
+	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,c.name,p.action_id
+		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind='Copro') pc
+ FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
+	 pp.kind_id,c.name,pp.comment,pp.action_id
+ FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind='Copro') pre
+ ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id
+ WHERE pc.kind ISNULL or pc.kind='Copro'
+ UNION ALL
+ SELECT pc.id,$1 AS year,COALESCE(pc.commission_id,pre.commission_id) AS commission_id,
+	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,'RenewProject' AS kind,
+	 COALESCE(pc.name,pre.name) as kind_name,pc.comment as prog_comment,pre.comment as pre_prog_comment,COALESCE(pc.action_id,pre.action_id) as action_id
+	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,c.name,p.action_id
+		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind='RenewProject') pc
+ FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
+	 pp.kind_id,c.name,pp.comment,pp.action_id
+ FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind='RenewProject') pre
+ ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id
+ WHERE pc.kind ISNULL or pc.kind='RenewProject') q
+ JOIN budget_action b ON q.action_id=b.id
+ JOIN commission c ON q.commission_id=c.id`, year)
 	if err != nil {
 		return err
 	}
 	var row Prog
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.Year, &row.CommissionID, &row.CommissionDate,
-			&row.CommissionName, &row.Value, &row.Kind, &row.KindID, &row.KindName,
-			&row.Comment, &row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
+		if err = rows.Scan(&row.ID, &row.Year, &row.CommissionID, &row.Value,
+			&row.PreProgValue, &row.KindID, &row.Kind, &row.KindName, &row.ProgComment,
+			&row.PreProgComment, &row.ActionID, &row.ActionCode, &row.ActionName,
+			&row.CommissionDate, &row.CommissionName); err != nil {
 			return err
 		}
 		p.Progs = append(p.Progs, row)
