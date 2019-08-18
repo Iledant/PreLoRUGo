@@ -60,7 +60,9 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
  SELECT q.*,b.code,b.name,c.date,c.name FROM
  (SELECT p.id,$1 AS year,COALESCE(p.commission_id,pre.commission_id) AS commission_id,
 	 p.value,pre.value AS preprog_value,NULL::int as kind_id,'Housing' as kind,
-	 NULL::varchar(150) as kind_name,p.comment as prog_comment,pre.comment as pre_prog_comment,COALESCE(p.action_id,pre.action_id) as action_id FROM p
+	 NULL::varchar(150) as kind_name,p.comment as prog_comment,
+	 pre.comment as pre_prog_comment,COALESCE(p.action_id,pre.action_id) as action_id
+	 FROM p
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 NULL::int as kind_id,NULL::varchar(150) as name,pp.comment,pp.action_id
  FROM pp WHERE pp.kind='Housing') pre
@@ -68,9 +70,11 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
  WHERE p.kind ISNULL or p.kind='Housing'
  UNION ALL
  SELECT pc.id,$1 AS year,COALESCE(pc.commission_id,pre.commission_id) AS commission_id,
-	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,'Copro' as kind,
-	 COALESCE(pc.name,pre.name) as kind_name,pc.comment as prog_comment,pre.comment as pre_prog_comment,COALESCE(pc.action_id,pre.action_id) as action_id
-	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,c.name,p.action_id
+	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,
+	 'Copro' as kind,COALESCE(pc.name,pre.name) as kind_name,pc.comment as prog_comment,
+	 pre.comment as pre_prog_comment,COALESCE(pc.action_id,pre.action_id) as action_id
+	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,
+			c.name,p.action_id
 		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind='Copro') pc
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 pp.kind_id,c.name,pp.comment,pp.action_id
@@ -79,9 +83,12 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
  WHERE pc.kind ISNULL or pc.kind='Copro'
  UNION ALL
  SELECT pc.id,$1 AS year,COALESCE(pc.commission_id,pre.commission_id) AS commission_id,
-	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,'RenewProject' AS kind,
-	 COALESCE(pc.name,pre.name) as kind_name,pc.comment as prog_comment,pre.comment as pre_prog_comment,COALESCE(pc.action_id,pre.action_id) as action_id
-	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,c.name,p.action_id
+	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,
+	 'RenewProject' AS kind,COALESCE(pc.name,pre.name) as kind_name,
+	 pc.comment as prog_comment,pre.comment as pre_prog_comment,
+	 COALESCE(pc.action_id,pre.action_id) as action_id
+	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,
+			c.name,p.action_id
 		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind='RenewProject') pc
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 pp.kind_id,c.name,pp.comment,pp.action_id
