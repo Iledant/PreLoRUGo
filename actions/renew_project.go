@@ -85,12 +85,6 @@ func GetRenewProjectDatas(ctx iris.Context) {
 		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête lien engagements ville : " + err.Error()})
 		return
 	}
-	year := (int64)(time.Now().Year())
-	if err = resp.PreProgs.GetAllOfKind(year, models.KindRenewProject, db); err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Datas de projet de renouvellement, requête lien engagements ville : " + err.Error()})
-		return
-	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
@@ -147,6 +141,9 @@ type renewProjectsResp struct {
 	models.Cities
 	models.RenewProjects
 	models.RPEventTypes
+	models.Commissions
+	models.BudgetActions
+	models.PreProgs
 }
 
 // GetRenewProjects handles the get request to handle all renew projets. In order
@@ -167,7 +164,23 @@ func GetRenewProjects(ctx iris.Context) {
 	}
 	if err := resp.RPEventTypes.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête villes : " + err.Error()})
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête événements types : " + err.Error()})
+		return
+	}
+	if err := resp.Commissions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête commissions : " + err.Error()})
+		return
+	}
+	if err := resp.BudgetActions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête actions budgétaires : " + err.Error()})
+		return
+	}
+	year := (int64)(time.Now().Year())
+	if err := resp.PreProgs.GetAllOfKind(year, models.KindRenewProject, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête préprogrammation : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

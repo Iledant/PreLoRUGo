@@ -132,7 +132,8 @@ func testGetRenewProjects(t *testing.T, c *TestContext) {
 				`"CityName1":"ACHERES-LA-FORET","BudgetCity1":null,"CityCode2":75101,` +
 				`"CityName2":"PARIS 1","BudgetCity2":200,"CityCode3":78146,"CityName3":` +
 				`"CHATOU","BudgetCity3":5,"Population":5400,"CompositeIndex":1`,
-				`"City":[`, `"RPEventType":[`},
+				`"City":[`, `"RPEventType":[`, `"PreProg":[`, `"Commission":[`,
+				`"BudgetAction":[`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : bad request
