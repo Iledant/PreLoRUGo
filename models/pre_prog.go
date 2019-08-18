@@ -38,6 +38,9 @@ JOIN budget_action b ON b.id=pp.action_id
 LEFT JOIN renew_project rp ON rp.id=pp.kind_id
 WHERE pp.kind='RenewProject' AND pp.year=$1`
 
+const preProgQry = preProgHousingQry + " UNION ALL " + preProgCoproQry +
+	" UNION ALL " + preProgRPQry
+
 // PreProg model includes fields for a better readability in frontend
 type PreProg struct {
 	ID             int64      `json:"ID"`
@@ -77,9 +80,7 @@ type PreProgBatch struct {
 
 // GetAll fetches all PreProg of a given year from the database
 func (p *PreProgs) GetAll(year int64, db *sql.DB) error {
-	qry := fmt.Sprintf("%s UNION ALL %s UNION ALL %s", preProgHousingQry,
-		preProgCoproQry, preProgRPQry)
-	rows, err := db.Query(qry, year)
+	rows, err := db.Query(preProgQry, year)
 	if err != nil {
 		return err
 	}
