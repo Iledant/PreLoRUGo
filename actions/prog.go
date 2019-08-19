@@ -52,11 +52,6 @@ func GetProgDatas(ctx iris.Context) {
 		ctx.JSON(jsonError{"Données de programmation d'une année, requête : " + err.Error()})
 		return
 	}
-	if err := resp.Progs.GetAll(year, db); err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Données de programmation d'une année, requête programmation: " + err.Error()})
-		return
-	}
 	if err := resp.Commissions.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données de programmation d'une année, requête commissions : " + err.Error()})
