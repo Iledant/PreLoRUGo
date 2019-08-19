@@ -12,6 +12,7 @@ func testProg(t *testing.T, c *TestContext) {
 	t.Run("Prog", func(t *testing.T) {
 		testBatchProg(t, c)
 		testGetProg(t, c)
+		testGetProgDatas(t, c)
 		testGetProgYears(t, c)
 	})
 }
@@ -110,6 +111,32 @@ func testGetProg(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "GetProg")
+}
+
+// testGetProgDatas checks if route is user protected and prog and others datas
+// correctly sent back
+func testGetProgDatas(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: `fake`,
+			RespContains: []string{`Token invalide`},
+			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		{Token: c.Config.Users.User.Token,
+			Params:       `?Year=a`,
+			RespContains: []string{`Données de programmation d'une année, décodage : `},
+			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
+		{Token: c.Config.Users.User.Token,
+			Params: `Year=2019`,
+			RespContains: []string{`"Prog":[`, `"Housing"`, `"RenewProject":[`, `"Copro":[`,
+				`"commentaire RU"`, `"Value":1000000`, `"BudgetAction":[`, `"Commission":[`},
+			Count:         15,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/prog/datas").WithQueryString(tc.Params).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	chkFactory(t, tcc, f, "GetProgDatas")
 }
 
 // testGetProgYears checks if route is user protected and programmation years

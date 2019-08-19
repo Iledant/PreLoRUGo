@@ -10,7 +10,7 @@ import (
 // Prog model includes fields for a better readability in frontend and matching
 // pre programmation fields
 type Prog struct {
-	ID             int64      `json:"ID"`
+	ID             NullInt64  `json:"ID"`
 	Year           int64      `json:"Year"`
 	CommissionID   int64      `json:"CommissionID"`
 	CommissionDate NullTime   `json:"CommissionDate"`

@@ -28,6 +28,59 @@ func GetProg(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
+type progDatasResp struct {
+	models.Progs
+	models.Commissions
+	models.BudgetActions
+	models.Copros
+	models.RenewProjects
+}
+
+// GetProgDatas handles the get request to fetch all datas for the frontend page
+// dedicated to the programmation
+func GetProgDatas(ctx iris.Context) {
+	year, err := ctx.URLParamInt64("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Données de programmation d'une année, décodage : " + err.Error()})
+		return
+	}
+	var resp progDatasResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.Progs.GetAll(year, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données de programmation d'une année, requête : " + err.Error()})
+		return
+	}
+	if err := resp.Progs.GetAll(year, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données de programmation d'une année, requête programmation: " + err.Error()})
+		return
+	}
+	if err := resp.Commissions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données de programmation d'une année, requête commissions : " + err.Error()})
+		return
+	}
+	if err := resp.BudgetActions.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données de programmation d'une année, requête actions budgétaires : " + err.Error()})
+		return
+	}
+	if err := resp.Copros.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données de programmation d'une année, requête copros : " + err.Error()})
+		return
+	}
+	if err := resp.RenewProjects.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données de programmation d'une année, requête projets RU : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // SetProg handles the post request to set the programmation of a given year
 func SetProg(ctx iris.Context) {
 	year, err := ctx.URLParamInt64("Year")
