@@ -17,7 +17,7 @@ type Prog struct {
 	CommissionName string     `json:"CommissionName"`
 	Value          NullInt64  `json:"Value"`
 	PreProgValue   NullInt64  `json:"PreProgValue"`
-	Kind           string     `json:"Kind"`
+	Kind           int64      `json:"Kind"`
 	KindID         NullInt64  `json:"KindID"`
 	KindName       NullString `json:"KindName"`
 	ProgComment    NullString `json:"ProgComment"`
@@ -36,7 +36,7 @@ type Progs struct {
 type ProgLine struct {
 	CommissionID int64      `json:"CommissionID"`
 	Value        int64      `json:"Value"`
-	Kind         string     `json:"Kind"`
+	Kind         int64      `json:"Kind"`
 	KindID       NullInt64  `json:"KindID"`
 	Comment      NullString `json:"Comment"`
 	ActionID     int64      `json:"ActionID"`
@@ -59,42 +59,42 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
 	pp AS (SELECT * FROM pre_prog WHERE year=$1)
  SELECT q.*,b.code,b.name,c.date,c.name FROM
  (SELECT p.id,$1 AS year,COALESCE(p.commission_id,pre.commission_id) AS commission_id,
-	 p.value,pre.value AS preprog_value,NULL::int as kind_id,'Housing' as kind,
+	 p.value,pre.value AS preprog_value,NULL::int as kind_id,1 as kind,
 	 NULL::varchar(150) as kind_name,p.comment as prog_comment,
 	 pre.comment as pre_prog_comment,COALESCE(p.action_id,pre.action_id) as action_id
 	 FROM p
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 NULL::int as kind_id,NULL::varchar(150) as name,pp.comment,pp.action_id
- FROM pp WHERE pp.kind='Housing') pre
+ FROM pp WHERE pp.kind=1) pre
  ON p.commission_id=pre.commission_id AND p.kind=pre.kind AND p.action_id=pre.action_id
- WHERE p.kind ISNULL or p.kind='Housing'
+ WHERE p.kind ISNULL or p.kind=1
  UNION ALL
  SELECT pc.id,$1 AS year,COALESCE(pc.commission_id,pre.commission_id) AS commission_id,
 	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,
-	 'Copro' as kind,COALESCE(pc.name,pre.name) as kind_name,pc.comment as prog_comment,
+	 2 as kind,COALESCE(pc.name,pre.name) as kind_name,pc.comment as prog_comment,
 	 pre.comment as pre_prog_comment,COALESCE(pc.action_id,pre.action_id) as action_id
 	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,
 			c.name,p.action_id
-		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind='Copro') pc
+		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind=2) pc
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 pp.kind_id,c.name,pp.comment,pp.action_id
- FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind='Copro') pre
+ FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind=2) pre
  ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id
- WHERE pc.kind ISNULL or pc.kind='Copro'
+ WHERE pc.kind ISNULL or pc.kind=2
  UNION ALL
  SELECT pc.id,$1 AS year,COALESCE(pc.commission_id,pre.commission_id) AS commission_id,
 	 pc.value,pre.value AS preprog_value,COALESCE(pc.kind_id,pre.kind_id) AS kind_id,
-	 'RenewProject' AS kind,COALESCE(pc.name,pre.name) as kind_name,
+	 3 AS kind,COALESCE(pc.name,pre.name) as kind_name,
 	 pc.comment as prog_comment,pre.comment as pre_prog_comment,
 	 COALESCE(pc.action_id,pre.action_id) as action_id
 	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,
 			c.name,p.action_id
-		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind='RenewProject') pc
+		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind=3) pc
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 pp.kind_id,c.name,pp.comment,pp.action_id
- FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind='RenewProject') pre
+ FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind=3) pre
  ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id
- WHERE pc.kind ISNULL or pc.kind='RenewProject') q
+ WHERE pc.kind ISNULL or pc.kind=3) q
  JOIN budget_action b ON q.action_id=b.id
  JOIN commission c ON q.commission_id=c.id`, year)
 	if err != nil {

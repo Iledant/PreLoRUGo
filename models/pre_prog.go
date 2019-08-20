@@ -8,20 +8,20 @@ import (
 )
 
 // KindHousing is the PreProg and Prog database field content for housing
-const KindHousing = "Housing"
+const KindHousing = 1
 
 // KindCopro is the PreProg and Prog database field content for copro
-const KindCopro = "Copro"
+const KindCopro = 2
 
 // KindRenewProject is the PreProg and Prog database field content for renew project
-const KindRenewProject = "RenewProject"
+const KindRenewProject = 3
 
 const preProgHousingQry = `SELECT DISTINCT pp.ID,pp.year,pp.commission_id,c.date,
 c.name,pp.value,pp.kind,NULL::int,NULL::varchar(150),pp.comment,pp.action_id,b.code,b.name 
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
-WHERE pp.kind='Housing' AND pp.year=$1`
+WHERE pp.kind=1 AND pp.year=$1`
 const preProgCoproQry = `SELECT DISTINCT pp.ID,pp.year,pp.commission_id,c.date,
 c.name, pp.value,pp.kind,pp.kind_id,copro.name,pp.comment,pp.action_id,b.code,
 b.name 
@@ -29,14 +29,14 @@ FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
 LEFT JOIN copro ON copro.id=pp.kind_id
-WHERE pp.kind='Copro' AND pp.year=$1`
+WHERE pp.kind=2 AND pp.year=$1`
 const preProgRPQry = `SELECT DISTINCT pp.ID,pp.year,pp.commission_id,c.date,
 c.name,pp.value,pp.kind,pp.kind_id,rp.name,pp.comment,pp.action_id,b.code,b.name 
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
 LEFT JOIN renew_project rp ON rp.id=pp.kind_id
-WHERE pp.kind='RenewProject' AND pp.year=$1`
+WHERE pp.kind=3 AND pp.year=$1`
 
 const preProgQry = preProgHousingQry + " UNION ALL " + preProgCoproQry +
 	" UNION ALL " + preProgRPQry
@@ -49,7 +49,7 @@ type PreProg struct {
 	CommissionDate NullTime   `json:"CommissionDate"`
 	CommissionName string     `json:"CommissionName"`
 	Value          int64      `json:"Value"`
-	Kind           string     `json:"Kind"`
+	Kind           int64      `json:"Kind"`
 	KindID         NullInt64  `json:"KindID"`
 	KindName       NullString `json:"KindName"`
 	Comment        NullString `json:"Comment"`
@@ -102,7 +102,7 @@ func (p *PreProgs) GetAll(year int64, db *sql.DB) error {
 }
 
 // GetAllOfKind fetches all PreProg of a given year and kind from the database
-func (p *PreProgs) GetAllOfKind(year int64, kind string, db *sql.DB) error {
+func (p *PreProgs) GetAllOfKind(year int64, kind int64, db *sql.DB) error {
 	var qry string
 	switch kind {
 	case KindHousing:
@@ -137,7 +137,7 @@ func (p *PreProgs) GetAllOfKind(year int64, kind string, db *sql.DB) error {
 // batch includes only one year, otherwise throw an error. It replaces all
 // the datas of the given year and kinds, deleting PreProgData of that year and
 // kind in the database
-func (p *PreProgBatch) Save(kind string, year int64, db *sql.DB) error {
+func (p *PreProgBatch) Save(kind int64, year int64, db *sql.DB) error {
 	for i, l := range p.Lines {
 		if l.CommissionID == 0 {
 			return fmt.Errorf("ligne %d, CommissionID nul", i+1)

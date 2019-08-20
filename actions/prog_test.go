@@ -62,20 +62,20 @@ func testBatchProg(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 6 : kind nul
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Prog":[{"CommissionID":3,` +
-				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2,"Kind":"Copro"}]}`),
+				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2,"Kind":2}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad commission ID
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Prog":[{"CommissionID":2,` +
-				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":5,"Kind":"Copro"}]}`),
+				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":5,"Kind":2}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la programmation d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 8 : bad action ID
 		{Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Prog":[{"CommissionID":2,"Value":1000000,"KindID":5,"Comment":null,"ActionID":2,"Kind":"Copro"},
-			{"CommissionID":2,"Value":2000000,"KindID":null,"Comment":null,"ActionID":3,"Kind":"Housing"},
-			{"CommissionID":2,"Value":3000000,"KindID":3,"Comment":"commentaire RU","ActionID":4,"Kind":"RenewProject"}]}`),
+			Sent: []byte(`{"Prog":[{"CommissionID":2,"Value":1000000,"KindID":5,"Comment":null,"ActionID":2,"Kind":2},
+			{"CommissionID":2,"Value":2000000,"KindID":null,"Comment":null,"ActionID":3,"Kind":1},
+			{"CommissionID":2,"Value":3000000,"KindID":3,"Comment":"commentaire RU","ActionID":4,"Kind":3}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Batch importé"},
 			StatusCode:   http.StatusOK}, // 9 : OK
@@ -100,10 +100,10 @@ func testGetProg(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.User.Token,
 			Params: `Year=2019`,
-			RespContains: []string{`"Prog":[`, `"Housing"`, `"RenewProject"`, `"Copro"`,
+			RespContains: []string{`"Prog":[`, `"Kind":1`, `"Kind":2`, `"Kind":3`,
 				`"commentaire RU"`, `"Value":1000000`},
 			Count:         3,
-			CountItemName: `"ID"`,
+			CountItemName: `"Kind"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -126,10 +126,11 @@ func testGetProgDatas(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.User.Token,
 			Params: `Year=2019`,
-			RespContains: []string{`"Prog":[`, `"Housing"`, `"RenewProject":[`, `"Copro":[`,
-				`"commentaire RU"`, `"Value":1000000`, `"BudgetAction":[`, `"Commission":[`},
-			Count:         15,
-			CountItemName: `"ID"`,
+			RespContains: []string{`"Prog":[`, `"Kind":1`, `"Kind":2`, `"Kind":3`,
+				`"RenewProject":[`, `"Copro":[`, `"commentaire RU"`, `"Value":1000000`,
+				`"BudgetAction":[`, `"Commission":[`},
+			Count:         3,
+			CountItemName: `"Kind"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {

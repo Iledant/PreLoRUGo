@@ -100,7 +100,7 @@ func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 			Params: `Year=2019`,
 			RespContains: []string{`"PreProg":[{"ID":3,"Year":2019,"CommissionID":2,` +
 				`"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test",` +
-				`"Value":1000000,"Kind":"Copro","KindID":5,"KindName":"Copro Test",` +
+				`"Value":1000000,"Kind":2,"KindID":5,"KindName":"Copro Test",` +
 				`"Comment":null,"ActionID":2,"ActionCode":15400403,"ActionName":` +
 				`"Aide aux copropriétés en difficulté"}]`},
 			StatusCode: http.StatusOK}, // 2 : ok
@@ -192,7 +192,7 @@ func testGetHousingPreProgs(t *testing.T, c *TestContext) {
 			Params: `Year=2019`,
 			RespContains: []string{`"PreProg":[{"ID":6,"Year":2019,"CommissionID":2,` +
 				`"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test",` +
-				`"Value":1000000,"Kind":"Housing","KindID":null,"KindName":null,` +
+				`"Value":1000000,"Kind":1,"KindID":null,"KindName":null,` +
 				`"Comment":null,"ActionID":3,"ActionCode":15400202,"ActionName":` +
 				`"Aide à la création de logements locatifs sociaux"}]`},
 			StatusCode: http.StatusOK}, // 2 : ok
@@ -284,7 +284,7 @@ func testGetRPPreProgs(t *testing.T, c *TestContext) {
 			Params: `Year=2019`,
 			RespContains: []string{`"PreProg":[{"ID":9,"Year":2019,"CommissionID":2,` +
 				`"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test",` +
-				`"Value":2000000,"Kind":"RenewProject","KindID":2,"KindName":"Site RU 1",` +
+				`"Value":2000000,"Kind":3,"KindID":2,"KindName":"Site RU 1",` +
 				`"Comment":null,"ActionID":4,"ActionCode":15400203,"ActionName":` +
 				`"Aide à la création de logements locatifs très sociaux"}]`},
 			StatusCode: http.StatusOK}, // 2 : ok
@@ -309,7 +309,7 @@ func testGetPreProgs(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.Admin.Token,
 			Params:        `Year=2019`,
-			RespContains:  []string{`"PreProg":[`, `"Housing"`, `"RenewProject"`, `"Copro"`},
+			RespContains:  []string{`"PreProg":[`, `"Kind":1`, `"Kind":2`, `"Kind":3`},
 			Count:         3,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
