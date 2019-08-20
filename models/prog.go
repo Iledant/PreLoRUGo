@@ -79,7 +79,7 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 pp.kind_id,c.name,pp.comment,pp.action_id
  FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind=2) pre
- ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id
+ ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id AND pc.kind_id=pre.kind_id
  WHERE pc.kind ISNULL or pc.kind=2
  UNION ALL
  SELECT pc.id,$1 AS year,COALESCE(pc.commission_id,pre.commission_id) AS commission_id,
@@ -89,11 +89,11 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
 	 COALESCE(pc.action_id,pre.action_id) as action_id
 	 FROM (SELECT p.id,p.year,p.commission_id,p.value,p.kind_id,p.kind,p.comment,
 			c.name,p.action_id
-		 FROM p JOIN copro c ON p.kind_id=c.id WHERE kind=3) pc
+		 FROM p JOIN renew_project c ON p.kind_id=c.id WHERE kind=3) pc
  FULL OUTER JOIN (SELECT DISTINCT pp.ID,pp.commission_id,pp.value,pp.kind,
 	 pp.kind_id,c.name,pp.comment,pp.action_id
- FROM pp JOIN copro c ON pp.kind_id=c.id WHERE pp.kind=3) pre
- ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id
+ FROM pp JOIN renew_project c ON pp.kind_id=c.id WHERE pp.kind=3) pre
+ ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id AND pc.kind_id=pre.kind_id
  WHERE pc.kind ISNULL or pc.kind=3) q
  JOIN budget_action b ON q.action_id=b.id
  JOIN commission c ON q.commission_id=c.id`, year)
