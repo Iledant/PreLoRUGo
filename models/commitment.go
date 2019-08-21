@@ -527,13 +527,13 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 		tx.Rollback()
 		return fmt.Errorf("statement exec flush %v", err)
 	}
-	queries := []string{`INSERT INTO beneficiary (code,name) 
-		SELECT DISTINCT beneficiary_code,beneficiary_name 
+	queries := []string{`INSERT INTO beneficiary (code,name)
+		SELECT DISTINCT beneficiary_code,beneficiary_name
 		FROM temp_commitment
 		WHERE beneficiary_code not in (SELECT code from beneficiary)`,
 		`INSERT INTO budget_sector (name) SELECT DISTINCT sector
 			FROM temp_commitment WHERE sector not in (SELECT name from budget_sector)`,
-		`INSERT INTO budget_action (code,name,sector_id) 
+		`INSERT INTO budget_action (code,name,sector_id)
 			SELECT DISTINCT ic.action_code,ic.action_name, s.id
 			FROM temp_commitment ic
 			LEFT JOIN budget_sector s ON ic.sector = s.name
@@ -543,13 +543,13 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			(SELECT ic.year,ic.code,ic.number,ic.line,ic.creation_date,
 				ic.modification_date,ic.caducity_date,ic.name,ic.value,ic.sold_out,b.id,
 				ic.iris_code,a.id
-  		 FROM temp_commitment ic
+			 FROM temp_commitment ic
 			 JOIN beneficiary b on ic.beneficiary_code=b.code
 			 LEFT JOIN budget_action a on ic.action_code = a.code
 			 WHERE (ic.year,ic.code,ic.number,ic.line,ic.creation_date,
-				ic.modification_date,ic.caducity_date,ic.name, ic.value) NOT IN
+				ic.modification_date,ic.name, ic.value) NOT IN
 					(SELECT year,code,number,line,creation_date,modification_date,
-						caducity_date,name,value FROM commitment))`,
+						name,value FROM commitment))`,
 		`DELETE FROM temp_commitment`}
 	for i, q := range queries {
 		_, err = tx.Exec(q)
