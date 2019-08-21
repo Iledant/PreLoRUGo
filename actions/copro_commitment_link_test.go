@@ -22,15 +22,15 @@ func testLinkCommitmentsCopros(t *testing.T, c *TestContext) {
 			RespContains: []string{`Droits sur les copropriétés requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.CoproUser.Token,
-			Sent:         []byte(`{"CoproCommitmentBach":[{"Reference":"","IRISCode":"13021233"}]}`),
+			Sent:         []byte(`{"CoproCommitmentBatch":[{"Reference":"","IRISCode":"13021233"}]}`),
 			RespContains: []string{`Ligne 1, Reference vide`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : reference null
 		{Token: c.Config.Users.CoproUser.Token,
-			Sent:         []byte(`{"CoproCommitmentBach":[{"Reference":"Essai3","IRISCode":""}]}`),
+			Sent:         []byte(`{"CoproCommitmentBatch":[{"Reference":"Essai3","IRISCode":""}]}`),
 			RespContains: []string{`Ligne 1, IRISCode vide`},
 			StatusCode:   http.StatusInternalServerError}, // 2 : IRIS code empty
 		{Token: c.Config.Users.CoproUser.Token,
-			Sent:         []byte(`{"CoproCommitmentBach":[{"Reference":"CO004","IRISCode":"13021233"}]}`),
+			Sent:         []byte(`{"CoproCommitmentBatch":[{"Reference":"CO004","IRISCode":"13021233"}]}`),
 			RespContains: []string{`Liens engagements copros importés`},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}

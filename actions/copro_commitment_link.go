@@ -10,7 +10,7 @@ import (
 
 // LinkCommitmentsCopros handles the post request of a batch of CoproCommiment
 func LinkCommitmentsCopros(ctx iris.Context) {
-	var l models.CoproCommitmentBach
+	var l models.CoproCommitmentBatch
 	if err := ctx.ReadJSON(&l); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liens engagements copros, décodage : " + err.Error()})

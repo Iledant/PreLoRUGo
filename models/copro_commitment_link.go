@@ -14,14 +14,14 @@ type CoproCommitmentLine struct {
 	IRISCode  string `json:"IRISCode"`
 }
 
-// CoproCommitmentBach embeddes an array of CoproCommitmentLine to
+// CoproCommitmentBatch embeddes an array of CoproCommitmentLine to
 // link commitment to copro operations
-type CoproCommitmentBach struct {
-	Lines []CoproCommitmentLine `json:"CoproCommitmentBach"`
+type CoproCommitmentBatch struct {
+	Lines []CoproCommitmentLine `json:"CoproCommitmentBatch"`
 }
 
 // Save takes a batch of housing commitment links and updates the database
-func (h *CoproCommitmentBach) Save(db *sql.DB) error {
+func (h *CoproCommitmentBatch) Save(db *sql.DB) error {
 	for i, l := range h.Lines {
 		if l.Reference == "" {
 			return fmt.Errorf("Ligne %d, Reference vide", i+1)
