@@ -8,10 +8,10 @@ import (
 // CityReportLine is used to decode a line of the query that fetches commitments
 // and payments per policy and per year in a city
 type CityReportLine struct {
-	Policy     string `Json:"Policy"`
-	Year       int64  `Json:"Year"`
-	Commitment int64  `Json:"Commitment"`
-	Payment    int64  `Json:"Payment"`
+	Kind       int64 `Json:"Kind"`
+	Year       int64 `Json:"Year"`
+	Commitment int64 `Json:"Commitment"`
+	Payment    int64 `Json:"Payment"`
 }
 
 // CityReport embeddes an array of CityReportLine for json export
@@ -58,15 +58,15 @@ func (c *CityReport) GetAll(db *sql.DB, inseeCode, firstYear, lastYear int64) (e
 		GROUP BY 1),
   rfig AS (SELECT rcmt.year,rcmt.cmt,rpmt.pmt FROM rcmt
     FULL OUTER JOIN rpmt ON rpmt.year=rcmt.year)
-	SELECT y.year,p.policy,COALESCE(q.cmt,0),COALESCE(q.pmt,0)
+	SELECT y.year,p.kind,COALESCE(q.cmt,0),COALESCE(q.pmt,0)
    FROM (SELECT generate_series(%d,%d) as year) y
-   CROSS JOIN (SELECT * FROM (VALUES ('Housing'),('Copro'),('RenewProject')) AS t(policy)) p
+   CROSS JOIN (SELECT * FROM (VALUES (1),(2),(3)) AS t(kind)) p
 	LEFT OUTER JOIN (
-		SELECT 'Housing' as policy,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM hfig UNION ALL 
-			SELECT 'Copro' as policy,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM cfig UNION ALL 
-			SELECT 'RenewProject' as policy,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM rfig
+		SELECT 1 as kind,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM hfig UNION ALL 
+			SELECT 2 as kind,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM cfig UNION ALL 
+			SELECT 3 as kind,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM rfig
 	) q
-		ON q.year=y.year AND q.policy=p.policy
+		ON q.year=y.year AND q.kind=p.kind
 		ORDER BY 1,2;`, firstYear, lastYear)
 	rows, err := db.Query(qry, inseeCode)
 	if err != nil {
@@ -75,7 +75,7 @@ func (c *CityReport) GetAll(db *sql.DB, inseeCode, firstYear, lastYear int64) (e
 	var r CityReportLine
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&r.Year, &r.Policy, &r.Commitment, &r.Payment); err != nil {
+		if err = rows.Scan(&r.Year, &r.Kind, &r.Commitment, &r.Payment); err != nil {
 			return err
 		}
 		c.Lines = append(c.Lines, r)

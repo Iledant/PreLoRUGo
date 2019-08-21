@@ -41,7 +41,7 @@ func testGetCityReport(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`inseeCode=77001&firstYear=2015&lastYear=2019`),
 			RespContains: []string{`"CityReport":[`,
-				`{"Policy":"Housing","Year":2015,"Commitment":30000000,"Payment":0}`},
+				`{"Kind":1,"Year":2015,"Commitment":30000000,"Payment":0}`},
 			StatusCode: http.StatusOK}, // 3 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
