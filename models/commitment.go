@@ -488,8 +488,8 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 	for i, r := range c.Lines {
 		if r.Year < 2009 || r.Number == 0 || r.Line == 0 ||
 			r.CreationDate < 20090101 || r.ModificationDate < 20090101 ||
-			r.CaducityDate < 20090101 || r.Name == "" || r.BeneficiaryCode == 0 ||
-			r.BeneficiaryName == "" || r.Sector == "" {
+			r.Name == "" || r.BeneficiaryCode == 0 || r.BeneficiaryName == "" ||
+			r.Sector == "" {
 			return fmt.Errorf("Ligne %d : champs incorrects dans %+v", i+1, r)
 		}
 	}
