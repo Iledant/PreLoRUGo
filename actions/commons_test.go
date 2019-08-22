@@ -81,6 +81,7 @@ func TestAll(t *testing.T) {
 	testCityReport(t, cfg)
 	testPreProg(t, cfg)
 	testProg(t, cfg)
+	testRPLS(t,cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

@@ -433,6 +433,19 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		comment text,
 		action_id int
 	);`, // 38 temp_prog
+	`CREATE TABLE IF NOT EXISTS rpls(
+		id SERIAL PRIMARY KEY,
+		insee_code int NOT NULL,
+		year int NOT NULL,
+		ratio double precision NOT NULL,
+		FOREIGN KEY (insee_code) REFERENCES city (insee_code) MATCH SIMPLE
+		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
+	);`, // 39 rpls		`
+	`CREATE TABLE IF NOT EXISTS temp_rpls(
+		insee_code int NOT NULL,
+		year int NOT NULL,
+		ratio double precision NOT NULL
+	);`, // 40 temp_rpls		`
 }
 
 // createTablesAndViews launches the queries against the database to create all
