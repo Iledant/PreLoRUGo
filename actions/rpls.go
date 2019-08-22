@@ -2,6 +2,7 @@ package actions
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/Iledant/PreLoRUGo/models"
@@ -122,4 +123,61 @@ func BatchRPLS(ctx iris.Context) {
 	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Batch RPLS importé"})
+}
+
+func decodeParams(p *models.RPLSReportParams, ctx iris.Context) (err error) {
+	if p.RPLSYear, err = ctx.URLParamInt64("RPLSYear"); err != nil {
+		return fmt.Errorf("RPLSYear : %v", err)
+	}
+	if p.FirstYear, err = ctx.URLParamInt64("FirstYear"); err != nil {
+		return fmt.Errorf("FirstYear : %v", err)
+	}
+	if p.LastYear, err = ctx.URLParamInt64("LastYear"); err != nil {
+		return fmt.Errorf("LastYear : %v", err)
+	}
+	if p.RPLSMin, err = ctx.URLParamFloat64("RPLSMin"); err != nil {
+		return fmt.Errorf("RPLSMin : %v", err)
+	}
+	if p.RPLSMax, err = ctx.URLParamFloat64("RPLSMax"); err != nil {
+		return fmt.Errorf("RPLSMax : %v", err)
+	}
+	return nil
+}
+
+// RPLSReport handle the get request to fetch the RPLS Report
+func RPLSReport(ctx iris.Context) {
+	var req models.RPLSReportParams
+	if err := decodeParams(&req, ctx); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Rapport RPLS, décodage " + err.Error()})
+		return
+	}
+	var resp models.RPLSReport
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.GetAll(&req, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Rapport RPLS, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
+// RPLSDetailedReport handle the get request to fetch the RPLS Report
+func RPLSDetailedReport(ctx iris.Context) {
+	var req models.RPLSReportParams
+	if err := decodeParams(&req, ctx); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Rapport détaillé RPLS, décodage " + err.Error()})
+		return
+	}
+	var resp models.RPLSDetailedReport
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.GetAll(&req, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Rapport détaillé RPLS, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
 }

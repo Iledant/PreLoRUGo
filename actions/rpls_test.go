@@ -22,6 +22,8 @@ func testRPLS(t *testing.T, c *TestContext) {
 		testBatchRPLS(t, c)
 		testGetAllRPLS(t, c)
 		testGetRPLSDatas(t, c)
+		testRPLSReport(t, c)
+		testRPLSDetailedReport(t, c)
 	})
 }
 
@@ -237,5 +239,99 @@ func testGetRPLSDatas(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "GetRPLSDatas")
+
+}
+
+// testRPLSReport check if route is user protected and batch RPLS have been
+// correctly inserted and updated
+func testRPLSReport(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{
+			Token:        `fake`,
+			StatusCode:   http.StatusInternalServerError,
+			RespContains: []string{`Token invalid`}}, // 0 bad token
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=a&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport RPLS, décodage RPLSYear :`}}, // 1 bad RPLSYear
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=a&LastYear=2019&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport RPLS, décodage FirstYear :`}}, // 2 bad FirstYear
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=a&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport RPLS, décodage LastYear :`}}, // 3 bad LastYear
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=2019&RPLSMin=a&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport RPLS, décodage RPLSMin :`}}, // 4 bad RPLSMin
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=a",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport RPLS, décodage RPLSMax :`}}, // 5 bad RPLSMax
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusOK,
+			RespContains: []string{`{"RPLSReport":[`}}, // 6 ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/rpls/report").WithQueryString(tc.Params).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	chkFactory(t, tcc, f, "RPLSReport")
+
+}
+
+// testRPLSDetailedReport check if route is user protected and batch RPLS have been
+// correctly inserted and updated
+func testRPLSDetailedReport(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{
+			Token:        `fake`,
+			StatusCode:   http.StatusInternalServerError,
+			RespContains: []string{`Token invalid`}}, // 0 bad token
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=a&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport détaillé RPLS, décodage RPLSYear :`}}, // 1 bad RPLSYear
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=a&LastYear=2019&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport détaillé RPLS, décodage FirstYear :`}}, // 2 bad FirstYear
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=a&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport détaillé RPLS, décodage LastYear :`}}, // 3 bad LastYear
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=2019&RPLSMin=a&RPLSMax=0.3",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport détaillé RPLS, décodage RPLSMin :`}}, // 4 bad RPLSMin
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=a",
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Rapport détaillé RPLS, décodage RPLSMax :`}}, // 5 bad RPLSMax
+		{
+			Token:        c.Config.Users.User.Token,
+			Params:       "RPLSYear=2016&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=0.3",
+			StatusCode:   http.StatusOK,
+			RespContains: []string{`{"RPLSDetailedReport":[`}}, // 6 ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/rpls/detailed_report").WithQueryString(tc.Params).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	chkFactory(t, tcc, f, "RPLSDetailedReport")
 
 }
