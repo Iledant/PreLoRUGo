@@ -33,7 +33,8 @@ func (d *DptReport) GetAll(db *sql.DB, firstYear, lastYear int64) (err error) {
 		JOIN housing h ON c.housing_id=h.id
 		JOIN department d ON d.code=h.zip_code/1000
 		GROUP BY 1,2),
-  hfig AS (SELECT hcmt.dpt_code,hcmt.year,hcmt.cmt,hpmt.pmt FROM hcmt
+  hfig AS (SELECT COALESCE(hcmt.dpt_code,hpmt.dpt_code) AS dpt_code,
+      COALESCE(hcmt.year,hpmt.year) AS year,hcmt.cmt,hpmt.pmt FROM hcmt
   	FULL OUTER JOIN hpmt ON hcmt.dpt_code=hpmt.dpt_code AND hcmt.year=hpmt.year),
 	ccmt AS (SELECT d.code as dpt_code,cmt.year,SUM(cmt.value) as cmt 
 		FROM cumulated_commitment cmt
@@ -45,7 +46,8 @@ func (d *DptReport) GetAll(db *sql.DB, firstYear, lastYear int64) (err error) {
 		JOIN copro co ON c.copro_id=co.id
 		JOIN department d ON d.code=co.zip_code/1000
 		GROUP BY 1,2),
-  cfig AS (SELECT ccmt.dpt_code,ccmt.year,ccmt.cmt,cpmt.pmt FROM ccmt
+  cfig AS (SELECT COALESCE(ccmt.dpt_code,cpmt.dpt_code) AS dpt_code,
+      COALESCE(ccmt.year,cpmt.year) AS year,ccmt.cmt,cpmt.pmt FROM ccmt
 		FULL OUTER JOIN cpmt ON ccmt.dpt_code=cpmt.dpt_code AND ccmt.year=cpmt.year),
 	rcmt AS (SELECT d.code as dpt_code,cmt.year,SUM(cmt.value) as cmt 
 		FROM cumulated_commitment cmt
@@ -57,7 +59,8 @@ func (d *DptReport) GetAll(db *sql.DB, firstYear, lastYear int64) (err error) {
 		JOIN rp_cmt_city_join rp ON c.id=rp.commitment_id
 		JOIN department d ON d.code=rp.city_code/1000
 		GROUP BY 1,2),
-  rfig AS (SELECT rcmt.dpt_code,rcmt.year,rcmt.cmt,rpmt.pmt FROM rcmt
+  rfig AS (SELECT COALESCE(rcmt.dpt_code,rpmt.dpt_code) AS dpt_code,
+    COALESCE(rcmt.year,rpmt.year) AS year,rcmt.cmt,rpmt.pmt FROM rcmt
     FULL OUTER JOIN rpmt ON rpmt.dpt_code=rcmt.dpt_code AND rpmt.year=rcmt.year),
   tfig AS (SELECT q.dpt_code,q.year,SUM(q.cmt) as cmt,SUM(q.pmt) as pmt FROM 
     (SELECT * FROM cfig UNION ALL SELECT * FROM hfig UNION ALL SELECT * FROM rfig)q
