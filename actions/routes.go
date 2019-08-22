@@ -96,6 +96,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Put("/rpls", UpdateRPLS)
 	adminParty.Delete("/rpls/{ID}", DeleteRPLS)
 	adminParty.Post("/rpls/batch", BatchRPLS)
+	adminParty.Get("/rpls/datas", GetRPLSDatas)
 
 	coproUserParty := api.Party("", CoproMiddleware)
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)

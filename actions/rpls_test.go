@@ -21,6 +21,7 @@ func testRPLS(t *testing.T, c *TestContext) {
 		testDeleteRPLS(t, c, ID)
 		testBatchRPLS(t, c)
 		testGetAllRPLS(t, c)
+		testGetRPLSDatas(t, c)
 	})
 }
 
@@ -213,5 +214,28 @@ func testGetAllRPLS(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "GetAllRPLS")
+
+}
+
+// testGetRPLSDatas check if route is admin protected and batch datas are
+// correctly sent back
+func testGetRPLSDatas(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		{Token: `fake`,
+			StatusCode:   http.StatusInternalServerError,
+			RespContains: []string{`Token invalid`}},
+		{Token: c.Config.Users.Admin.Token,
+			StatusCode: http.StatusOK,
+			RespContains: []string{`"RPLS":[{"ID":3,"InseeCode":75101,"CityName":` +
+				`"PARIS 1","Year":2016,"Ratio":0.167},{"ID":4,"InseeCode":77001,` +
+				`"CityName":"ACHERES-LA-FORET","Year":2016,"Ratio":0.3},{"ID":5,` +
+				`"InseeCode":78146,"CityName":"CHATOU","Year":2016,"Ratio":0.4}]`,
+				`"City":[`}},
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/rpls/datas").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	chkFactory(t, tcc, f, "GetRPLSDatas")
 
 }

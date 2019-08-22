@@ -8,12 +8,37 @@ import (
 	"github.com/kataras/iris"
 )
 
+// rplsDatasResp is used to sent all needed datas to frontend page
+type rplsDatasResp struct {
+	models.RPLSArray
+	models.Cities
+}
+
+// GetRPLSDatas handle the get request to fetch all datas for dedicated frontend
+// page
+func GetRPLSDatas(ctx iris.Context) {
+	var resp rplsDatasResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.RPLSArray.GetAll(db); err != nil {
+		ctx.JSON(jsonError{"Datas RPLS, requête RPLS : " + err.Error()})
+		ctx.StatusCode(http.StatusInternalServerError)
+		return
+	}
+	if err := resp.Cities.GetAll(db); err != nil {
+		ctx.JSON(jsonError{"Datas RPLS, requête Cities : " + err.Error()})
+		ctx.StatusCode(http.StatusInternalServerError)
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // GetAllRPLS handle the get request to fetch all RPLS
 func GetAllRPLS(ctx iris.Context) {
 	var resp models.RPLSArray
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetAll(db); err != nil {
-		ctx.JSON(jsonError{"Batch RPLS, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Liste RPLS, requête : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
 		return
 	}
