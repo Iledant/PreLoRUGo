@@ -52,8 +52,8 @@ func (r *RPLSReport) GetAll(p *RPLSReportParams, db *sql.DB) error {
 	JOIN housing h ON h.id=c.housing_id
 	JOIN rpls r ON h.zip_code=r.insee_code
 		WHERE EXTRACT(year FROM c.creation_date)>=$1 
-			AND EXTRACT(year FROM c.creation_date)<$2
-			AND c.housing_id NOTNULL AND r.ratio >=$3 AND r.ratio <$4 AND r.year=$5
+			AND EXTRACT(year FROM c.creation_date)<=$2
+			AND c.housing_id NOTNULL AND r.ratio >=$3 AND r.ratio <=$4 AND r.year=$5
 	GROUP BY 2;`, p.FirstYear, p.LastYear, p.RPLSMin, p.RPLSMax, p.RPLSYear)
 	if err != nil {
 		return nil
@@ -61,7 +61,7 @@ func (r *RPLSReport) GetAll(p *RPLSReportParams, db *sql.DB) error {
 	var row RPLSReportLine
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.Value, &row.Value); err != nil {
+		if err = rows.Scan(&row.Value, &row.Dpt); err != nil {
 			return err
 		}
 		r.Lines = append(r.Lines, row)
@@ -83,8 +83,8 @@ func (r *RPLSDetailedReport) GetAll(p *RPLSReportParams, db *sql.DB) error {
 	JOIN rpls r ON h.zip_code=r.insee_code
 	JOIN city ON r.insee_code=city.insee_code
 		WHERE EXTRACT(year FROM c.creation_date)>=$1
-			AND EXTRACT(year FROM c.creation_date)<$2 AND c.housing_id NOTNULL
-			AND r.ratio >=$3 AND r.ratio <$4 AND r.year=$5`, p.FirstYear, p.LastYear,
+			AND EXTRACT(year FROM c.creation_date)<=$2 AND c.housing_id NOTNULL
+			AND r.ratio >=$3 AND r.ratio <=$4 AND r.year=$5`, p.FirstYear, p.LastYear,
 		p.RPLSMin, p.RPLSMax, p.RPLSYear)
 	if err != nil {
 		return nil

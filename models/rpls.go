@@ -33,6 +33,11 @@ type RPLSBatch struct {
 	Lines []RPLSLine `json:"RPLS"`
 }
 
+// RPLSYears embeddes the distinct years in the rpls table
+type RPLSYears struct {
+	Lines []int64 `json:"RPLSYear"`
+}
+
 // Validate checks of fields can be inserted into database
 func (r *RPLS) Validate() error {
 	if r.InseeCode == 0 {
@@ -166,6 +171,30 @@ func (r *RPLSArray) GetAll(db *sql.DB) error {
 	}
 	if len(r.Lines) == 0 {
 		r.Lines = []RPLS{}
+	}
+	return nil
+}
+
+// GetAll fetches all years from the rpls table
+func (r *RPLSYears) GetAll(db *sql.DB) error {
+	rows, err := db.Query(`SELECT DISTINCT year FROM rpls`)
+	if err != nil {
+		return err
+	}
+	var y int64
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&y); err != nil {
+			return err
+		}
+		r.Lines = append(r.Lines, y)
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	if len(r.Lines) == 0 {
+		r.Lines = []int64{}
 	}
 	return nil
 }

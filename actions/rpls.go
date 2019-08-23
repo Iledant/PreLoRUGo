@@ -126,21 +126,31 @@ func BatchRPLS(ctx iris.Context) {
 }
 
 func decodeParams(p *models.RPLSReportParams, ctx iris.Context) (err error) {
-	if p.RPLSYear, err = ctx.URLParamInt64("RPLSYear"); err != nil {
+	rplsYear, err := ctx.URLParamInt64("RPLSYear")
+	if err != nil {
 		return fmt.Errorf("RPLSYear : %v", err)
 	}
-	if p.FirstYear, err = ctx.URLParamInt64("FirstYear"); err != nil {
+	firstYear, err := ctx.URLParamInt64("FirstYear")
+	if err != nil {
 		return fmt.Errorf("FirstYear : %v", err)
 	}
-	if p.LastYear, err = ctx.URLParamInt64("LastYear"); err != nil {
+	lastYear, err := ctx.URLParamInt64("LastYear")
+	if err != nil {
 		return fmt.Errorf("LastYear : %v", err)
 	}
-	if p.RPLSMin, err = ctx.URLParamFloat64("RPLSMin"); err != nil {
+	rplsMin, err := ctx.URLParamFloat64("RPLSMin")
+	if err != nil {
 		return fmt.Errorf("RPLSMin : %v", err)
 	}
-	if p.RPLSMax, err = ctx.URLParamFloat64("RPLSMax"); err != nil {
+	rplsMax, err := ctx.URLParamFloat64("RPLSMax")
+	if err != nil {
 		return fmt.Errorf("RPLSMax : %v", err)
 	}
+	p.FirstYear = firstYear
+	p.LastYear = lastYear
+	p.RPLSYear = rplsYear
+	p.RPLSMin = rplsMin
+	p.RPLSMax = rplsMax
 	return nil
 }
 

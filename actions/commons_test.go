@@ -82,6 +82,7 @@ func TestAll(t *testing.T) {
 	testPreProg(t, cfg)
 	testProg(t, cfg)
 	testRPLS(t,cfg)
+	testSummaries(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
