@@ -132,7 +132,7 @@ func (r *CoproForecasts) GetAll(db *sql.DB) (err error) {
 // Get fetches all copro linked CoproForecasts from database
 func (r *CoproForecasts) Get(ID int64, db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT cf.id, cf.commission_id,c.date,c.name, 
-		cf.value,cf.comment,cf.copro_id, b.code, b.name
+		cf.value,cf.comment,cf.copro_id, b.id, b.code, b.name
 	FROM copro_forecast cf
 	JOIN commission c ON c.id=cf.commission_id
 	JOIN budget_action b ON b.id = cf.action_id
@@ -144,7 +144,7 @@ func (r *CoproForecasts) Get(ID int64, db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.CommissionID, &row.CommissionDate,
-			&row.CommissionName, &row.Value, &row.Comment, &row.CoproID,
+			&row.CommissionName, &row.Value, &row.Comment, &row.CoproID, &row.ActionID,
 			&row.ActionCode, &row.ActionName); err != nil {
 			return err
 		}
