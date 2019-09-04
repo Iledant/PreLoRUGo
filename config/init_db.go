@@ -99,7 +99,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		);`, // 5 : temp_city
 	`CREATE TABLE IF NOT EXISTS copro (
 			id SERIAL PRIMARY KEY,
-			reference varchar(25) NOT NULL,
+			reference varchar(60) NOT NULL,
 			name varchar(150) NOT NULL,
 			address varchar(200) NOT NULL,
 			zip_code int NOT NULL,
