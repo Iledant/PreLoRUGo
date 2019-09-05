@@ -89,6 +89,31 @@ func GetRenewProjectDatas(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
+// renewProjectCmtPmtResp embeddes the data for the get renew project datas request
+type renewProjectCmtPmtResp struct {
+	models.RPLinkedCommitments
+	models.Payments
+}
+
+// GetRenewProjectCmtAndPmt is used to send back commitments and payments linked to a
+// renew project after a link action
+func GetRenewProjectCmtAndPmt(ID int64, ctx iris.Context) {
+	var resp renewProjectCmtPmtResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.RPLinkedCommitments.Get(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Engagements payments de projet de renouvellement, requête commitments : " + err.Error()})
+		return
+	}
+	if err := resp.Payments.GetLinkedToRenewProject(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Engagements payments de renouvellement, requête commitments : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // CreateRenewProject handles the post request to create a renew project
 func CreateRenewProject(ctx iris.Context) {
 	var req renewProjectReq

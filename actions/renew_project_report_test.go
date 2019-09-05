@@ -24,7 +24,7 @@ func testGetRenewProjectReport(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RenewProjectReport":[{"ID":2,"Reference":"PRU002",` +
-				`"Name":"Site RU 1","Budget":250000000,"Commitment":null,"Payment":null,` +
+				`"Name":"Site RU 1","Budget":250000000,"Commitment":232828,"Payment":null,` +
 				`"LastEventName":null,"LastEventDate":null,"City1Name":"PARIS 1","City1Cmt"` +
 				`:null,"City1Pmt":null,"City2Name":null,"City2Cmt":null,"City2Pmt":null,` +
 				`"City3Name":null,"City3Cmt":null,"City3Pmt":null},{"ID":3,"Reference":` +

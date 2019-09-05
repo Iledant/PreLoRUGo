@@ -240,3 +240,27 @@ func GetHousingDatas(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
+
+type housingCmtPmtResp struct {
+	models.HousingLinkedCommitments
+	models.Payments
+}
+
+// GetHousingCmtAndPmt is used to send back commitments and payments linked to a
+// housing after a link action
+func GetHousingCmtAndPmt(ID int64, ctx iris.Context) {
+	var resp housingCmtPmtResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.HousingLinkedCommitments.Get(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Engagements paiements d'un logement, commitments get : " + err.Error()})
+		return
+	}
+	if err := resp.Payments.GetLinkedToHousing(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Engagements paiements d'un logement, payments get : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}

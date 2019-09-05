@@ -42,15 +42,29 @@ func testLinkCommitment(t *testing.T, c *TestContext) {
 			RespContains: []string{`Liens d'engagements, requête :`},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad commitment ID
 		{Token: c.Config.Users.Admin.Token,
-			Sent:         []byte(`{"DestID":3,"IDs":[2,3],"Type":"Copro"}`),
-			RespContains: []string{`Liens d'engagements mis à jour`},
-			StatusCode:   http.StatusOK}, // 6 : ok
+			Sent:          []byte(`{"DestID":3,"IDs":[2,3],"Type":"Copro"}`),
+			RespContains:  []string{`"Commitment":[{`, `"Payment":[{`},
+			Count:         3,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 6 : copro, ok
+		{Token: c.Config.Users.Admin.Token,
+			Sent:          []byte(`{"DestID":2,"IDs":[1],"Type":"RenewProject"}`),
+			RespContains:  []string{`"Commitment":[{`, `"Payment":[`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 7 : renew project, ok
+		{Token: c.Config.Users.Admin.Token,
+			Sent:          []byte(`{"DestID":3,"IDs":[4],"Type":"Housing"}`),
+			RespContains:  []string{`"Commitment":[{`, `"Payment":[`},
+			Count:         3,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 7 : housing, ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/commitments/link").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "SetCommitmentLink")
+	chkFactory(t, tcc, f, "LinkCommitment")
 }
 
 // testUnlinkCommitment check route is limited to admin and batch import succeeds

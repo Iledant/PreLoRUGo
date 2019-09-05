@@ -28,8 +28,17 @@ func LinkCommitment(ctx iris.Context) {
 		ctx.JSON(jsonError{"Liens d'engagements, requête : " + err.Error()})
 		return
 	}
-	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(jsonMessage{"Liens d'engagements mis à jour"})
+	switch req.Type {
+	case "Copro":
+		GetCoproCmtAndPmt((int64)(req.DestID), ctx)
+		return
+	case "RenewProject":
+		GetRenewProjectCmtAndPmt((int64)(req.DestID), ctx)
+		return
+	default:
+		GetHousingCmtAndPmt((int64)(req.DestID), ctx)
+		return
+	}
 }
 
 // UnlinkCommitment handles the post request to link commitments and

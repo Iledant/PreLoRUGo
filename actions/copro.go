@@ -135,6 +135,32 @@ func GetCoproDatas(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
+// coproCmtPmResp embeddes commitments and payments linked to a copro to handle
+// the response to a link operation
+type coproCmtPmResp struct {
+	models.CoproLinkedCommitments
+	models.Payments
+}
+
+// GetCoproCmtAndPmt is used to send back commitments and payments linked to a
+// copro after a link action
+func GetCoproCmtAndPmt(ID int64, ctx iris.Context) {
+	var resp coproCmtPmResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.CoproLinkedCommitments.Get(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Engagements paiements d'une copropriété, requête commitment : " + err.Error()})
+		return
+	}
+	if err := resp.Payments.GetLinkedToCopro(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Engagements paiements d'une copropriété, requête payment : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // ModifyCopro handles the put request to modify a copro
 func ModifyCopro(ctx iris.Context) {
 	var c coproReq
