@@ -23,15 +23,19 @@ func testGetRenewProjectReport(t *testing.T, c *TestContext) {
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`"RenewProjectReport":[{"ID":2,"Reference":"PRU002",` +
-				`"Name":"Site RU 1","Budget":250000000,"Commitment":232828,"Payment":null,` +
-				`"LastEventName":null,"LastEventDate":null,"City1Name":"PARIS 1","City1Cmt"` +
-				`:null,"City1Pmt":null,"City2Name":null,"City2Cmt":null,"City2Pmt":null,` +
-				`"City3Name":null,"City3Cmt":null,"City3Pmt":null},{"ID":3,"Reference":` +
-				`"PRU003","Name":"Site RU 2","Budget":150000000,"Commitment":null,"Payment":` +
-				`null,"LastEventName":null,"LastEventDate":null,"City1Name":"ACHERES-LA-FORET",` +
-				`"City1Cmt":null,"City1Pmt":null,"City2Name":"CHATOU","City2Cmt":null,` +
-				`"City2Pmt":null,"City3Name":null,"City3Cmt":null,"City3Pmt":null}]`},
+			RespContains: []string{`"RenewProjectReport":[{"ID":3,"Reference":"PRU003",` +
+				`"Name":"Site RU 2","Budget":150000000,"Commitment":null,"Payment":null,` +
+				`"LastEventName":null,"LastEventDate":null,"City1Name":"ACHERES-LA-FORET",` +
+				`"City1CommunityName":null,"City1Cmt":null,"City1Pmt":null,"City2Name":` +
+				`"CHATOU","City2CommunityName":"CA SAINT GERMAIN BOUCLES DE SEINE ` +
+				`(78-YVELINES)","City2Cmt":null,"City2Pmt":null,"City3Name":null,` +
+				`"City3CommunityName":null,"City3Cmt":null,"City3Pmt":null},{"ID":2,` +
+				`"Reference":"PRU002","Name":"Site RU 1","Budget":250000000,"Commitment":` +
+				`232828,"Payment":null,"LastEventName":null,"LastEventDate":null,` +
+				`"City1Name":"PARIS 1","City1CommunityName":"VILLE DE PARIS (EPT1)",` +
+				`"City1Cmt":null,"City1Pmt":null,"City2Name":null,"City2CommunityName":` +
+				`null,"City2Cmt":null,"City2Pmt":null,"City3Name":null,"City3CommunityName":` +
+				`null,"City3Cmt":null,"City3Pmt":null}]`},
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
