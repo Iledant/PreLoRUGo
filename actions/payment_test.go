@@ -56,7 +56,7 @@ func testGetPayments(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"ID":1,"CommitmentID":4,"CommitmentYear":2010,"CommitmentCode":"IRIS ","CommitmentNumber":277678,"CommitmentLine":1,"Year":2010,"CreationDate":"2010-02-02T00:00:00Z","ModificationDate":"2010-04-16T00:00:00Z","Number":102717,"Value":1896880`,
-				`"ID":4,"CommitmentID":2,"CommitmentYear":2014,"CommitmentCode":"IRIS ","CommitmentNumber":431370,"CommitmentLine":1,"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","ModificationDate":"2016-09-19T00:00:00Z","Number":141103,"Value":239200`},
+				`"CommitmentYear":2014,"CommitmentCode":"IRIS ","CommitmentNumber":431370,"CommitmentLine":1,"Year":2016,"CreationDate":"2016-09-12T00:00:00Z","ModificationDate":"2016-09-19T00:00:00Z","Number":141103,"Value":239200`},
 			Count:         4,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok

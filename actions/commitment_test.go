@@ -91,14 +91,10 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Page=2&Year=2010&Search=savigny`),
 			// cSpell: disable
-			RespContains: []string{`"Commitment"`, `"Year":2015,"Code":"IRIS ",` +
-				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z",` +
-				`"ModificationDate":"2015-04-13T00:00:00Z","CaducityDate":` +
-				`"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU` +
-				` - 65 PLUS/PLAI","Value":30000000,"SoldOut":false,"BeneficiaryID":3,` +
-				`"BeneficiaryName":"IMMOBILIERE 3F","ActionName":"Aide à la création de ` +
-				`logements locatifs très sociaux","Sector":"LO","IrisCode":"14004240",` +
-				`"HousingID":null,"CoproID":null,"RenewProjectID":null`,
+			RespContains: []string{`"Commitment":[`, `"Code":"IRIS ","Number":469347,` +
+				`"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":"2015-04-13T00:00:00Z",` +
+				`"CaducityDate":"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU` +
+				` - 65 PLUS/PLAI","Value":30000000,"SoldOut":false`,
 				`"Page":1`, `"ItemsCount":1`},
 			// cSpell: enable
 			Count:         1,
@@ -129,15 +125,10 @@ func testGetUnlinkedCommitments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Page=2&Year=2010&Search=savigny`),
 			// cSpell: disable
-			RespContains: []string{`"Commitment"`, `"Year":2015,"Code":"IRIS ",` +
-				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z",` +
-				`"ModificationDate":"2015-04-13T00:00:00Z","CaducityDate":` +
-				`"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU` +
-				` - 65 PLUS/PLAI","Value":30000000,"SoldOut":false,"BeneficiaryID":3,` +
-				`"BeneficiaryName":"IMMOBILIERE 3F","ActionName":` +
-				`"Aide à la création de logements locatifs très sociaux","Sector":"LO",` +
-				`"IrisCode":"14004240","HousingID":null,"CoproID":null,"RenewProjectID"` +
-				`:null`, `"Page":1`, `"ItemsCount":1`},
+			RespContains: []string{`"Commitment":[`, `"Year":2015,"Code":"IRIS ","Number":469347,` +
+				`"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":"2015-04-13T00:00:00Z"` +
+				`,"CaducityDate":"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE`,
+				`"Page":1`, `"ItemsCount":1`},
 			// cSpell: enable
 			Count:         1,
 			CountItemName: `"ID"`,
@@ -167,14 +158,10 @@ func testExportedCommitments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Year=2010&Search=savigny`),
 			// cSpell: disable
-			RespContains: []string{`"ExportedCommitment":[`, `"ID":3,"Year":2015,` +
-				`"Code":"IRIS ","Number":469347,"Line":1,"CreationDate":` +
-				`"2015-04-13T00:00:00Z","ModificationDate":"2015-04-13T00:00:00Z",` +
-				`"CaducityDate":"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE - ` +
-				`AV DE LONGJUMEAU - 65 PLUS/PLAI","Value":300000,"SoldOut":false,` +
-				`"BeneficiaryName":"IMMOBILIERE 3F","Sector":"LO","ActionName":` +
-				`"Aide à la création de logements locatifs très sociaux","IrisCode":` +
-				`"14004240","HousingName":null,"CoproName":null,"RenewProjectName":null`},
+			RespContains: []string{`"ExportedCommitment":[`, `"Year":2015,"Code":"IRIS ",` +
+				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":` +
+				`"2015-04-13T00:00:00Z","CaducityDate":"2018-06-13T00:00:00Z",` +
+				`"Name":"91 - SAVIGNY SUR ORGE`},
 			// cSpell: enable
 			Count:         1,
 			CountItemName: `"ID"`,
