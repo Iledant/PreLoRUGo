@@ -473,7 +473,8 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			RETURN NULL;
 		END;
 	$log_cmt$ LANGUAGE plpgsql;`,
-	`CREATE  TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`,
+	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
 	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`,
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
@@ -482,7 +483,8 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			RETURN NULL;
 		END;
 	$log_cmt$ LANGUAGE plpgsql;`,
-	`CREATE  TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
+	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`,
+	`CREATE TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
 	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`,
 }
 

@@ -12,7 +12,7 @@ import (
 type homeResp struct {
 	Commitment models.TwoYearsCommitments `json:"Commitment"`
 	Payment    models.TwoYearsPayments    `json:"Payment"`
-	ImportLogs models.ImportLogs
+	models.ImportLogs
 }
 
 // GetHome handle the get request for the home page
