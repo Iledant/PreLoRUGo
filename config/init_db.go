@@ -445,7 +445,11 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		insee_code int NOT NULL,
 		year int NOT NULL,
 		ratio double precision NOT NULL
-	);`, // 40 temp_rpls		`
+	);`, // 40 temp_rpls
+	`CREATE TABLE IF NOT EXISTS import_logs(
+		kind int UNIQUE,
+		date date
+	);`,
 }
 
 // createTablesAndViews launches the queries against the database to create all
