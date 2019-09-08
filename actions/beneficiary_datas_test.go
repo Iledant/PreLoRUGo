@@ -16,7 +16,8 @@ func testBeneficiaryDatas(t *testing.T, c *TestContext) {
 	})
 }
 
-// testGetBeneficiaryDatas checks if route is user protected and datas correctly sent back
+// testGetBeneficiaryDatas checks if route is user protected and datas correctly
+// sent back
 func testGetBeneficiaryDatas(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		{Token: "",
@@ -50,7 +51,8 @@ func testGetBeneficiaryDatas(t *testing.T, c *TestContext) {
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/beneficiary/"+strconv.Itoa(tc.ID)+"/datas").
-			WithQueryString(string(tc.Sent)).WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+			WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	chkFactory(t, tcc, f, "GetBeneficiaryDatas")
 }
@@ -80,7 +82,8 @@ func testGetExportBeneficiaryDatas(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Year=2010&Search=`),
 			//cSpell: disable
-			RespContains: []string{`"BeneficiaryData":[`, `"Date"`, `"Value":`, `"IRISCode"`, `"Caducity":`},
+			RespContains: []string{`"BeneficiaryData":[`, `"Date"`, `"Value":`,
+				`"IRISCode"`, `"Caducity":`},
 			//cSpell: enable
 			ID:            3,
 			Count:         1,

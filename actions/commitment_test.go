@@ -92,10 +92,10 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 			Sent: []byte(`Page=2&Year=2010&Search=savigny`),
 			// cSpell: disable
 			RespContains: []string{`"Commitment":[`, `"Code":"IRIS ","Number":469347,` +
-				`"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":"2015-04-13T00:00:00Z",` +
-				`"CaducityDate":"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU` +
-				` - 65 PLUS/PLAI","Value":30000000,"SoldOut":false`,
-				`"Page":1`, `"ItemsCount":1`},
+				`"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":` +
+				`"2015-04-13T00:00:00Z","CaducityDate":"2018-06-13T00:00:00Z","Name":` +
+				`"91 - SAVIGNY SUR ORGE - AV DE LONGJUMEAU - 65 PLUS/PLAI",` +
+				`"Value":30000000,"SoldOut":false`, `"Page":1`, `"ItemsCount":1`},
 			// cSpell: enable
 			Count:         1,
 			CountItemName: `"ID"`,
@@ -125,9 +125,10 @@ func testGetUnlinkedCommitments(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent: []byte(`Page=2&Year=2010&Search=savigny`),
 			// cSpell: disable
-			RespContains: []string{`"Commitment":[`, `"Year":2015,"Code":"IRIS ","Number":469347,` +
-				`"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":"2015-04-13T00:00:00Z"` +
-				`,"CaducityDate":"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE`,
+			RespContains: []string{`"Commitment":[`, `"Year":2015,"Code":"IRIS ",` +
+				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z",` +
+				`"ModificationDate":"2015-04-13T00:00:00Z","CaducityDate":` +
+				`"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE`,
 				`"Page":1`, `"ItemsCount":1`},
 			// cSpell: enable
 			Count:         1,
@@ -159,9 +160,9 @@ func testExportedCommitments(t *testing.T, c *TestContext) {
 			Sent: []byte(`Year=2010&Search=savigny`),
 			// cSpell: disable
 			RespContains: []string{`"ExportedCommitment":[`, `"Year":2015,"Code":"IRIS ",` +
-				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":` +
-				`"2015-04-13T00:00:00Z","CaducityDate":"2018-06-13T00:00:00Z",` +
-				`"Name":"91 - SAVIGNY SUR ORGE`},
+				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z",` +
+				`"ModificationDate":"2015-04-13T00:00:00Z","CaducityDate":` +
+				`"2018-06-13T00:00:00Z","Name":"91 - SAVIGNY SUR ORGE`},
 			// cSpell: enable
 			Count:         1,
 			CountItemName: `"ID"`,
