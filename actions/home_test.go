@@ -22,7 +22,7 @@ func testGetHome(t *testing.T, c *TestContext) {
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
 		{Token: c.Config.Users.User.Token,
-			RespContains:  []string{`"Commitment":`, `"Payment":`},
+			RespContains:  []string{`"Commitment":`, `"Payment":`, `"ImportLog":[`},
 			Count:         0,
 			CountItemName: `"Month"`,
 			StatusCode:    http.StatusOK}, // 1 : ok

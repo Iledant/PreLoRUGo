@@ -32,6 +32,22 @@ func getNames(db *sql.DB, tableType string) ([]string, error) {
 	return tables, nil
 }
 
+// dropTriggersAndFunctions delete triggers and linked functions
+func dropTriggersAndFunctions(db *sql.DB) error {
+	queries := []string{
+		`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`,
+		`DROP FUNCTION IF EXISTS log_cmt();`,
+		`DROP TRIGGER IF EXISTS pmt_stamp ON commitment;`,
+		`DROP FUNCTION IF EXISTS log_pmt();`,
+	}
+	for i, q := range queries {
+		if _, err := db.Exec(q); err != nil {
+			return fmt.Errorf("drop trigger %d query %v", i, err)
+		}
+	}
+	return nil
+}
+
 // dropAllTables delete all table from database for test purpose
 func dropAllTables(db *sql.DB, app *iris.Application) error {
 	views, err := getNames(db, "VIEW")
@@ -50,7 +66,7 @@ func dropAllTables(db *sql.DB, app *iris.Application) error {
 	}
 	if len(tables) > 0 {
 		if _, err = db.Exec("drop table " + strings.Join(tables, ",")); err != nil {
-			return fmt.Errorf("drp tables : %v", err)
+			return fmt.Errorf("drop tables : %v", err)
 		}
 		app.Logger().Infof("%d tables dropped", len(views))
 	}
@@ -450,6 +466,24 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		kind int UNIQUE,
 		date date
 	);`,
+	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
+		BEGIN
+			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
+			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
+			RETURN NULL;
+		END;
+	$log_cmt$ LANGUAGE plpgsql;`,
+	`CREATE  TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`,
+	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
+		BEGIN
+			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)
+			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
+			RETURN NULL;
+		END;
+	$log_cmt$ LANGUAGE plpgsql;`,
+	`CREATE  TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
+	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`,
 }
 
 // createTablesAndViews launches the queries against the database to create all
