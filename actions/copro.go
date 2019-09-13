@@ -12,7 +12,7 @@ import (
 type getCoprosResp struct {
 	models.Copros
 	models.Cities
-	models.PreProgs
+	models.FcPreProgs
 	models.Commissions
 	models.BudgetActions
 }
@@ -28,7 +28,7 @@ func GetCopros(ctx iris.Context) {
 	}
 	if err := resp.Cities.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Liste des copropriétés, copros : " + err.Error()})
+		ctx.JSON(jsonError{"Liste des copropriétés, communes : " + err.Error()})
 		return
 	}
 	if err := resp.Commissions.GetAll(db); err != nil {
@@ -42,7 +42,7 @@ func GetCopros(ctx iris.Context) {
 		return
 	}
 	year := (int64)(time.Now().Year())
-	if err := resp.PreProgs.GetAllOfKind(year, models.KindCopro, db); err != nil {
+	if err := resp.FcPreProgs.GetAllOfKind(year, models.KindCopro, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liste des copropriétés, requête préprogrammation : " + err.Error()})
 		return

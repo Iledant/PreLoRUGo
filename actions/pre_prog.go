@@ -37,11 +37,11 @@ func GetCoproPreProgs(ctx iris.Context) {
 		ctx.JSON(jsonError{"Préprogrammation copro d'une année, décodage : " + err.Error()})
 		return
 	}
-	var resp models.PreProgs
+	var resp models.FcPreProgs
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetAllOfKind(year, models.KindCopro, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Préprogrammation copro d'une année, requête batch: " + err.Error()})
+		ctx.JSON(jsonError{"Préprogrammation copro d'une année, requête : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
@@ -57,7 +57,7 @@ func GetRPPreProgs(ctx iris.Context) {
 		ctx.JSON(jsonError{"Préprogrammation RU d'une année, décodage : " + err.Error()})
 		return
 	}
-	var resp models.PreProgs
+	var resp models.FcPreProgs
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetAllOfKind(year, models.KindRenewProject, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
@@ -77,7 +77,7 @@ func GetHousingPreProgs(ctx iris.Context) {
 		ctx.JSON(jsonError{"Préprogrammation logement d'une année, décodage : " + err.Error()})
 		return
 	}
-	var resp models.PreProgs
+	var resp models.FcPreProgs
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetAllOfKind(year, models.KindHousing, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)

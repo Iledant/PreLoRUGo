@@ -168,7 +168,7 @@ type renewProjectsResp struct {
 	models.RPEventTypes
 	models.Commissions
 	models.BudgetActions
-	models.PreProgs
+	models.FcPreProgs
 }
 
 // GetRenewProjects handles the get request to handle all renew projets. In order
@@ -203,7 +203,7 @@ func GetRenewProjects(ctx iris.Context) {
 		return
 	}
 	year := (int64)(time.Now().Year())
-	if err := resp.PreProgs.GetAllOfKind(year, models.KindRenewProject, db); err != nil {
+	if err := resp.FcPreProgs.GetAllOfKind(year, models.KindRenewProject, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête préprogrammation : " + err.Error()})
 		return

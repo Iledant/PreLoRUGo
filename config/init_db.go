@@ -465,17 +465,17 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	`CREATE TABLE IF NOT EXISTS import_logs(
 		kind int UNIQUE,
 		date date
-	);`,
+	);`, // 41
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`,
-	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`,
+	$log_cmt$ LANGUAGE plpgsql;`, // 42
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 43
 	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`,
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 44
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)

@@ -98,11 +98,8 @@ func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.CoproUser.Token,
 			Params: `Year=2019`,
-			RespContains: []string{`"PreProg":[{"ID":3,"Year":2019,"CommissionID":2,` +
-				`"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test",` +
-				`"Value":1000000,"Kind":2,"KindID":5,"KindName":"Copro Test",` +
-				`"Comment":null,"ActionID":2,"ActionCode":15400403,"ActionName":` +
-				`"Aide aux copropriétés en difficulté"}]`},
+			RespContains: []string{`"FcPreProg":[`, `"KindName":"Copro Test"`,
+				`"ForecastValue"`, `"PreProgValue"`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -190,11 +187,8 @@ func testGetHousingPreProgs(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.HousingUser.Token,
 			Params: `Year=2019`,
-			RespContains: []string{`"PreProg":[{"ID":6,"Year":2019,"CommissionID":2,` +
-				`"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test",` +
-				`"Value":1000000,"Kind":1,"KindID":null,"KindName":null,` +
-				`"Comment":null,"ActionID":3,"ActionCode":15400202,"ActionName":` +
-				`"Aide à la création de logements locatifs sociaux"}]`},
+			RespContains: []string{`"FcPreProg":[`, `"ActionCode":15400202`,
+				`"KindName":null`, `"ForecastValue":`, `"PreProgValue":`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -282,11 +276,8 @@ func testGetRPPreProgs(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.RenewProjectUser.Token,
 			Params: `Year=2019`,
-			RespContains: []string{`"PreProg":[{"ID":9,"Year":2019,"CommissionID":2,` +
-				`"CommissionDate":"2018-03-01T00:00:00Z","CommissionName":"Commission test",` +
-				`"Value":2000000,"Kind":3,"KindID":2,"KindName":"Site RU 1",` +
-				`"Comment":null,"ActionID":4,"ActionCode":15400203,"ActionName":` +
-				`"Aide à la création de logements locatifs très sociaux"}]`},
+			RespContains: []string{`"FcPreProg":[`, `"KindName":"Site RU 1"`,
+				`"ForecastValue":`, `"PreProgValue":2000000`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
