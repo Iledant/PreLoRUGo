@@ -99,7 +99,7 @@ type HousingsDatasResp struct {
 	models.BudgetActions
 	models.Commissions
 	models.HousingForecasts
-	models.PreProgs
+	models.FcPreProgs
 }
 
 // GetHousingsDatas handles the get request to fetch all datas for the frontend page
@@ -134,7 +134,7 @@ func GetHousingsDatas(ctx iris.Context) {
 		return
 	}
 	year := (int64)(time.Now().Year())
-	if err := resp.PreProgs.GetAllOfKind(year, models.KindHousing, db); err != nil {
+	if err := resp.FcPreProgs.GetAllOfKind(year, models.KindHousing, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données logement, requête préprogrammation : " + err.Error()})
 		return
