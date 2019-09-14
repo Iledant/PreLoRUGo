@@ -71,7 +71,7 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
 	 FROM p
 		FULL OUTER JOIN
 		(SELECT DISTINCT COALESCE(pp.commission_id,hf.commission_id) AS commission_id,
-			pp.value AS pre_prog_value,pp.kind,pp.comment AS pre_prog_comment,
+			pp.value AS pre_prog_value,pp.comment AS pre_prog_comment,
 			COALESCE(pp.action_id,hf.action_id) AS action_id,hf.value AS forecast_value,
 			hf.comment AS forecast_comment
  		FROM pp 
@@ -81,8 +81,8 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
  		JOIN commission co ON hf.commission_id=co.id
  		WHERE extract(year FROM co.date) = $1) hf
  		ON pp.commission_id=hf.commission_id AND pp.action_id=hf.action_id
- 		WHERE pp.kind=1) pre
- 	ON p.commission_id=pre.commission_id AND p.kind=pre.kind AND p.action_id=pre.action_id
+ 		WHERE pp.kind=1 OR pp.kind ISNULL) pre
+ 	ON p.commission_id=pre.commission_id AND p.action_id=pre.action_id
  	WHERE p.kind ISNULL or p.kind=1
 
 	UNION ALL
@@ -115,7 +115,7 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
  			JOIN copro c ON cf.copro_id=c.id
  			WHERE extract(year FROM co.date) = $1) cf
 		ON pp.commission_id=cf.commission_id AND pp.action_id=cf.action_id AND pp.kind_id=cf.kind_id
- 		WHERE pp.kind=2
+ 		WHERE pp.kind=2 OR pp.kind ISNULL
  		) pre
  		ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id AND pc.kind_id=pre.kind_id
  		WHERE pc.kind ISNULL or pc.kind=2
@@ -150,7 +150,7 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
  				JOIN renew_project rp ON rf.renew_project_id=rp.id
  				WHERE extract(year FROM co.date) = $1) rf
  			ON pp.commission_id=rf.commission_id AND pp.action_id=rf.action_id AND pp.kind_id=rf.kind_id
-			WHERE pp.kind=3
+			WHERE pp.kind=3 OR pp.kind ISNULL
 		) pre
  		ON pc.commission_id=pre.commission_id AND pc.action_id=pre.action_id AND pc.kind_id=pre.kind_id
   	WHERE pc.kind ISNULL or pc.kind=3
