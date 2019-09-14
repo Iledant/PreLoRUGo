@@ -101,7 +101,7 @@ func testGetProg(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Params: `Year=2019`,
 			RespContains: []string{`"Prog":[`, `"Kind":1`, `"Kind":2`, `"Kind":3`,
-				`"commentaire RU"`, `"Value":1000000`},
+				`"commentaire RU"`, `"Value":1000000`, `"ForecastValue"`, `"PreProgValue"`},
 			Count:         4,
 			CountItemName: `"Kind"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
