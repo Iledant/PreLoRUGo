@@ -257,7 +257,7 @@ func testGetHousingsDatas(t *testing.T, c *TestContext, ID int) {
 				`"2018-03-01T00:00:00Z","CommissionName":"Commission test","Value":200,` +
 				`"Comment":"Batch2","ActionID":4,"ActionName":"Aide à la création de ` +
 				`logements locatifs très sociaux"}]`,
-				`"Housing":[`, `"City":[`, `"BudgetAction":[`, `"Commission":[`, `"PreProg":[`},
+				`"Housing":[`, `"City":[`, `"BudgetAction":[`, `"Commission":[`, `"FcPreProg":[`},
 			Count:      1,
 			StatusCode: http.StatusOK}, // 1 : ok
 	}
