@@ -12,6 +12,7 @@ import (
 type homeResp struct {
 	Commitment models.TwoYearsCommitments `json:"Commitment"`
 	Payment    models.TwoYearsPayments    `json:"Payment"`
+	models.CumulatedProgrammation
 	models.ImportLogs
 }
 
@@ -25,6 +26,11 @@ func GetHome(ctx iris.Context) {
 		return
 	}
 	if err := resp.Payment.Get(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Home requête paiement : " + err.Error()})
+		return
+	}
+	if err := resp.CumulatedProgrammation.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Home requête paiement : " + err.Error()})
 		return

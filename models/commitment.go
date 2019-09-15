@@ -564,14 +564,24 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 
 // Get fetches all commitments per year for the current and the previous years
 func (t *TwoYearsCommitments) Get(db *sql.DB) error {
-	var row MonthCumulatedValue
-	rows, err := db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
-	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
-	FROM commitment WHERE year=extract(year FROM CURRENT_DATE) GROUP BY 1) q`)
+	query := `WITH cmt_month as (
+		select max(extract(month from creation_date))::int as max_month
+		from commitment where year=$1)
+	select cmt.m,sum(0.01 * cmt.v) OVER (ORDER BY m) from
+	(select q.m as m,COALESCE(sum_cmt.v,0) as v FROM
+	(select generate_series(1,max_month) AS m from cmt_month) q
+	LEFT OUTER JOIN
+	(select extract(month from creation_date)::int as m,sum(value)::bigint as v
+	FROM commitment WHERE year=$1
+	GROUP BY 1) sum_cmt
+	ON sum_cmt.m=q.m) cmt;`
+	actualYear := time.Now().Year()
+	rows, err := db.Query(query, actualYear)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
+	var row MonthCumulatedValue
 	for rows.Next() {
 		if err = rows.Scan(&row.Month, &row.Value); err != nil {
 			return err
@@ -585,9 +595,7 @@ func (t *TwoYearsCommitments) Get(db *sql.DB) error {
 	if len(t.CurrentYear) == 0 {
 		t.CurrentYear = []MonthCumulatedValue{}
 	}
-	rows, err = db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
-	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
-	FROM commitment WHERE year=extract(year FROM CURRENT_DATE)-1 GROUP BY 1) q`)
+	rows, err = db.Query(query, actualYear-1)
 	if err != nil {
 		return err
 	}

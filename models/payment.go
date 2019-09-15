@@ -358,10 +358,20 @@ func (p *ExportedPayments) Get(db *sql.DB, q *ExportQuery) error {
 
 // Get fetches all payments per year for the current and the previous years
 func (t *TwoYearsPayments) Get(db *sql.DB) error {
+	query := `WITH pmt_month as (
+		select max(extract(month from creation_date))::int as max_month
+		from commitment where year=$1)
+	select pmt.m,sum(0.01 * pmt.v) OVER (ORDER BY m) from
+	(select q.m as m,COALESCE(sum_pmt.v,0) as v FROM
+	(select generate_series(1,max_month) AS m from pmt_month) q
+	LEFT OUTER JOIN
+	(select extract(month from creation_date)::int as m,sum(value)::bigint as v
+	FROM payment WHERE year=$1
+	GROUP BY 1) sum_pmt
+	ON sum_pmt.m=q.m) pmt;`
+	actualYear := time.Now().Year()
 	var row MonthCumulatedValue
-	rows, err := db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
-	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
-	FROM payment WHERE year=extract(year FROM CURRENT_DATE) GROUP BY 1) q`)
+	rows, err := db.Query(query, actualYear)
 	if err != nil {
 		return err
 	}
@@ -379,9 +389,7 @@ func (t *TwoYearsPayments) Get(db *sql.DB) error {
 	if len(t.CurrentYear) == 0 {
 		t.CurrentYear = []MonthCumulatedValue{}
 	}
-	rows, err = db.Query(`SELECT q.m,SUM(q.v) OVER (ORDER BY m) FROM
-	(SELECT EXTRACT(MONTH FROM modification_date) as m,sum(value*0.01) as v
-	FROM payment WHERE year=extract(year FROM CURRENT_DATE)-1 GROUP BY 1) q`)
+	rows, err = db.Query(query, actualYear-1)
 	if err != nil {
 		return err
 	}
