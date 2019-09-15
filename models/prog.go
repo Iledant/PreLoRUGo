@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/lib/pq"
 )
@@ -52,6 +53,11 @@ type ProgBatch struct {
 // years with programmation data in the database
 type ProgYears struct {
 	Years []int64 `json:"ProgYear"`
+}
+
+// CumulatedProgrammation is used for json export
+type CumulatedProgrammation struct {
+	Programmation []MonthCumulatedValue `json:"Programmation"`
 }
 
 // GetAll fetches all Prog of a given year from the database
@@ -258,4 +264,41 @@ func (p *ProgYears) GetAll(db *sql.DB) error {
 		p.Years = []int64{}
 	}
 	return err
+}
+
+// GetAll fetches all cumulated programmation value of the current year
+func (c *CumulatedProgrammation) GetAll(db *sql.DB) error {
+	query := `WITH prg_month as (
+		select max(extract(month from c.date))::int as max_month
+		from prog,commission c 
+		where prog.year=$1 and prog.commission_id=c.id)
+	SELECT prg.m,SUM(0.01 * prg.v) OVER (ORDER BY m) FROM
+	(SELECT q.m as m,COALESCE(prg.v,0) as v FROM
+	(SELECT generate_series(1,max_month) AS m from prg_month) q
+	LEFT OUTER JOIN
+	(SELECT EXTRACT(month FROM c.date)::int AS m,sum(prog.value)::bigint AS v FROM
+	prog,commission c WHERE prog.year=$1 AND prog.commission_id=c.id
+	GROUP BY 1) prg
+	ON q.m=prg.m) prg;`
+	actualYear := time.Now().Year()
+	rows, err := db.Query(query, actualYear)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	var row MonthCumulatedValue
+	for rows.Next() {
+		if err = rows.Scan(&row.Month, &row.Value); err != nil {
+			return err
+		}
+		c.Programmation = append(c.Programmation, row)
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	if len(c.Programmation) == 0 {
+		c.Programmation = []MonthCumulatedValue{}
+	}
+	return nil
 }
