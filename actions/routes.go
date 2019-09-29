@@ -136,6 +136,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	housingUserParty.Get("/pre_prog/housing", GetHousingPreProgs)
 	housingUserParty.Post("/pre_prog/housing", SetHousingPreProgs)
 
+	housingUserParty.Post("/housing_summary", BatchHousingSummary)
+
 	userParty := api.Party("", ActiveMiddleware)
 	userParty.Post("/user/password", ChangeUserPwd)
 	userParty.Post("/user/logout", Logout)

@@ -465,7 +465,23 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	`CREATE TABLE IF NOT EXISTS import_logs(
 		kind int UNIQUE,
 		date date
-	);`, // 41
+	);`, // 41 import_logs
+	`CREATE TABLE IF NOT EXISTS temp_housing_summary(
+		reference_code varchar(150),
+		iris_code varchar(20),
+		pls int,
+		plai int,
+		plus int,
+		anru boolean,
+		insee_code int REFERENCES city(insee_code)
+	);`, // 42 temp_housing_summary
+	`CREATE TABLE IF NOT EXISTS housing_summary(
+		id SERIAL PRIMARY KEY,
+		year int NOT NULL,
+		housing_ref varchar(100) NOT NULL,
+		import_ref varchar(150) NOT NULL,
+		iris_code varchar(20) NOT NULL
+	);`, // 43 housing_summary
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
