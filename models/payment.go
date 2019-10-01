@@ -360,7 +360,7 @@ func (p *ExportedPayments) Get(db *sql.DB, q *ExportQuery) error {
 func (t *TwoYearsPayments) Get(db *sql.DB) error {
 	query := `WITH pmt_month as (
 		select max(extract(month from creation_date))::int as max_month
-		from commitment where year=$1)
+		from payment where year=$1)
 	select pmt.m,sum(0.01 * pmt.v) OVER (ORDER BY m) from
 	(select q.m as m,COALESCE(sum_pmt.v,0) as v FROM
 	(select generate_series(1,max_month) AS m from pmt_month) q
