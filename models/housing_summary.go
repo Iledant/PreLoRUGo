@@ -121,7 +121,7 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 	}
 	defer rows.Close()
 	var hsg Housing
-	var hsgs []Housing
+	var hh []Housing
 	var ref, irisCode string
 	var dpt int
 	for rows.Next() {
@@ -132,10 +132,10 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 		}
 		dpt = int(hsg.ZipCode.Int64 / 1000)
 		hsg.Reference = fmt.Sprintf("LLS%d%d%03d", dpt, decade, maxDptRef[dpt]+1)
-		hsgs = append(hsgs, hsg)
+		hh = append(hh, hsg)
 		maxDptRef[dpt]++
 	}
-	for _, hsg = range hsgs {
+	for _, hsg = range hh {
 		if _, err = tx.Exec(`INSERT INTO housing (reference,address,zip_code,plai,
 			plus,pls,anru) VALUES($1,$2,$3,$4,$5,$6,$7)`, hsg.Reference, hsg.Address,
 			hsg.ZipCode, hsg.PLAI, hsg.PLUS, hsg.PLS, hsg.ANRU); err != nil {
