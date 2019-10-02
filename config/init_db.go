@@ -468,6 +468,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	);`, // 41 import_logs
 	`CREATE TABLE IF NOT EXISTS temp_housing_summary(
 		reference_code varchar(150),
+		address varchar(150),
 		iris_code varchar(20),
 		pls int,
 		plai int,

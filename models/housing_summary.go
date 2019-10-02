@@ -111,7 +111,7 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 		tx.Rollback()
 		return err
 	}
-	rows, err := tx.Query(`SELECT reference,iris_code,insee_code,address,pls,
+	rows, err := tx.Query(`SELECT reference_code,iris_code,insee_code,address,pls,
 		plai,plus,anru FROM temp_housing_summary 
 	WHERE (reference_code,$1) NOT IN
 		(SELECT reference_code,year FROM housing_summary WHERE year=$1)`, year)
@@ -119,7 +119,9 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 		tx.Rollback()
 		return fmt.Errorf("select temp_housing_summary %v", err)
 	}
+	defer rows.Close()
 	var hsg Housing
+	var hsgs []Housing
 	var ref, irisCode string
 	var dpt int
 	for rows.Next() {
@@ -129,7 +131,11 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 			return fmt.Errorf("scan temp_housing_summary %v", err)
 		}
 		dpt = int(hsg.ZipCode.Int64 / 1000)
-		hsg.Reference = fmt.Sprintf("LLS%d%03d", dpt, maxDptRef[dpt]+1)
+		hsg.Reference = fmt.Sprintf("LLS%d%d%03d", dpt, decade, maxDptRef[dpt]+1)
+		hsgs = append(hsgs, hsg)
+		maxDptRef[dpt]++
+	}
+	for _, hsg = range hsgs {
 		if _, err = tx.Exec(`INSERT INTO housing (reference,address,zip_code,plai,
 			plus,pls,anru) VALUES($1,$2,$3,$4,$5,$6,$7)`, hsg.Reference, hsg.Address,
 			hsg.ZipCode, hsg.PLAI, hsg.PLUS, hsg.PLS, hsg.ANRU); err != nil {
@@ -142,7 +148,6 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 			tx.Rollback()
 			return fmt.Errorf("insert housing_summary %v", err)
 		}
-		maxDptRef[dpt]++
 	}
 	queries := []string{
 		`UPDATE commitment SET housing_id=q.housing_id, 

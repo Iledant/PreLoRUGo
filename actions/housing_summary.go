@@ -20,7 +20,7 @@ func BatchHousingSummary(ctx iris.Context) {
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := req.Save(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Batch de bilan logements, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Batch de bilan logements, requête : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
