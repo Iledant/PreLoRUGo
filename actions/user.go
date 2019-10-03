@@ -286,18 +286,13 @@ func ChangeUserPwd(ctx iris.Context) {
 	ctx.JSON(jsonError{"Mot de passe changé"})
 }
 
-// getUserRoleAndID fetch user role and ID with the token
+// getUserID fetch user role and ID with the token
 func getUserID(ctx iris.Context) (uID int64, err error) {
 	u := ctx.Values().Get("userID")
-	r := ctx.Values().Get("rights")
-	if u == nil || r == nil {
+	if u == nil {
 		return 0, errors.New("Utilisateur non enregistré")
 	}
 	uID = int64(u.(int))
-	rights := r.(int64)
-	if rights&models.SuperAdminBit != 0 || rights&models.AdminBit != 0 {
-		uID = 0
-	}
 	return uID, nil
 }
 
