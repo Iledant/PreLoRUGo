@@ -77,6 +77,18 @@ func fetchMaxDptRef(decade int, tx *sql.Tx) (map[int]int, error) {
 	return maxDptRef, nil
 }
 
+type composedHousing struct {
+	SummaryRef string
+	HousingRef string
+	IRISCode   string
+	ZipCode    int64
+	Address    string
+	PLS        int64
+	PLUS       int64
+	PLAI       int64
+	ANRU       bool
+}
+
 // Save import a housing summary batch, validates it and process it to create
 // new housing lines
 func (h *HousingSummary) Save(db *sql.DB) error {
@@ -120,31 +132,30 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 		return fmt.Errorf("select temp_housing_summary %v", err)
 	}
 	defer rows.Close()
-	var hsg Housing
-	var hh []Housing
-	var ref, irisCode string
+	var hsg composedHousing
+	var hh []composedHousing
 	var dpt int
 	for rows.Next() {
-		if err = rows.Scan(&ref, &irisCode, &hsg.ZipCode, &hsg.Address, &hsg.PLS,
-			&hsg.PLAI, &hsg.PLUS, &hsg.ANRU); err != nil {
+		if err = rows.Scan(&hsg.SummaryRef, &hsg.IRISCode, &hsg.ZipCode, &hsg.Address,
+			&hsg.PLS, &hsg.PLAI, &hsg.PLUS, &hsg.ANRU); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scan temp_housing_summary %v", err)
 		}
-		dpt = int(hsg.ZipCode.Int64 / 1000)
-		hsg.Reference = fmt.Sprintf("LLS%d%d%03d", dpt, decade, maxDptRef[dpt]+1)
+		dpt = int(hsg.ZipCode / 1000)
+		hsg.HousingRef = fmt.Sprintf("LLS%d%d%03d", dpt, decade, maxDptRef[dpt]+1)
 		hh = append(hh, hsg)
 		maxDptRef[dpt]++
 	}
 	for _, hsg = range hh {
 		if _, err = tx.Exec(`INSERT INTO housing (reference,address,zip_code,plai,
-			plus,pls,anru) VALUES($1,$2,$3,$4,$5,$6,$7)`, hsg.Reference, hsg.Address,
+			plus,pls,anru) VALUES($1,$2,$3,$4,$5,$6,$7)`, hsg.HousingRef, hsg.Address,
 			hsg.ZipCode, hsg.PLAI, hsg.PLUS, hsg.PLS, hsg.ANRU); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insert housing %v", err)
 		}
 		if _, err = tx.Exec(`INSERT INTO housing_summary (year,housing_ref,
-			import_ref,iris_code) VALUES($1,$2,$3,$4)`, year, hsg.Reference, ref,
-			irisCode); err != nil {
+			import_ref,iris_code) VALUES($1,$2,$3,$4)`, year, hsg.HousingRef,
+			hsg.SummaryRef, hsg.IRISCode); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insert housing_summary %v", err)
 		}
