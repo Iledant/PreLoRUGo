@@ -87,11 +87,12 @@ COALESCE(pp.kind_id,rf.renew_project_id),COALESCE(pp.rp_name,rf.rp_name),rf.id,
 rf.value,rf.comment,pp.id,pp.value,pp.comment
 FROM
 (SELECT DISTINCT pp.ID,pp.commission_id,c.date,
-c.name,pp.value,pp.comment,pp.action_id,pp.kind_id,rp.name as rp_name,b.code,b.name as action_name
+c.name,pp.value,pp.comment,pp.action_id,pp.kind_id,city.name || ' - ' || rp.name as rp_name,b.code,b.name as action_name
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
 JOIN renew_project rp ON pp.kind_id=rp.id
+JOIN city ON rp.city_code1=city.insee_code
 WHERE pp.kind=3 AND pp.year=$1) pp
 FULL OUTER JOIN
 (SELECT rf.id,rf.commission_id,c.date,c.name,rf.value,rf.comment,rf.action_id,

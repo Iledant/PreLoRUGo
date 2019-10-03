@@ -276,7 +276,7 @@ func testGetRPPreProgs(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.RenewProjectUser.Token,
 			Params: `Year=2019`,
-			RespContains: []string{`"FcPreProg":[`, `"KindName":"Site RU 1"`,
+			RespContains: []string{`"FcPreProg":[`, `"KindName":"PARIS 1 - Site RU 1"`,
 				`"ForecastValue":`, `"PreProgValue":2000000`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
