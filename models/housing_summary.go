@@ -80,13 +80,17 @@ func fetchMaxDptRef(decade int, tx *sql.Tx) (map[int]int, error) {
 type composedHousing struct {
 	SummaryRef string
 	HousingRef string
-	IRISCode   string
 	ZipCode    int64
 	Address    string
 	PLS        int64
 	PLUS       int64
 	PLAI       int64
 	ANRU       bool
+}
+
+type refsIRIS struct {
+	SummaryRef string
+	HousingRef string
 }
 
 // Save import a housing summary batch, validates it and process it to create
@@ -123,10 +127,11 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 		tx.Rollback()
 		return err
 	}
-	rows, err := tx.Query(`SELECT reference_code,iris_code,insee_code,address,pls,
-		plai,plus,anru FROM temp_housing_summary 
-	WHERE (reference_code,$1) NOT IN
-		(SELECT reference_code,year FROM housing_summary WHERE year=$1)`, year)
+	rows, err := tx.Query(`SELECT reference_code,insee_code,max(address),SUM(pls),
+		SUM(plai),SUM(plus),bool_or(anru) FROM temp_housing_summary 
+	WHERE reference_code NOT IN
+		(SELECT reference_code FROM housing_summary WHERE year=$1)
+		GROUP BY 1,2`, year)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("select temp_housing_summary %v", err)
@@ -136,7 +141,7 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 	var hh []composedHousing
 	var dpt int
 	for rows.Next() {
-		if err = rows.Scan(&hsg.SummaryRef, &hsg.IRISCode, &hsg.ZipCode, &hsg.Address,
+		if err = rows.Scan(&hsg.SummaryRef, &hsg.ZipCode, &hsg.Address,
 			&hsg.PLS, &hsg.PLAI, &hsg.PLUS, &hsg.ANRU); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("scan temp_housing_summary %v", err)
@@ -154,8 +159,8 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 			return fmt.Errorf("insert housing %v", err)
 		}
 		if _, err = tx.Exec(`INSERT INTO housing_summary (year,housing_ref,
-			import_ref,iris_code) VALUES($1,$2,$3,$4)`, year, hsg.HousingRef,
-			hsg.SummaryRef, hsg.IRISCode); err != nil {
+			import_ref,iris_code) SELECT $1,$2::varchar,$3::varchar,iris_code FROM temp_housing_summary 
+			WHERE reference_code=$3`, year, hsg.HousingRef, hsg.SummaryRef); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insert housing_summary %v", err)
 		}
