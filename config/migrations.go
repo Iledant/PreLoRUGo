@@ -53,7 +53,7 @@ var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar
 		ADD COLUMN project varchar(150) DEFAULT NULL`, // 15
 	`ALTER TABLE copro_forecast
 		ADD COLUMN project varchar(150) DEFAULT NULL`, // 16
-	`ALTER TABLE copro_project_forecast
+	`ALTER TABLE temp_copro_forecast
 		ADD COLUMN project varchar(150) DEFAULT NULL`, // 17
 }
 
