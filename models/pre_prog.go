@@ -17,13 +17,13 @@ const KindCopro = 2
 const KindRenewProject = 3
 
 const preProgHousingQry = `SELECT DISTINCT pp.ID,pp.year,pp.commission_id,c.date,
-c.name,pp.value,pp.kind,NULL::int,NULL::varchar(150),pp.comment,pp.action_id,b.code,b.name 
+c.name,pp.value,pp.kind,NULL::int,NULL::varchar(150),pp.project,pp.comment,pp.action_id,b.code,b.name 
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
 WHERE pp.kind=1 AND pp.year=$1`
 const preProgCoproQry = `SELECT DISTINCT pp.ID,pp.year,pp.commission_id,c.date,
-c.name, pp.value,pp.kind,pp.kind_id,copro.name,pp.comment,pp.action_id,b.code,
+c.name, pp.value,pp.kind,pp.kind_id,copro.name,pp.project,pp.comment,pp.action_id,b.code,
 b.name 
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
@@ -31,7 +31,7 @@ JOIN budget_action b ON b.id=pp.action_id
 LEFT JOIN copro ON copro.id=pp.kind_id
 WHERE pp.kind=2 AND pp.year=$1`
 const preProgRPQry = `SELECT DISTINCT pp.ID,pp.year,pp.commission_id,c.date,
-c.name,pp.value,pp.kind,pp.kind_id,rp.name,pp.comment,pp.action_id,b.code,b.name 
+c.name,pp.value,pp.kind,pp.kind_id,rp.name,pp.project,pp.comment,pp.action_id,b.code,b.name 
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
@@ -41,7 +41,8 @@ WHERE pp.kind=3 AND pp.year=$1`
 const fcPreProgHousingQry = `SELECT COALESCE(pp.commission_id,hf.commission_id),
 COALESCE(pp.date,hf.date), COALESCE(pp.name,hf.name),COALESCE(pp.action_id,hf.action_id),
 COALESCE(pp.code,hf.code),COALESCE(pp.action_name,hf.action_name),
-NULL::int,NULL::varchar(150),hf.id,hf.value,hf.comment,pp.id,pp.value,pp.comment
+NULL::int,NULL::varchar(150),hf.id,hf.value,NULL::varchar(150),hf.comment,pp.id,pp.value,
+NULL::varchar(150),pp.comment
 FROM
 (SELECT DISTINCT pp.ID,pp.commission_id,c.date,
 c.name,pp.value,pp.comment,pp.action_id,b.code,b.name as action_name
@@ -61,17 +62,18 @@ ON pp.commission_id=hf.commission_id AND pp.action_id=hf.action_id`
 const fcPreProgCoproQry = `SELECT DISTINCT COALESCE(pp.commission_id,cf.commission_id),
 COALESCE(pp.date,cf.date),COALESCE(pp.name,cf.name),COALESCE(pp.action_id,cf.action_id),
 COALESCE(pp.code,cf.code),COALESCE(pp.action_name,cf.action_name),COALESCE(pp.kind_id,cf.copro_id),
-COALESCE(pp.copro_name,cf.copro_name),cf.id,cf.value,cf.comment,pp.id,pp.value,pp.comment
+COALESCE(pp.copro_name,cf.copro_name),cf.id,cf.value,cf.project,cf.comment,pp.id,
+pp.value,pp.project,pp.comment
 FROM
 (SELECT DISTINCT pp.ID,pp.commission_id,c.date,
-c.name,pp.value,pp.comment,pp.action_id,pp.kind_id,co.name as copro_name,b.code,b.name as action_name
+c.name,pp.value,pp.project,pp.comment,pp.action_id,pp.kind_id,co.name as copro_name,b.code,b.name as action_name
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
 JOIN copro co ON pp.kind_id=co.id
 WHERE pp.kind=2 AND pp.year=$1) pp
 FULL OUTER JOIN
-(SELECT cf.id,cf.commission_id,c.date,c.name,cf.value,cf.comment,cf.action_id,
+(SELECT cf.id,cf.commission_id,c.date,c.name,cf.value,cf.project,cf.comment,cf.action_id,
 cf.copro_id,co.name as copro_name,b.code,b.name  as action_name
 FROM copro_forecast cf
 JOIN commission c ON c.id=cf.commission_id
@@ -84,10 +86,10 @@ const fcPreProgRPQry = `SELECT DISTINCT COALESCE(pp.commission_id,rf.commission_
 COALESCE(pp.date,rf.date),COALESCE(pp.name,rf.name),COALESCE(pp.action_id,rf.action_id),
 COALESCE(pp.code,rf.code),COALESCE(pp.action_name,rf.action_name),
 COALESCE(pp.kind_id,rf.renew_project_id),COALESCE(pp.rp_name,rf.rp_name),rf.id,
-rf.value,rf.comment,pp.id,pp.value,pp.comment
+rf.value,rf.project,rf.comment,pp.id,pp.value,pp.project,pp.comment
 FROM
 (SELECT DISTINCT pp.ID,pp.commission_id,c.date,
-c.name,pp.value,pp.comment,pp.action_id,pp.kind_id,city.name || ' - ' || rp.name as rp_name,b.code,b.name as action_name
+c.name,pp.value,pp.project,pp.comment,pp.action_id,pp.kind_id,city.name || ' - ' || rp.name as rp_name,b.code,b.name as action_name
 FROM pre_prog pp
 JOIN commission c ON c.id=pp.commission_id
 JOIN budget_action b ON b.id=pp.action_id
@@ -95,7 +97,7 @@ JOIN renew_project rp ON pp.kind_id=rp.id
 JOIN city ON rp.city_code1=city.insee_code
 WHERE pp.kind=3 AND pp.year=$1) pp
 FULL OUTER JOIN
-(SELECT rf.id,rf.commission_id,c.date,c.name,rf.value,rf.comment,rf.action_id,
+(SELECT rf.id,rf.commission_id,c.date,c.name,rf.value,rf.project,rf.comment,rf.action_id,
 rf.renew_project_id,rp.name as rp_name,b.code,b.name  as action_name
 FROM renew_project_forecast rf
 JOIN commission c ON c.id=rf.commission_id
@@ -118,6 +120,7 @@ type PreProg struct {
 	Kind           int64      `json:"Kind"`
 	KindID         NullInt64  `json:"KindID"`
 	KindName       NullString `json:"KindName"`
+	KindProject    NullString `json:"KindProject"`
 	Comment        NullString `json:"Comment"`
 	ActionID       int64      `json:"ActionID"`
 	ActionCode     int64      `json:"ActionCode"`
@@ -141,10 +144,12 @@ type FcPreProg struct {
 	KindName        NullString `json:"KindName"`
 	ForecastID      NullInt64  `json:"ForecastID"`
 	ForecastValue   NullInt64  `json:"ForecastValue"`
-	ForecastComment NullString `json:"ForecastString"`
+	ForecastComment NullString `json:"ForecastComment"`
+	ForecastProject NullString `json:"ForecastProject"`
 	PreProgID       NullInt64  `json:"PreProgID"`
 	PreProgValue    NullInt64  `json:"PreProgValue"`
 	PreProgComment  NullString `json:"PreProgComment"`
+	PreProgProject  NullString `json:"PreProgProject"`
 }
 
 // FcPreProgs embeddes an array of FcPreProg for json export
@@ -159,6 +164,7 @@ type PreProgLine struct {
 	Value        int64      `json:"Value"`
 	KindID       NullInt64  `json:"KindID"`
 	Comment      NullString `json:"Comment"`
+	Project      NullString `json:"Project"`
 	ActionID     int64      `json:"ActionID"`
 }
 
@@ -178,7 +184,7 @@ func (p *PreProgs) GetAll(year int64, db *sql.DB) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Kind, &row.KindID, &row.KindName,
-			&row.Comment, &row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
+			&row.KindProject, &row.Comment, &row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
 			return err
 		}
 		p.PreProgs = append(p.PreProgs, row)
@@ -210,7 +216,7 @@ func (p *PreProgs) GetAllOfKind(year int64, kind int64, db *sql.DB) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Year, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Kind, &row.KindID, &row.KindName,
-			&row.Comment, &row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
+			&row.KindProject, &row.Comment, &row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
 			return err
 		}
 		p.PreProgs = append(p.PreProgs, row)
@@ -242,8 +248,8 @@ func (p *FcPreProgs) GetAllOfKind(year int64, kind int64, db *sql.DB) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.CommissionID, &row.CommissionDate, &row.CommissionName,
 			&row.ActionID, &row.ActionCode, &row.ActionName, &row.KindID, &row.KindName,
-			&row.ForecastID, &row.ForecastValue, &row.ForecastComment, &row.PreProgID,
-			&row.PreProgValue, &row.PreProgComment); err != nil {
+			&row.ForecastID, &row.ForecastValue, &row.ForecastProject, &row.ForecastComment,
+			&row.PreProgID, &row.PreProgValue, &row.PreProgProject, &row.PreProgComment); err != nil {
 			return err
 		}
 		p.FcPreProgs = append(p.FcPreProgs, row)
@@ -276,14 +282,14 @@ func (p *PreProgBatch) Save(kind int64, year int64, db *sql.DB) error {
 		return fmt.Errorf("début de transaction %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_pre_prog", "commission_id",
-		"year", "value", "kind", "kind_id", "comment", "action_id"))
+		"year", "value", "kind", "kind_id", "project", "comment", "action_id"))
 	if err != nil {
 		return fmt.Errorf("insert statement %v", err)
 	}
 	defer stmt.Close()
 	for _, l := range p.Lines {
 		if _, err = stmt.Exec(l.CommissionID, year, l.Value, kind, l.KindID,
-			l.Comment, l.ActionID); err != nil {
+			l.Project, l.Comment, l.ActionID); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("statement execution %v", err)
 		}
@@ -298,8 +304,8 @@ func (p *PreProgBatch) Save(kind int64, year int64, db *sql.DB) error {
 		return fmt.Errorf("delete query %v", err)
 	}
 	queries := []string{`INSERT INTO pre_prog (commission_id,year,value,kind,kind_id,
-		comment,action_id) SELECT commission_id,year,value,kind,kind_id,
-		comment,action_id FROM temp_pre_prog `,
+		project,comment,action_id) SELECT commission_id,year,value,kind,kind_id,
+		project,comment,action_id FROM temp_pre_prog `,
 		`DELETE from temp_pre_prog`,
 	}
 	for i, q := range queries {

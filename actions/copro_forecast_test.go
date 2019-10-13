@@ -62,13 +62,13 @@ func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : action ID null
 		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Project":null,"Comment":"Essai","CoproID":` +
 			strconv.Itoa(int(c.CoproID)) + `,"ActionID":2}}`),
 			Token:  c.Config.Users.CoproUser.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"CoproForecast":{"ID":1,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":1000000,"Comment":"Essai","CoproID":` +
+				`"CommissionName":"Commission test","Value":1000000,"Project":null,"Comment":"Essai","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionID":2,"ActionCode":15400403,` +
 				`"ActionName":"Aide aux copropriétés en difficulté"}`},
 			StatusCode: http.StatusCreated}, // 6 : ok
@@ -122,12 +122,12 @@ func testUpdateCoproForecast(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Modification de prévision copro, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad ID
 		{Sent: []byte(`{"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
 			strconv.Itoa(int(c.CoproID)) + `,"ActionID":3}}`),
 			Token: c.Config.Users.CoproUser.Token,
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
+				`"CommissionName":"Commission test","Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionID":3,"ActionCode":15400202,` +
 				`"ActionName":"Aide à la création de logements locatifs sociaux"}`},
 			StatusCode: http.StatusOK}, // 7 : ok
@@ -153,7 +153,7 @@ func testGetCoproForecast(t *testing.T, c *TestContext, ID int) {
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
+				`"CommissionName":"Commission test","Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionID":0,"ActionCode":15400202,` +
 				`"ActionName":"Aide à la création de logements locatifs sociaux"}`},
 			ID:         ID,
@@ -176,7 +176,7 @@ func testGetCoproForecasts(t *testing.T, c *TestContext, ID int) {
 		{Token: c.Config.Users.User.Token,
 			RespContains: []string{`"CoproForecast":[{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
-				`"CommissionName":"Commission test","Value":2000000,"Comment":"Essai2","CoproID":` +
+				`"CommissionName":"Commission test","Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionID":0,"ActionCode":15400202,` +
 				`"ActionName":"Aide à la création de logements locatifs sociaux"}]}`},
 			Count:      1,
@@ -220,17 +220,17 @@ func testBatchCoproForecasts(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"CoproForecast":[{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Batch1","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Project":null,"Comment":"Batch1","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203},{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Comment":"Batch2","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Project":"projet copro 2","Comment":"Batch2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203}]}`),
 			RespContains: []string{"Batch de Prévision copros, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 1 : value nul
 		{Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"CoproForecast":[{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":100,"Comment":"Batch1","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":100,"Project":null,"Comment":"Batch1","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203},{"ID":0,"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Comment":"Batch2","CoproID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":200,"Project":"projet copro 2","Comment":"Batch2","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203}]}`),
 			RespContains: []string{"Batch de Prévision copros importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -243,7 +243,8 @@ func testBatchCoproForecasts(t *testing.T, c *TestContext) {
 		response := c.E.GET("/api/copro_forecasts").
 			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
 		body := string(response.Content)
-		for _, j := range []string{`"Value":100,"Comment":"Batch1"`, `"Value":200,"Comment":"Batch2"`} {
+		for _, j := range []string{`"Value":100,"Project":null,"Comment":"Batch1"`,
+			`"Value":200,"Project":"projet copro 2","Comment":"Batch2"`} {
 			if !strings.Contains(body, j) {
 				t.Errorf("BatchCoproForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
 			}

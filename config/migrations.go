@@ -47,6 +47,14 @@ var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar
 		ADD COLUMN project varchar(150) DEFAULT NULL`, // 12
 	`ALTER TABLE temp_renew_project_forecast
 		ADD COLUMN project varchar(150) DEFAULT NULL`, // 13
+	`ALTER TABLE pre_prog
+		ADD COLUMN project varchar(150) DEFAULT NULL`, // 14
+	`ALTER TABLE temp_pre_prog
+		ADD COLUMN project varchar(150) DEFAULT NULL`, // 15
+	`ALTER TABLE copro_forecast
+		ADD COLUMN project varchar(150) DEFAULT NULL`, // 16
+	`ALTER TABLE copro_project_forecast
+		ADD COLUMN project varchar(150) DEFAULT NULL`, // 17
 }
 
 // handleMigrations check if new migrations have been created and launches them
