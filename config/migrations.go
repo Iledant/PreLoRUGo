@@ -43,6 +43,10 @@ var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar
 		ADD COLUMN caducity_date date DEFAULT null`, // 10
 	`ALTER TABLE copro
 		ALTER COLUMN reference TYPE varchar(60)`, // 11
+	`ALTER TABLE renew_project_forecast
+		ADD COLUMN project varchar(150) DEFAULT NULL`, // 12
+	`ALTER TABLE temp_renew_project_forecast
+		ADD COLUMN project varchar(150) DEFAULT NULL`, // 13
 }
 
 // handleMigrations check if new migrations have been created and launches them
