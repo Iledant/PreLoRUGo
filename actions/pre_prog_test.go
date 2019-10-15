@@ -98,7 +98,7 @@ func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
 		{Token: c.Config.Users.CoproUser.Token,
 			Params: `Year=2019`,
-			RespContains: []string{`"FcPreProg":[`, `"KindName":"Copro Test"`,
+			RespContains: []string{`"FcPreProg":[`, `"KindName":"copro4"`,
 				`"ForecastValue"`, `"PreProgValue"`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}

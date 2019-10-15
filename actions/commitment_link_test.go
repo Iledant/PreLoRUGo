@@ -2,6 +2,7 @@ package actions
 
 import (
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/iris-contrib/httpexpect"
@@ -42,7 +43,7 @@ func testLinkCommitment(t *testing.T, c *TestContext) {
 			RespContains: []string{`Liens d'engagements, requête :`},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad commitment ID
 		{Token: c.Config.Users.Admin.Token,
-			Sent:          []byte(`{"DestID":3,"IDs":[2,3],"Type":"Copro"}`),
+			Sent:          []byte(`{"DestID":` + strconv.FormatInt(c.CoproID, 10) + `,"IDs":[2,3],"Type":"Copro"}`),
 			RespContains:  []string{`"Commitment":[{`, `"Payment":[{`},
 			Count:         3,
 			CountItemName: `"ID"`,

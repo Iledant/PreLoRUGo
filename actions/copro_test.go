@@ -26,8 +26,8 @@ func testCopro(t *testing.T, c *TestContext) {
 		testBatchCopros(t, c)
 		copro := models.Copro{Reference: "RefCoproTest",
 			Name:      "Copro Test",
-			Address:   "Adresse de test",
-			ZipCode:   77001,
+			Address:   models.NullString{Valid: true, String: "Adresse de test"},
+			ZipCode:   models.NullInt64{Valid: true, Int64: 77001},
 			LabelDate: models.NullTime{Valid: false},
 			Budget:    models.NullInt64{Valid: false}}
 		if err := copro.Create(c.DB); err != nil {
@@ -47,33 +47,19 @@ func testCreateCopro(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusUnauthorized}, // 0 : no token
 		{Sent: []byte(`{"Copro":{"Reference":"","Name":"","Address":"","ZipCode":0,` +
 			`"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Création de copropriété : Champ reference, name,` +
-				` address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 1 : reference empty
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`"Création de copropriété : champ reference vide"`},
+			StatusCode:   http.StatusBadRequest}, // 1 : reference empty
 		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"","Address":"",` +
 			`"ZipCode":0,"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Création de copropriété : Champ reference, name,` +
-				` address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"",` +
-			`"ZipCode":0,"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Création de copropriété : Champ reference, name,` +
-				` address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 3 : address empty
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
-			`"ZipCode":0,"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Création de copropriété : Champ reference, name,` +
-				` address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 4 : zipcode null
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`"Création de copropriété : champ name vide"`},
+			StatusCode:   http.StatusBadRequest}, // 2 : name empty
 		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
 			`"ZipCode":93200,"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de copropriété, requête :`},
-			StatusCode:   http.StatusInternalServerError}, // 5 : zipcode doesn't exist
+			StatusCode:   http.StatusInternalServerError}, // 3 : zipcode doesn't exist
 		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
 			`"ZipCode":78146,"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000}}`),
 			Token:  c.Config.Users.Admin.Token,
@@ -81,7 +67,15 @@ func testCreateCopro(t *testing.T, c *TestContext) (ID int) {
 			RespContains: []string{`"Copro":{"ID":2,"Reference":"CO001","Name":"Copro",` +
 				`"Address":"adresse","ZipCode":78146,"CityName":"CHATOU",` +
 				`"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000`},
-			StatusCode: http.StatusCreated}, // 6 : ok
+			StatusCode: http.StatusCreated}, // 4 : ok
+		{Sent: []byte(`{"Copro":{"Reference":"CO100","Name":"Copro cadre","Address":null,` +
+			`"ZipCode":null,"LabelDate":null,"Budget":null}}`),
+			Token:  c.Config.Users.Admin.Token,
+			IDName: `{"ID"`,
+			RespContains: []string{`"Copro":{"ID":3,"Reference":"CO100","Name":"Copro cadre",` +
+				`"Address":null,"ZipCode":null,"CityName":null,` +
+				`"LabelDate":null,"Budget":null`},
+			StatusCode: http.StatusCreated}, // 5 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/copro").WithBytes(tc.Sent).
@@ -99,34 +93,20 @@ func testModifyCopro(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusUnauthorized}, // 0 : no token
 		{Sent: []byte(`{"Copro":{"Reference":"","Name":"","Address":"","ZipCode":0,` +
 			`"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Modification de copropriété : Champ reference,` +
-				` name, address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 1 : reference empty
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`"Modification de copropriété : champ reference vide"`},
+			StatusCode:   http.StatusBadRequest}, // 1 : reference empty
 		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"","Address":"","ZipCode":0,` +
 			`"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Modification de copropriété : Champ reference,` +
-				` name, address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"",` +
-			`"ZipCode":0,"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Modification de copropriété : Champ reference, name,` +
-				` address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 3 : address empty
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
-			`"ZipCode":0,"LabelDate":null,"Budget":null}}`),
-			Token: c.Config.Users.Admin.Token,
-			RespContains: []string{`"Modification de copropriété : Champ reference,` +
-				` name, address ou zipcode vide"`},
-			StatusCode: http.StatusBadRequest}, // 4 : zipcode null
+			Token:        c.Config.Users.Admin.Token,
+			RespContains: []string{`"Modification de copropriété : champ name vide"`},
+			StatusCode:   http.StatusBadRequest}, // 2 : name empty
 		{Sent: []byte(`{"Copro":{"ID":0,"Reference":"CO002","Name":"Copro2",` +
 			`"Address":"adresse2","ZipCode":93100,"LabelDate":"2016-04-01T12:00:00Z",` +
 			`"Budget":2000000}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de copropriété, requête : Copro introuvable`},
-			StatusCode:   http.StatusInternalServerError}, // 5 : zipcode null
+			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
 		{Sent: []byte(`{"Copro":{"ID":` + strconv.Itoa(ID) + `,"Reference":"CO002",` +
 			`"Name":"Copro2","Address":"adresse2","ZipCode":77001,` +
 			`"LabelDate":"2016-04-01T12:00:00Z","Budget":2000000}}`),
@@ -134,7 +114,7 @@ func testModifyCopro(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"Copro":{"ID":` + strconv.Itoa(ID) +
 				`,"Reference":"CO002","Name":"Copro2","Address":"adresse2","ZipCode":77001,` +
 				`"CityName":"ACHERES-LA-FORET","LabelDate":"2016-04-01T12:00:00Z","Budget":2000000`},
-			StatusCode: http.StatusOK}, // 6 : zipcode null
+			StatusCode: http.StatusOK}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.PUT("/api/copro").WithBytes(tc.Sent).
@@ -151,7 +131,7 @@ func testGetCopros(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 0 : no token
 		{Token: c.Config.Users.User.Token,
 			RespContains:  []string{`"Copro"`, `"City"`, `"FcPreProg"`},
-			Count:         1,
+			Count:         2,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
 	}

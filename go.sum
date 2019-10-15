@@ -1,5 +1,7 @@
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
+github.com/Iledant/iris-propera v0.0.0-20191007205614-caba59e21f4e h1:gIbxf5OUYY9Vi+Rnro42fZ8OK/VpJ83R4SwDg3H3tyQ=
+github.com/Iledant/iris-propera v0.0.0-20191007205614-caba59e21f4e/go.mod h1:fNe0QFt56W97foovlbwcx1FOrZC39rExBPfe5Q+xFn8=
 github.com/Joker/hpp v0.0.0-20180418125244-6893e659854a/go.mod h1:MzD2WMdSxvbHw5fM/OXOFily/lipJWRc9C1px0Mt0ZE=
 github.com/Joker/jade v1.0.0 h1:lOCEPvTAtWfLpSZYMOv/g44MGQFAolbKh2khHHGu0Kc=
 github.com/Joker/jade v1.0.0/go.mod h1:efZIdO0py/LtcJRSa/j2WEklMSAw84WV0zZVMxNToB8=

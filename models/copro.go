@@ -11,14 +11,14 @@ import (
 
 // Copro is the model for a labelled condominium
 type Copro struct {
-	ID        int64     `json:"ID"`
-	Reference string    `json:"Reference"`
-	Name      string    `json:"Name"`
-	Address   string    `json:"Address"`
-	ZipCode   int       `json:"ZipCode"`
-	CityName  string    `json:"CityName"`
-	LabelDate NullTime  `json:"LabelDate"`
-	Budget    NullInt64 `json:"Budget"`
+	ID        int64      `json:"ID"`
+	Reference string     `json:"Reference"`
+	Name      string     `json:"Name"`
+	Address   NullString `json:"Address"`
+	ZipCode   NullInt64  `json:"ZipCode"`
+	CityName  NullString `json:"CityName"`
+	LabelDate NullTime   `json:"LabelDate"`
+	Budget    NullInt64  `json:"Budget"`
 }
 
 // Copros embeddes an array of Copro for JSON export
@@ -44,8 +44,11 @@ type CoproBatch struct {
 // Validate checks copro's fields and return an error if they don't
 // fit with database constraints
 func (c *Copro) Validate() error {
-	if c.Reference == "" || c.Name == "" || c.Address == "" || c.ZipCode == 0 {
-		return errors.New("Champ reference, name, address ou zipcode vide")
+	if c.Reference == "" {
+		return errors.New("champ reference vide")
+	}
+	if c.Name == "" {
+		return errors.New("champ name vide")
 	}
 	return nil
 }
@@ -58,9 +61,11 @@ func (c *Copro) Create(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	err = db.QueryRow(`SELECT city.name FROM copro 
-	JOIN city ON copro.zip_code=city.insee_code 
-	WHERE copro.id=$1`, c.ID).Scan(&c.CityName)
+	if c.ZipCode.Valid {
+		err = db.QueryRow(`SELECT city.name FROM copro 
+		JOIN city ON copro.zip_code=city.insee_code 
+		WHERE copro.id=$1`, c.ID).Scan(&c.CityName)
+	}
 	return err
 }
 
@@ -79,9 +84,11 @@ func (c *Copro) Update(db *sql.DB) (err error) {
 	if count != 1 {
 		return errors.New("Copro introuvable")
 	}
-	err = db.QueryRow(`SELECT city.name FROM copro 
-	JOIN city ON copro.zip_code=city.insee_code 
-	WHERE id=$1`, c.ID).Scan(&c.CityName)
+	if c.ZipCode.Valid {
+		err = db.QueryRow(`SELECT city.name FROM copro 
+		JOIN city ON copro.zip_code=city.insee_code 
+		WHERE id=$1`, c.ID).Scan(&c.CityName)
+	}
 	return err
 }
 
@@ -105,7 +112,7 @@ func (c *Copro) Delete(db *sql.DB) (err error) {
 func (c *Copro) Get(db *sql.DB) (err error) {
 	err = db.QueryRow(`SELECT co.id,co.reference,co.name,co.address,co.zip_code,
 	ci.name,co.label_date,co.budget FROM copro co
-	JOIN city ci ON co.zip_code=ci.insee_code
+	LEFT OUTER JOIN city ci ON co.zip_code=ci.insee_code
 	WHERE id = $1`, c.ID).
 		Scan(&c.ID, &c.Reference, &c.Name, &c.Address, &c.ZipCode, &c.CityName,
 			&c.LabelDate, &c.Budget)
@@ -116,7 +123,7 @@ func (c *Copro) Get(db *sql.DB) (err error) {
 func (c *Copros) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT co.id,co.reference,co.name,co.address,co.zip_code,
 	ci.name,co.label_date,co.budget FROM copro co
-	JOIN city ci ON co.zip_code=ci.insee_code`)
+	LEFT OUTER JOIN city ci ON co.zip_code=ci.insee_code`)
 	if err != nil {
 		return err
 	}
