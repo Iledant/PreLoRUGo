@@ -17,15 +17,16 @@ import (
 
 // TestContext contains all items for units tests in API.
 type TestContext struct {
-	DB             *sql.DB
-	App            *iris.Application
-	E              *httpexpect.Expect
-	Config         *config.PreLoRuGoConf
-	CommissionID   int64
-	RenewProjectID int64
-	CoproID        int64
-	HousingID      int64
-	RPEventTypeID  int64
+	DB               *sql.DB
+	App              *iris.Application
+	E                *httpexpect.Expect
+	Config           *config.PreLoRuGoConf
+	CommissionID     int64
+	RenewProjectID   int64
+	CoproID          int64
+	HousingID        int64
+	RPEventTypeID    int64
+	CoproEventTypeID int64
 }
 
 // TestCase is used as common structure for all request tests
@@ -84,6 +85,8 @@ func TestAll(t *testing.T) {
 	testRPLS(t, cfg)
 	testSummaries(t, cfg)
 	testHousingSummary(t, cfg)
+	testCoproEventType(t, cfg)
+	testCoproEvent(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

@@ -104,6 +104,14 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	coproUserParty.Delete("/copro_forecast/{ID}", DeleteCoproForecast)
 	coproUserParty.Post("/copro/commitments", LinkCommitmentsCopros)
 
+	coproUserParty.Post("/copro_event_type", CreateCoproEventType)
+	coproUserParty.Put("/copro_event_type", UpdateCoproEventType)
+	coproUserParty.Delete("/copro_event_type/{ID}", DeleteCoproEventType)
+
+	coproUserParty.Post("/copro_event", CreateCoproEvent)
+	coproUserParty.Put("/copro_event", UpdateCoproEvent)
+	coproUserParty.Delete("/copro_event/{ID}", DeleteCoproEvent)
+
 	coproUserParty.Get("/pre_prog/copro", GetCoproPreProgs)
 	coproUserParty.Post("/pre_prog/copro", SetCoproPreProgs)
 
@@ -194,6 +202,12 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 
 	userParty.Get("/copro_forecast/{ID}", GetCoproForecast)
 	userParty.Get("/copro_forecasts", GetCoproForecasts)
+
+	userParty.Get("/copro_event_types", GetCoproEventTypes)
+	userParty.Get("/copro_event_type/{ID}", GetCoproEventType)
+
+	userParty.Get("/copro_events", GetCoproEvents)
+	userParty.Get("/copro_event/{ID}", GetCoproEvent)
 
 	userParty.Get("/home", GetHome)
 
