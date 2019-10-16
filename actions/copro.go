@@ -15,6 +15,7 @@ type getCoprosResp struct {
 	models.FcPreProgs
 	models.Commissions
 	models.BudgetActions
+	models.CoproEventTypes
 }
 
 // GetCopros handles the get request to fetch all copros
@@ -45,6 +46,11 @@ func GetCopros(ctx iris.Context) {
 	if err := resp.FcPreProgs.GetAllOfKind(year, models.KindCopro, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liste des copropriétés, requête préprogrammation : " + err.Error()})
+		return
+	}
+	if err := resp.CoproEventTypes.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des copropriétés, requête événements types : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
@@ -87,6 +93,8 @@ type coproDatasResp struct {
 	models.Commissions
 	models.CoproForecasts
 	models.BudgetActions
+	models.CoproEventTypes
+	models.FullCoproEvents
 }
 
 // GetCoproDatas handle the get request to fetch copro fields, commitments and
@@ -129,6 +137,16 @@ func GetCoproDatas(ctx iris.Context) {
 	if err = resp.BudgetActions.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données d'une copropriété, requête actions : " + err.Error()})
+		return
+	}
+	if err = resp.CoproEventTypes.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête événements types : " + err.Error()})
+		return
+	}
+	if err = resp.FullCoproEvents.GetLinked(db, ID); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête événements : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
