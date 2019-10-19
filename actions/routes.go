@@ -115,6 +115,10 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	coproUserParty.Get("/pre_prog/copro", GetCoproPreProgs)
 	coproUserParty.Post("/pre_prog/copro", SetCoproPreProgs)
 
+	coproUserParty.Post("/copro/{CoproID}/copro_doc", CreateCoproDoc)
+	coproUserParty.Put("/copro/{CoproID}/copro_doc", UpdateCoproDoc)
+	coproUserParty.Delete("/copro/{CoproID}/copro_doc/{ID}", DeleteCoproDoc)
+
 	renewProjectUserParty := api.Party("", RenewProjectMiddleware)
 	renewProjectUserParty.Post("/renew_project_forecast", CreateRenewProjectForecast)
 	renewProjectUserParty.Put("/renew_project_forecast", UpdateRenewProjectForecast)
@@ -238,6 +242,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/rpls/detailed_report", RPLSDetailedReport)
 
 	userParty.Get("/summaries/datas", GetSummariesDatas)
+
+	userParty.Get("/copro/{CoproID}/copro_docs", GetCoproDocs)
 }
 
 // setDBMiddleware return a middleware to add db to context values

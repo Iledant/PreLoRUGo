@@ -87,6 +87,7 @@ func TestAll(t *testing.T) {
 	testHousingSummary(t, cfg)
 	testCoproEventType(t, cfg)
 	testCoproEvent(t, cfg)
+	testCoproDoc(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

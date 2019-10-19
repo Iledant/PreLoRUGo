@@ -500,26 +500,32 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		date date NOT NULL,
 		comment text
 	);`, // 45 copro_event
+	`CREATE TABLE IF NOT EXISTS copro_doc (
+		id SERIAL PRIMARY KEY,
+		copro_id int NOT NULL references copro(id),
+		name varchar(150) NOT NULL,
+		link varchar(250) NOT NULL
+	);`, // 46 copro_doc
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 46
-	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 47
+	$log_cmt$ LANGUAGE plpgsql;`, // 47
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 48
 	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 48
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 49
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 49
-	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 50
+	$log_cmt$ LANGUAGE plpgsql;`, // 50
+	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 51
 	`CREATE TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 51
+	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 52
 }
 
 // createTablesAndViews launches the queries against the database to create all
