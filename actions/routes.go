@@ -244,6 +244,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/summaries/datas", GetSummariesDatas)
 
 	userParty.Get("/copro/{CoproID}/copro_docs", GetCoproDocs)
+
+	userParty.Get("/copro/report", GetCoproReport)
 }
 
 // setDBMiddleware return a middleware to add db to context values
