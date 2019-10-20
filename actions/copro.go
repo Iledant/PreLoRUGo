@@ -95,6 +95,7 @@ type coproDatasResp struct {
 	models.BudgetActions
 	models.CoproEventTypes
 	models.FullCoproEvents
+	models.CoproDocs
 }
 
 // GetCoproDatas handle the get request to fetch copro fields, commitments and
@@ -147,6 +148,11 @@ func GetCoproDatas(ctx iris.Context) {
 	if err = resp.FullCoproEvents.GetLinked(db, ID); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données d'une copropriété, requête événements : " + err.Error()})
+		return
+	}
+	if err = resp.CoproDocs.GetAll(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données d'une copropriété, requête documents : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
