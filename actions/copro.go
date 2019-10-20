@@ -16,6 +16,7 @@ type getCoprosResp struct {
 	models.Commissions
 	models.BudgetActions
 	models.CoproEventTypes
+	models.CoproReports
 }
 
 // GetCopros handles the get request to fetch all copros
@@ -51,6 +52,11 @@ func GetCopros(ctx iris.Context) {
 	if err := resp.CoproEventTypes.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liste des copropriétés, requête événements types : " + err.Error()})
+		return
+	}
+	if err := resp.CoproReports.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des copropriétés, requête rapport : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

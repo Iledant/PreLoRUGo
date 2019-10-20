@@ -130,7 +130,7 @@ func testGetCopros(t *testing.T, c *TestContext) {
 			RespContains: []string{`Token absent`},
 			StatusCode:   http.StatusInternalServerError}, // 0 : no token
 		{Token: c.Config.Users.User.Token,
-			RespContains:  []string{`"Copro"`, `"City"`, `"FcPreProg"`},
+			RespContains:  []string{`"Copro"`, `"City"`, `"FcPreProg"`, `"CoproReport":[`},
 			Count:         2,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
