@@ -57,7 +57,8 @@ FROM housing_forecast hf
 JOIN commission c ON c.id=hf.commission_id
 JOIN budget_action b ON b.id=hf.action_id
 WHERE EXTRACT(year FROM c.date)=$1) hf
-ON pp.commission_id=hf.commission_id AND pp.action_id=hf.action_id`
+ON pp.commission_id=hf.commission_id AND pp.action_id=hf.action_id
+	AND pp.value=hf.value`
 
 const fcPreProgCoproQry = `SELECT DISTINCT COALESCE(pp.commission_id,cf.commission_id),
 COALESCE(pp.date,cf.date),COALESCE(pp.name,cf.name),COALESCE(pp.action_id,cf.action_id),
@@ -80,7 +81,8 @@ JOIN commission c ON c.id=cf.commission_id
 JOIN budget_action b ON b.id=cf.action_id
 JOIN copro co ON cf.copro_id=co.id
 WHERE EXTRACT(year FROM c.date)=$1) cf
-ON pp.commission_id=cf.commission_id AND pp.action_id=cf.action_id AND pp.kind_id=cf.copro_id`
+ON pp.commission_id=cf.commission_id AND pp.action_id=cf.action_id
+	AND pp.kind_id=cf.copro_id AND pp.value=cf.value`
 
 const fcPreProgRPQry = `SELECT DISTINCT COALESCE(pp.commission_id,rf.commission_id),
 COALESCE(pp.date,rf.date),COALESCE(pp.name,rf.name),COALESCE(pp.action_id,rf.action_id),
@@ -104,7 +106,8 @@ JOIN commission c ON c.id=rf.commission_id
 JOIN budget_action b ON b.id=rf.action_id
 JOIN renew_project rp ON rf.renew_project_id=rp.id
 WHERE EXTRACT(year FROM c.date)=$1) rf
-ON pp.commission_id=rf.commission_id AND pp.action_id=rf.action_id AND pp.kind_id=rf.renew_project_id`
+ON pp.commission_id=rf.commission_id AND pp.action_id=rf.action_id
+	AND pp.kind_id=rf.renew_project_id AND pp.value=rf.value`
 
 const preProgQry = preProgHousingQry + " UNION ALL " + preProgCoproQry +
 	" UNION ALL " + preProgRPQry
