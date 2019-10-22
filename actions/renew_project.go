@@ -169,6 +169,7 @@ type renewProjectsResp struct {
 	models.Commissions
 	models.BudgetActions
 	models.FcPreProgs
+	models.RPMultiAnnualReports
 }
 
 // GetRenewProjects handles the get request to handle all renew projets. In order
@@ -206,6 +207,11 @@ func GetRenewProjects(ctx iris.Context) {
 	if err := resp.FcPreProgs.GetAllOfKind(year, models.KindRenewProject, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête préprogrammation : " + err.Error()})
+		return
+	}
+	if err := resp.RPMultiAnnualReports.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des projets de renouvellement, requête rapport pluriannuel : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

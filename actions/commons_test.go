@@ -89,6 +89,7 @@ func TestAll(t *testing.T) {
 	testCoproEvent(t, cfg)
 	testCoproDoc(t, cfg)
 	testCoproReport(t, cfg)
+	testRPMultiAnnualReport(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

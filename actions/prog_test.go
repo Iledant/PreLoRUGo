@@ -102,7 +102,7 @@ func testGetProg(t *testing.T, c *TestContext) {
 			Params: `Year=2019`,
 			RespContains: []string{`"Prog":[`, `"Kind":1`, `"Kind":2`, `"Kind":3`,
 				`"commentaire RU"`, `"Value":1000000`, `"ForecastValue"`, `"PreProgValue"`},
-			Count:         4,
+			Count:         5,
 			CountItemName: `"Kind"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
 	}
@@ -129,7 +129,7 @@ func testGetProgDatas(t *testing.T, c *TestContext) {
 			RespContains: []string{`"Prog":[`, `"Kind":1`, `"Kind":2`, `"Kind":3`,
 				`"RenewProject":[`, `"Copro":[`, `"commentaire RU"`, `"Value":1000000`,
 				`"BudgetAction":[`, `"Commission":[`},
-			Count:         4,
+			Count:         5,
 			CountItemName: `"Kind"`,
 			StatusCode:    http.StatusOK}, // 2 : ok
 	}
