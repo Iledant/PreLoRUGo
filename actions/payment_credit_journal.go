@@ -45,3 +45,34 @@ func GetAllPaymentCreditJournals(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
+
+type creditsAndJournalResp struct {
+	models.PaymentCreditJournals
+	models.PaymentCredits
+}
+
+// GetPaymentCreditsAndJournal is used to embed the request about payment credits
+// and paymentcredits journal forthe frontend page
+func GetPaymentCreditsAndJournal(ctx iris.Context) {
+	year, err := ctx.URLParamInt("Year")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Situation et mouvements de crédits, décodage : " + err.Error()})
+		return
+	}
+	var resp creditsAndJournalResp
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err = resp.PaymentCreditJournals.GetAll(year, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Situation et mouvements de crédits, requête journal : " + err.Error()})
+		return
+	}
+	if err = resp.PaymentCredits.GetAll(year, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Situation et mouvements de crédits, requête situation : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+
+}

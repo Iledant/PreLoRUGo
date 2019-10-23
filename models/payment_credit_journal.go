@@ -105,7 +105,6 @@ func (p *PaymentCreditJournalBatch) Save(db *sql.DB) error {
 		m = time.Date(int(l.ModificationDate/10000),
 			time.Month(l.ModificationDate/100%100), int(l.ModificationDate%100), 0, 0,
 			0, 0, time.UTC)
-		fmt.Printf("insertion %+v %v %v", l, c, m)
 		if _, err = tx.Exec(`INSERT INTO temp_payment_credit_journal (chapter,
 			function,creation_date,modification_date,name,value)
 			VALUES($1,$2,$3,$4,$5,$6)`, l.Chapter, l.Function, c, m, l.Name, l.Value); err != nil {
