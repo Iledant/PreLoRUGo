@@ -3,7 +3,7 @@ module github.com/Iledant/PreLoRUGo
 go 1.13
 
 require (
-	github.com/Iledant/iris-propera v0.0.0-20191007205614-caba59e21f4e // indirect
+	github.com/Iledant/iris-propera v0.0.0-20191007205614-caba59e21f4e
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/iris-contrib/httpexpect v0.0.0-20180314041918-ebe99fcebbce
 	github.com/iris-contrib/middleware v0.0.0-20190816193017-7838277651e8

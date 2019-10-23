@@ -506,6 +506,26 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		name varchar(150) NOT NULL,
 		link varchar(250) NOT NULL
 	);`, // 46 copro_doc
+	`CREATE TABLE IF NOT EXISTS temp_payment_credit (
+		chapter int NOT NULL,
+		function int NOT NULL,
+		primitive bigint NOT NULL,
+		reported bigint NOT NULL,
+		added bigint NOT NULL,
+		modified bigint NOT NULL,
+		movement bigint NOT NULL
+	);`, // 47 temp_payment_credit
+	`CREATE TABLE IF NOT EXISTS payment_credit (
+		id SERIAL PRIMARY KEY,
+		chapter int NOT NULL,
+		function int NOT NULL,
+		primitive bigint NOT NULL,
+		reported bigint NOT NULL,
+		added bigint NOT NULL,
+		modified bigint NOT NULL,
+		movement bigint NOT NULL,
+		year int NOT NULL
+	);`, // 48 payment_credit
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)

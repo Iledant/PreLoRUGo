@@ -90,6 +90,7 @@ func TestAll(t *testing.T) {
 	testCoproDoc(t, cfg)
 	testCoproReport(t, cfg)
 	testRPMultiAnnualReport(t, cfg)
+	testPaymentCredits(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
