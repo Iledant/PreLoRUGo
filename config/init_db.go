@@ -526,6 +526,23 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		movement bigint NOT NULL,
 		year int NOT NULL
 	);`, // 48 payment_credit
+	`CREATE TABLE IF NOT EXISTS temp_payment_credit_journal (
+		chapter int NOT NULL,
+		function int NOT NULL,
+		creation_date date NOT NULL,
+		modification_date date NOT NULL,
+		name varchar(150) NOT NULL,
+		value bigint NOT NULL
+	);`, // 49 temp_payment_credit_journal
+	`CREATE TABLE IF NOT EXISTS payment_credit_journal (
+		id SERIAL PRIMARY KEY,
+		chapter int NOT NULL,
+		function int NOT NULL,
+		creation_date date NOT NULL,
+		modification_date date NOT NULL,
+		name varchar(150) NOT NULL,
+		value bigint NOT NULL
+	);`, // 50 payment_credit_journal
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
