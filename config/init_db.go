@@ -506,15 +506,6 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		name varchar(150) NOT NULL,
 		link varchar(250) NOT NULL
 	);`, // 46 copro_doc
-	`CREATE TABLE IF NOT EXISTS temp_payment_credit (
-		chapter int NOT NULL,
-		function int NOT NULL,
-		primitive bigint NOT NULL,
-		reported bigint NOT NULL,
-		added bigint NOT NULL,
-		modified bigint NOT NULL,
-		movement bigint NOT NULL
-	);`, // 47 temp_payment_credit
 	`CREATE TABLE IF NOT EXISTS payment_credit (
 		id SERIAL PRIMARY KEY,
 		chapter int NOT NULL,
@@ -525,15 +516,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		modified bigint NOT NULL,
 		movement bigint NOT NULL,
 		year int NOT NULL
-	);`, // 48 payment_credit
-	`CREATE TABLE IF NOT EXISTS temp_payment_credit_journal (
-		chapter int NOT NULL,
-		function int NOT NULL,
-		creation_date date NOT NULL,
-		modification_date date NOT NULL,
-		name varchar(150) NOT NULL,
-		value bigint NOT NULL
-	);`, // 49 temp_payment_credit_journal
+	);`, // 47 payment_credit
 	`CREATE TABLE IF NOT EXISTS payment_credit_journal (
 		id SERIAL PRIMARY KEY,
 		chapter int NOT NULL,
@@ -542,27 +525,27 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		modification_date date NOT NULL,
 		name varchar(150) NOT NULL,
 		value bigint NOT NULL
-	);`, // 50 payment_credit_journal
+	);`, // 48 payment_credit_journal
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 47
-	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 48
+	$log_cmt$ LANGUAGE plpgsql;`, // 49
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 50
 	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 49
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 51
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 50
-	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 51
+	$log_cmt$ LANGUAGE plpgsql;`, // 52
+	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 53
 	`CREATE TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 52
+	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 54
 }
 
 // createTablesAndViews launches the queries against the database to create all

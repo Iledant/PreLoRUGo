@@ -98,40 +98,24 @@ func (p *PaymentCreditJournalBatch) Save(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	if _, err = tx.Exec(`DELETE FROM payment_credit_journal 
+		WHERE extract(year FROM creation_date)=extract(year FROM CURRENT_DATE)`); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("initial delete %v", err)
+	}
 	var c, m time.Time
-	for _, l := range p.Lines {
+	for i, l := range p.Lines {
 		c = time.Date(int(l.CreationDate/10000), time.Month(l.CreationDate/100%100),
 			int(l.CreationDate%100), 0, 0, 0, 0, time.UTC)
 		m = time.Date(int(l.ModificationDate/10000),
 			time.Month(l.ModificationDate/100%100), int(l.ModificationDate%100), 0, 0,
 			0, 0, time.UTC)
-		if _, err = tx.Exec(`INSERT INTO temp_payment_credit_journal (chapter,
-			function,creation_date,modification_date,name,value)
-			VALUES($1,$2,$3,$4,$5,$6)`, l.Chapter, l.Function, c, m, l.Name, l.Value); err != nil {
+		if _, err = tx.Exec(`INSERT INTO payment_credit_journal (chapter,function,
+			creation_date,modification_date,name,value) VALUES($1,$2,$3,$4,$5,$6)`,
+			l.Chapter, l.Function, c, m, l.Name, l.Value); err != nil {
 			tx.Rollback()
-			return fmt.Errorf("temp insert %v", err)
+			return fmt.Errorf("insert %d %v", i, err)
 		}
-	}
-	if _, err = tx.Exec(`UPDATE payment_credit_journal SET 
-	modification_date=t.modification_date,name=t.name,value=t.value
-	FROM (SELECT * FROM temp_payment_credit_journal
-		WHERE (chapter,function,creation_date) IN
-		(SELECT chapter,function,creation_date FROM payment_credit_journal)) t;`); err != nil {
-		tx.Rollback()
-		return err
-	}
-	if _, err = tx.Exec(`INSERT INTO payment_credit_journal (chapter,function,
-		creation_date,modification_date,name,value)
-		(SELECT chapter, function,creation_date,modification_date,name,value
-			FROM temp_payment_credit_journal
-			WHERE (chapter,function,creation_date) NOT IN
-			(SELECT chapter,function,creation_date FROM payment_credit_journal));`); err != nil {
-		tx.Rollback()
-		return err
-	}
-	if _, err = tx.Exec(`DELETE FROM temp_payment_credit_journal`); err != nil {
-		tx.Rollback()
-		return err
 	}
 	tx.Commit()
 	return nil
