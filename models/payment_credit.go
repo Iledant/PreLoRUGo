@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 // PaymentCredit model
@@ -31,6 +32,11 @@ type PaymentCreditLine struct {
 	Added     int64 `json:"Added"`
 	Modified  int64 `json:"Modified"`
 	Movement  int64 `json:"Movement"`
+}
+
+// PaymentCreditSum is used to calculate the total of payment credit of a current year
+type PaymentCreditSum struct {
+	Sum NullFloat64 `json:"PaymentCreditSum"`
 }
 
 // PaymentCreditBatch embeddes an array of PaumentCreditLine for batch import
@@ -84,5 +90,16 @@ func (p *PaymentCreditBatch) Save(year int64, db *sql.DB) error {
 		}
 	}
 	tx.Commit()
+	return nil
+}
+
+// Get fetches the payment credit sum of the current year
+func (p *PaymentCreditSum) Get(db *sql.DB) error {
+	q := `SELECT sum(primitive+reported+added+modified+movement)*0.01 from payment_credit
+	where year=$1 and chapter='905' and function<>52`
+	year := time.Now().Year()
+	if err := db.QueryRow(q, year).Scan(&p.Sum); err != nil {
+		return fmt.Errorf("select %v", err)
+	}
 	return nil
 }
