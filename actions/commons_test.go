@@ -48,6 +48,7 @@ type TestCase struct {
 func TestAll(t *testing.T) {
 	cfg := initializeTests(t)
 	testUser(t, cfg)
+	testHomeMessage(t, cfg)
 	testDepartment(t, cfg)
 	testCommunity(t, cfg)
 	testCity(t, cfg)
@@ -120,7 +121,6 @@ func initializeTests(t *testing.T) *TestContext {
 	createUsers(t, testCtx.DB, testCtx.Config)
 	SetRoutes(testCtx.App, testCtx.Config.Users.SuperAdmin.Email, testCtx.DB)
 	testCtx.E = httptest.New(t, testCtx.App)
-	// Fetch admin and user tokens
 	fetchTokens(t, testCtx)
 	return testCtx
 }
@@ -131,50 +131,42 @@ func createUsers(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			Name:     "Christophe Saintillan",
 			Email:    cfg.Users.Admin.Email,
 			Password: cfg.Users.Admin.Password,
-			Rights:   models.AdminBit | models.ActiveBit,
-		},
+			Rights:   models.AdminBit | models.ActiveBit},
 		{
 			Name:     "Utilisateur",
 			Email:    cfg.Users.User.Email,
 			Password: cfg.Users.User.Password,
-			Rights:   models.ActiveBit,
-		},
+			Rights:   models.ActiveBit},
 		{
 			Name:     "Utilisateur copro",
 			Email:    cfg.Users.CoproUser.Email,
 			Password: cfg.Users.CoproUser.Password,
-			Rights:   models.ActiveCoproMask,
-		},
+			Rights:   models.ActiveCoproMask},
 		{
 			Name:     "Utilisateur pre prog copro",
 			Email:    cfg.Users.CoproPreProgUser.Email,
 			Password: cfg.Users.CoproPreProgUser.Password,
-			Rights:   models.ActiveCoproPreProgMask,
-		},
+			Rights:   models.ActiveCoproPreProgMask},
 		{
 			Name:     "Utilisateur RU",
 			Email:    cfg.Users.RenewProjectUser.Email,
 			Password: cfg.Users.RenewProjectUser.Password,
-			Rights:   models.ActiveRenewProjectMask,
-		},
+			Rights:   models.ActiveRenewProjectMask},
 		{
 			Name:     "Utilisateur pre prog RU",
 			Email:    cfg.Users.RenewProjectPreProgUser.Email,
 			Password: cfg.Users.RenewProjectPreProgUser.Password,
-			Rights:   models.ActiveRenewProjectPreProgMask,
-		},
+			Rights:   models.ActiveRenewProjectPreProgMask},
 		{
 			Name:     "Utilisateur logement",
 			Email:    cfg.Users.HousingUser.Email,
 			Password: cfg.Users.HousingUser.Password,
-			Rights:   models.ActiveHousingMask,
-		},
+			Rights:   models.ActiveHousingMask},
 		{
 			Name:     "Utilisateur pre prog logement",
 			Email:    cfg.Users.HousingPreProgUser.Email,
 			Password: cfg.Users.HousingPreProgUser.Password,
-			Rights:   models.ActiveHousingPreProgMask,
-		},
+			Rights:   models.ActiveHousingPreProgMask},
 	}
 	for _, u := range users {
 		if err := createUser(&u, db); err != nil {
