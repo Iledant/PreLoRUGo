@@ -526,26 +526,30 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		name varchar(150) NOT NULL,
 		value bigint NOT NULL
 	);`, // 48 payment_credit_journal
+	`CREATE TABLE IF NOT EXISTS home_message (
+		title varchar(255),
+		body text
+	);`, // 49 home_message
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 49
-	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 50
+	$log_cmt$ LANGUAGE plpgsql;`, // 50
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 51
 	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 51
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 52
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 52
-	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 53
+	$log_cmt$ LANGUAGE plpgsql;`, // 53
+	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 54
 	`CREATE TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 54
+	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 55
 }
 
 // createTablesAndViews launches the queries against the database to create all
