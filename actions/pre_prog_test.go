@@ -24,53 +24,62 @@ func testPreProg(t *testing.T, c *TestContext) {
 // returns successfully
 func testBatchCoproPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			Params:       "Year=2019",
 			Sent:         []byte(``),
 			RespContains: []string{"Droits préprogrammation sur les copropriétés requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token:  c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=a",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, décodage année : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token:        c.Config.Users.CoproPreProgUser.Token,
 			Params:       "Year=2019",
 			Sent:         []byte(`{`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, décodage batch : "},
 			StatusCode:   http.StatusBadRequest}, // 2 : bad JSON
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token:  c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":0,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 3 : commision ID nul
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token:  c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":0,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 4 : value nul
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token:  c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 5 : action ID nul
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token:  c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":3,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad commission ID
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token:  c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":5}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad action ID
-		{Token: c.Config.Users.CoproPreProgUser.Token,
+		{
+			Token: c.Config.Users.CoproPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			Params:       "Year=2019",
@@ -89,14 +98,17 @@ func testBatchCoproPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les copropriétés requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : token empty
-		{Token: c.Config.Users.CoproUser.Token,
+		{
+			Token:        c.Config.Users.CoproUser.Token,
 			Params:       `Year=a`,
 			RespContains: []string{`Préprogrammation copro d'une année, décodage : `},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
-		{Token: c.Config.Users.CoproUser.Token,
+		{
+			Token:  c.Config.Users.CoproUser.Token,
 			Params: `Year=2019`,
 			RespContains: []string{`"FcPreProg":[`, `"KindName":"copro4"`,
 				`"ForecastValue"`, `"PreProgValue"`},
@@ -113,53 +125,62 @@ func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 // import returns successfully
 func testBatchHousingPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(``),
 			Params:       "Year=2019",
 			RespContains: []string{"Droits préprogrammation sur les projets logement requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token:        c.Config.Users.HousingPreProgUser.Token,
 			Sent:         []byte(`{`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, décodage batch : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad JSON
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=a",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, décodage année : "},
 			StatusCode:   http.StatusBadRequest}, // 2 : year nul
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":0,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 3 : commision ID nul
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":0,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 4 : value nul
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 5 : action ID nul
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":3,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad commission ID
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":5}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad action ID
-		{Token: c.Config.Users.HousingPreProgUser.Token,
+		{
+			Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
@@ -178,14 +199,17 @@ func testBatchHousingPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetHousingPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets logement requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : token empty
-		{Token: c.Config.Users.HousingUser.Token,
+		{
+			Token:        c.Config.Users.HousingUser.Token,
 			Params:       `Year=a`,
 			RespContains: []string{`Préprogrammation logement d'une année, décodage : `},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
-		{Token: c.Config.Users.HousingUser.Token,
+		{
+			Token:  c.Config.Users.HousingUser.Token,
 			Params: `Year=2019`,
 			RespContains: []string{`"FcPreProg":[`, `"ActionCode":15400202`,
 				`"KindName":null`, `"ForecastValue":`, `"PreProgValue":`},
@@ -202,53 +226,62 @@ func testGetHousingPreProgs(t *testing.T, c *TestContext) {
 // successfully
 func testBatchRPPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(``),
 			Params:       "Year=2019",
 			RespContains: []string{"Droits préprogrammation sur les projets RU requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token:        c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent:         []byte(`{`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, décodage batch : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad JSON
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=a",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, décodage année : "},
 			StatusCode:   http.StatusBadRequest}, // 2 : year nul
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":0,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 3 : commision ID nul
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":0,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 4 : value nul
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 5 : action ID nul
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":3,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad commission ID
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":5}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad action ID
-		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
+		{
+			Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
@@ -267,14 +300,17 @@ func testBatchRPPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetRPPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : token empty
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{
+			Token:        c.Config.Users.RenewProjectUser.Token,
 			Params:       `Year=a`,
 			RespContains: []string{`Préprogrammation RU d'une année, décodage : `},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{
+			Token:  c.Config.Users.RenewProjectUser.Token,
 			Params: `Year=2019`,
 			RespContains: []string{`"FcPreProg":[`, `"KindName":"PARIS 1 - Site RU 1"`,
 				`"ForecastValue":`, `"PreProgValue":2000000`},
@@ -291,14 +327,17 @@ func testGetRPPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : bad token
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			Params:       `Year=a`,
 			RespContains: []string{`Préprogrammation d'une année, décodage : `},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year param
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:         c.Config.Users.Admin.Token,
 			Params:        `Year=2019`,
 			RespContains:  []string{`"PreProg":[`, `"Kind":1`, `"Kind":2`, `"Kind":3`},
 			Count:         3,
