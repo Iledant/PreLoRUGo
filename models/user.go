@@ -37,6 +37,8 @@ const (
 	ObserverBit = 1 << 5
 	// HousingBit of user's rights field specifies the user has access to housing functions
 	HousingBit = 1 << 6
+	// PreProgBit of user's rights fields specifies the user can modify the preprogramming
+	PreProgBit = 1 << 7
 	// RightsMask is used to check if user's rights field are correctly filled
 	RightsMask = ActiveBit | SuperAdminBit | AdminBit | CoproBit | RenewProjectBit | ObserverBit
 	// ActiveAdminMask is used to check if a user is an active admin
@@ -45,10 +47,16 @@ const (
 	ActiveObserverMask = ActiveBit | ObserverBit
 	// ActiveCoproMask is used to check is a user is active and has copro rights
 	ActiveCoproMask = ActiveBit | CoproBit
+	// ActiveCoproPreProgMask is used to check is a user is active and has copro and pre prog rights
+	ActiveCoproPreProgMask = ActiveBit | CoproBit | PreProgBit
 	// ActiveRenewProjectMask is used to check is a user is active and has renew project rights
 	ActiveRenewProjectMask = ActiveBit | RenewProjectBit
-	// ActiveHousingMask is used to check is a user is active and has renew project rights
+	// ActiveRenewProjectPreProgMask is used to check is a user is active and has renew project and pre prog rights
+	ActiveRenewProjectPreProgMask = ActiveBit | RenewProjectBit | PreProgBit
+	// ActiveHousingMask is used to check is a user is active and has housing rights
 	ActiveHousingMask = ActiveBit | HousingBit
+	// ActiveHousingPreProgMask is used to check is a user is active and has housing and pre prog rights
+	ActiveHousingPreProgMask = ActiveBit | HousingBit | PreProgBit
 )
 
 // Validate checks if field are correctly filled for database constraints
@@ -66,11 +74,9 @@ func (u *User) Validate() error {
 }
 
 // GetByID fetches a user from database using ID.
-func (u *User) GetByID(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT id, name, email, password, rights 
-	FROM users WHERE id = $1 LIMIT 1`, u.ID).Scan(&u.ID,
-		&u.Name, &u.Email, &u.Password, &u.Rights)
-	return err
+func (u *User) GetByID(db *sql.DB) error {
+	return db.QueryRow(`SELECT id,name,email,password,rights FROM users
+		WHERE id=$1`, u.ID).Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.Rights)
 }
 
 // CryptPwd crypt not codded password field.
@@ -132,11 +138,10 @@ func (u *User) Exists(db *sql.DB) error {
 }
 
 // Create insert a new user into database updating time fields.
-func (u *User) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO users (name, email, 
+func (u *User) Create(db *sql.DB) error {
+	return db.QueryRow(`INSERT INTO users (name, email, 
 		password, rights) VALUES($1,$2,$3,$4) RETURNING id`,
 		u.Name, u.Email, u.Password, u.Rights).Scan(&u.ID)
-	return err
 }
 
 // Update modifies a user into database.

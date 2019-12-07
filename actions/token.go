@@ -133,165 +133,65 @@ func bearerToUser(ctx iris.Context) (claims *customClaims, err error) {
 	return claims, err
 }
 
-// isActive check an existing token in header and, if succeed,
-// parse returning user active field
-func isActive(ctx iris.Context) (bool, error) {
-	u, err := bearerToUser(ctx)
-	if err != nil {
-		return false, err
-	}
-	return u.Rights&models.ActiveBit != 0 || u.Rights&models.SuperAdminBit != 0, nil
+// RightHandler is used by RightsMiddleWare to handle permissions
+// If none of the Masks matches with the user's rights, the Messages is used
+// to send en error back
+type RightHandler struct {
+	Masks   []int64
+	Message string
 }
 
-// isCopro check an existing token in header and, if succeed,
-// check if user is admin, superadmin or has copro rights
-func isCopro(ctx iris.Context) (bool, error) {
-	u, err := bearerToUser(ctx)
-	if err != nil {
-		return false, err
-	}
-	return u.Rights&models.ActiveCoproMask == models.ActiveCoproMask ||
-		u.Rights&models.ActiveAdminMask == models.ActiveAdminMask ||
-		u.Rights&models.SuperAdminBit != 0, nil
+var admHandler = RightHandler{
+	Masks:   []int64{models.SuperAdminBit, models.ActiveAdminMask},
+	Message: "Droits administrateur requis",
 }
 
-// isRenewProject check an existing token in header and, if succeed,
-// check if user is admin, superadmin or has renew project rights
-func isRenewProject(ctx iris.Context) (bool, error) {
-	u, err := bearerToUser(ctx)
-	if err != nil {
-		return false, err
-	}
-	return u.Rights&models.ActiveRenewProjectMask == models.ActiveRenewProjectMask ||
-		u.Rights&models.ActiveAdminMask == models.ActiveAdminMask ||
-		u.Rights&models.SuperAdminBit != 0, nil
+var coproHandler = RightHandler{
+	Masks:   []int64{models.SuperAdminBit, models.ActiveAdminMask, models.ActiveCoproMask},
+	Message: "Droits sur les copropriétés requis",
 }
 
-// isHousing check an existing token in header and, if succeed,
-// check if user is admin, superadmin or has housing rights
-func isHousing(ctx iris.Context) (bool, error) {
-	u, err := bearerToUser(ctx)
-	if err != nil {
-		return false, err
-	}
-	return u.Rights&models.ActiveHousingMask == models.ActiveHousingMask ||
-		u.Rights&models.ActiveAdminMask == models.ActiveAdminMask ||
-		u.Rights&models.SuperAdminBit != 0, nil
+var rpHandler = RightHandler{
+	Masks:   []int64{models.SuperAdminBit, models.ActiveAdminMask, models.ActiveRenewProjectMask},
+	Message: "Droits sur les projets RU requis",
 }
 
-// isAdmin check an existing token in header and, if succeed,
-// parse check if user active and admin
-func isAdmin(ctx iris.Context) (bool, error) {
-	u, err := bearerToUser(ctx)
-	if err != nil {
-		return false, err
-	}
-	return (u.Rights&models.ActiveAdminMask == models.ActiveAdminMask) ||
-		u.Rights&models.SuperAdminBit != 0, nil
+var housingHandler = RightHandler{
+	Masks:   []int64{models.SuperAdminBit, models.ActiveAdminMask, models.ActiveHousingMask},
+	Message: "Droits sur les projets logement requis",
 }
 
-// isObserver check an existing token in header and, if succeed,
-// parse check if user active and observer
-func isObserver(ctx iris.Context) (bool, error) {
-	u, err := bearerToUser(ctx)
-	if err != nil {
-		return false, err
-	}
-	return u.Rights&models.ActiveObserverMask == models.ActiveObserverMask, nil
+var userHandler = RightHandler{
+	Masks:   []int64{models.SuperAdminBit, models.ActiveBit},
+	Message: "Connexion requise",
 }
 
-// AdminMiddleware checks if there's a token and if it belongs to admin user
-//  otherwise prompt error
-func AdminMiddleware(ctx iris.Context) {
-	admin, err := isAdmin(ctx)
-	if err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{err.Error()})
-		ctx.StopExecution()
-		return
+// RightsMiddleWare checks if the user attached to the token match with the bit
+// rights sent
+func RightsMiddleWare(r *RightHandler) func(iris.Context) {
+	return func(ctx iris.Context) {
+		u, err := bearerToUser(ctx)
+		if err != nil {
+			ctx.StatusCode(http.StatusInternalServerError)
+			ctx.JSON(jsonError{err.Error()})
+			ctx.StopExecution()
+			return
+		}
+		rights := true
+		for _, mask := range r.Masks {
+			rights = u.Rights&mask == mask
+			if rights {
+				break
+			}
+		}
+		if !rights {
+			ctx.StatusCode(http.StatusUnauthorized)
+			ctx.JSON(jsonError{r.Message})
+			ctx.StopExecution()
+			return
+		}
+		ctx.Next()
 	}
-	if !admin {
-		ctx.StatusCode(http.StatusUnauthorized)
-		ctx.JSON(jsonError{"Droits administrateur requis"})
-		ctx.StopExecution()
-		return
-	}
-	ctx.Next()
-}
-
-// ActiveMiddleware checks if there's a valid token and user is active otherwise prompt error
-func ActiveMiddleware(ctx iris.Context) {
-	active, err := isActive(ctx)
-	if err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{err.Error()})
-		ctx.StopExecution()
-		return
-	}
-	if !active {
-		ctx.StatusCode(http.StatusUnauthorized)
-		ctx.JSON(jsonError{"Connexion requise"})
-		ctx.StopExecution()
-		return
-	}
-	ctx.Next()
-}
-
-// CoproMiddleware checks if there's a valid token and user is active and has
-// copro rights otherwise prompt error
-func CoproMiddleware(ctx iris.Context) {
-	copro, err := isCopro(ctx)
-	if err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{err.Error()})
-		ctx.StopExecution()
-		return
-	}
-	if !copro {
-		ctx.StatusCode(http.StatusUnauthorized)
-		ctx.JSON(jsonError{"Droits sur les copropriétés requis"})
-		ctx.StopExecution()
-		return
-	}
-	ctx.Next()
-}
-
-// RenewProjectMiddleware checks if there's a valid token and user is active and
-// has rights on renew projects otherwise prompt error
-func RenewProjectMiddleware(ctx iris.Context) {
-	renewProject, err := isRenewProject(ctx)
-	if err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{err.Error()})
-		ctx.StopExecution()
-		return
-	}
-	if !renewProject {
-		ctx.StatusCode(http.StatusUnauthorized)
-		ctx.JSON(jsonError{"Droits sur les projets RU requis"})
-		ctx.StopExecution()
-		return
-	}
-	ctx.Next()
-}
-
-// HousingMiddleware checks if there's a valid token and user is active and
-// has rights on renew projects otherwise prompt error
-func HousingMiddleware(ctx iris.Context) {
-	renewProject, err := isHousing(ctx)
-	if err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{err.Error()})
-		ctx.StopExecution()
-		return
-	}
-	if !renewProject {
-		ctx.StatusCode(http.StatusUnauthorized)
-		ctx.JSON(jsonError{"Droits sur les projets logement requis"})
-		ctx.StopExecution()
-		return
-	}
-	ctx.Next()
 }
 
 // TokenRecover tries to load a previously saved file with tokens history.
