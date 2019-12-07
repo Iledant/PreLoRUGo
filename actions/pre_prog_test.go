@@ -27,50 +27,50 @@ func testBatchCoproPreProgs(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Params:       "Year=2019",
 			Sent:         []byte(``),
-			RespContains: []string{"Droits sur les copropriétés requis"},
+			RespContains: []string{"Droits préprogrammation sur les copropriétés requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=a",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, décodage année : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad year
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Params:       "Year=2019",
 			Sent:         []byte(`{`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, décodage batch : "},
 			StatusCode:   http.StatusBadRequest}, // 2 : bad JSON
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":0,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 3 : commision ID nul
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":0,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 4 : value nul
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 5 : action ID nul
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":3,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad commission ID
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=2019",
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":5}]}`),
 			RespContains: []string{"Fixation de la préprogrammation copro d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad action ID
-		{Token: c.Config.Users.CoproUser.Token,
+		{Token: c.Config.Users.CoproPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":5,"Comment":null,"ActionID":2}]}`),
 			Params:       "Year=2019",

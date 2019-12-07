@@ -127,26 +127,54 @@ func initializeTests(t *testing.T) *TestContext {
 
 func createUsers(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 	users := []models.User{
-		{Name: "Christophe Saintillan",
+		{
+			Name:     "Christophe Saintillan",
 			Email:    cfg.Users.Admin.Email,
 			Password: cfg.Users.Admin.Password,
-			Rights:   models.AdminBit | models.ActiveBit},
-		{Name: "Utilisateur",
+			Rights:   models.AdminBit | models.ActiveBit,
+		},
+		{
+			Name:     "Utilisateur",
 			Email:    cfg.Users.User.Email,
 			Password: cfg.Users.User.Password,
-			Rights:   models.ActiveBit},
-		{Name: "Utilisateur copro",
+			Rights:   models.ActiveBit,
+		},
+		{
+			Name:     "Utilisateur copro",
 			Email:    cfg.Users.CoproUser.Email,
 			Password: cfg.Users.CoproUser.Password,
-			Rights:   models.ActiveCoproMask},
-		{Name: "Utilisateur RU",
+			Rights:   models.ActiveCoproMask,
+		},
+		{
+			Name:     "Utilisateur pre prog copro",
+			Email:    cfg.Users.CoproPreProgUser.Email,
+			Password: cfg.Users.CoproPreProgUser.Password,
+			Rights:   models.ActiveCoproPreProgMask,
+		},
+		{
+			Name:     "Utilisateur RU",
 			Email:    cfg.Users.RenewProjectUser.Email,
 			Password: cfg.Users.RenewProjectUser.Password,
-			Rights:   models.ActiveRenewProjectMask},
-		{Name: "Utilisateur logement",
+			Rights:   models.ActiveRenewProjectMask,
+		},
+		{
+			Name:     "Utilisateur pre prog RU",
+			Email:    cfg.Users.RenewProjectPreProgUser.Email,
+			Password: cfg.Users.RenewProjectPreProgUser.Password,
+			Rights:   models.ActiveRenewProjectPreProgMask,
+		},
+		{
+			Name:     "Utilisateur logement",
 			Email:    cfg.Users.HousingUser.Email,
 			Password: cfg.Users.HousingUser.Password,
-			Rights:   models.ActiveHousingMask},
+			Rights:   models.ActiveHousingMask,
+		},
+		{
+			Name:     "Utilisateur pre prog logement",
+			Email:    cfg.Users.HousingPreProgUser.Email,
+			Password: cfg.Users.HousingPreProgUser.Password,
+			Rights:   models.ActiveHousingPreProgMask,
+		},
 	}
 	for _, u := range users {
 		if err := createUser(&u, db); err != nil {
@@ -170,16 +198,19 @@ func createUser(u *models.User, db *sql.DB) error {
 
 // fetchTokens uses the login request to store an admin and an user token
 func fetchTokens(t *testing.T, ctx *TestContext) {
+	var lr struct{ Token string }
 	for _, u := range []*config.Credentials{
 		&ctx.Config.Users.Admin,
 		&ctx.Config.Users.User,
 		&ctx.Config.Users.CoproUser,
+		&ctx.Config.Users.CoproPreProgUser,
 		&ctx.Config.Users.RenewProjectUser,
-		&ctx.Config.Users.HousingUser} {
-		response := ctx.E.POST("/api/user/login").
-			WithBytes([]byte(`{"Email":"` + u.Email + `","Password":"` + u.Password + `"}`)).
-			Expect()
-		lr := struct{ Token string }{}
+		&ctx.Config.Users.RenewProjectPreProgUser,
+		&ctx.Config.Users.HousingUser,
+		&ctx.Config.Users.HousingPreProgUser,
+	} {
+		c := fmt.Sprintf(`{"Email":"%s","Password":"%s"}`, u.Email, u.Password)
+		response := ctx.E.POST("/api/user/login").WithBytes([]byte(c)).Expect()
 		if err := json.Unmarshal(response.Content, &lr); err != nil {
 			t.Errorf(err.Error())
 			t.FailNow()

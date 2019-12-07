@@ -43,12 +43,15 @@ type Credentials struct {
 
 // Users includes users credentials for test purposes.
 type Users struct {
-	SuperAdmin       Credentials `yaml:"superadmin"`
-	Admin            Credentials
-	User             Credentials
-	CoproUser        Credentials `yaml:"coprouser"`
-	RenewProjectUser Credentials `yaml:"renewprojectuser"`
-	HousingUser      Credentials `yaml:"housinguser"`
+	SuperAdmin              Credentials `yaml:"superadmin"`
+	Admin                   Credentials
+	User                    Credentials
+	CoproUser               Credentials `yaml:"coprouser"`
+	CoproPreProgUser        Credentials `yaml:"copro_pre_prog_user"`
+	RenewProjectUser        Credentials `yaml:"renewprojectuser"`
+	RenewProjectPreProgUser Credentials `yaml:"renewproject_pre_prog_user"`
+	HousingUser             Credentials `yaml:"housinguser"`
+	HousingPreProgUser      Credentials `yaml:"housing_pre_prog_user"`
 }
 
 // DBConf includes all informations for connecting to a database.

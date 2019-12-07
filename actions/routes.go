@@ -117,11 +117,13 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	coproUserParty.Delete("/copro_event/{ID}", DeleteCoproEvent)
 
 	coproUserParty.Get("/pre_prog/copro", GetCoproPreProgs)
-	coproUserParty.Post("/pre_prog/copro", SetCoproPreProgs)
 
 	coproUserParty.Post("/copro/{CoproID}/copro_doc", CreateCoproDoc)
 	coproUserParty.Put("/copro/{CoproID}/copro_doc", UpdateCoproDoc)
 	coproUserParty.Delete("/copro/{CoproID}/copro_doc/{ID}", DeleteCoproDoc)
+
+	coproPreProgParty := api.Party("", RightsMiddleWare(&coproPreProgHandler))
+	coproPreProgParty.Post("/pre_prog/copro", SetCoproPreProgs)
 
 	renewProjectUserParty := api.Party("", RightsMiddleWare(&rpHandler))
 	renewProjectUserParty.Post("/renew_project_forecast", CreateRenewProjectForecast)
@@ -258,13 +260,4 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/payment_credit_journal", GetAllPaymentCreditJournals)
 
 	userParty.Get("/payment_credits_and_journal", GetPaymentCreditsAndJournal)
-}
-
-// setDBMiddleware return a middleware to add db to context values
-func setDBMiddleware(db *sql.DB, superAdminEmail string) func(iris.Context) {
-	return func(ctx iris.Context) {
-		ctx.Values().Set("db", db)
-		ctx.Values().Set("superAdminEmail", superAdminEmail)
-		ctx.Next()
-	}
 }
