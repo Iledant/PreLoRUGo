@@ -143,7 +143,9 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	renewProjectUserParty.Delete("/rp_cmt_city_join/{ID}", DeleteRPCmtCityJoin)
 
 	renewProjectUserParty.Get("/pre_prog/renew_project", GetRPPreProgs)
-	renewProjectUserParty.Post("/pre_prog/renew_project", SetRPPreProgs)
+
+	renewProjectPreProgUserParty := api.Party("", RightsMiddleWare(&rpPreProgHandler))
+	renewProjectPreProgUserParty.Post("/pre_prog/renew_project", SetRPPreProgs)
 
 	housingUserParty := api.Party("", RightsMiddleWare(&housingHandler))
 	housingUserParty.Post("/housing_forecast", CreateHousingForecast)
@@ -152,9 +154,11 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	housingUserParty.Post("/housing/commitments", LinkCommitmentsHousings)
 
 	housingUserParty.Get("/pre_prog/housing", GetHousingPreProgs)
-	housingUserParty.Post("/pre_prog/housing", SetHousingPreProgs)
 
 	housingUserParty.Post("/housing_summary", BatchHousingSummary)
+
+	housingPreProgUserParty := api.Party("", RightsMiddleWare(&housingPreProgHandler))
+	housingPreProgUserParty.Post("/pre_prog/housing", SetHousingPreProgs)
 
 	userParty := api.Party("", RightsMiddleWare(&userHandler))
 	userParty.Post("/user/password", ChangeUserPwd)

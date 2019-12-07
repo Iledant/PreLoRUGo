@@ -116,50 +116,50 @@ func testBatchHousingPreProgs(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent:         []byte(``),
 			Params:       "Year=2019",
-			RespContains: []string{"Droits sur les projets logement requis"},
+			RespContains: []string{"Droits préprogrammation sur les projets logement requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent:         []byte(`{`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, décodage batch : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad JSON
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=a",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, décodage année : "},
 			StatusCode:   http.StatusBadRequest}, // 2 : year nul
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":0,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 3 : commision ID nul
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":0,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 4 : value nul
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 5 : action ID nul
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":3,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad commission ID
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":5}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation logement d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad action ID
-		{Token: c.Config.Users.HousingUser.Token,
+		{Token: c.Config.Users.HousingPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":1000000,"KindID":null,"Comment":null,"ActionID":3}]}`),
 			Params:       "Year=2019",
@@ -205,50 +205,50 @@ func testBatchRPPreProgs(t *testing.T, c *TestContext) {
 		{Token: c.Config.Users.User.Token,
 			Sent:         []byte(``),
 			Params:       "Year=2019",
-			RespContains: []string{"Droits sur les projets RU requis"},
+			RespContains: []string{"Droits préprogrammation sur les projets RU requis"},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent:         []byte(`{`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, décodage batch : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad JSON
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=a",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, décodage année : "},
 			StatusCode:   http.StatusBadRequest}, // 2 : year nul
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":0,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 3 : commision ID nul
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":0,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 4 : value nul
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 5 : action ID nul
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":3,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad commission ID
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":5}]}`),
 			Params:       "Year=2019",
 			RespContains: []string{"Fixation de la préprogrammation RU d'une année, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 7 : bad action ID
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{Token: c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent: []byte(`{"PreProg":[{"CommissionID":2,` +
 				`"Value":2000000,"KindID":2,"Comment":null,"ActionID":4}]}`),
 			Params:       "Year=2019",
