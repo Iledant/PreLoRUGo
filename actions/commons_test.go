@@ -130,6 +130,7 @@ func initializeTests(t *testing.T) *TestContext {
 	SetRoutes(testCtx.App, testCtx.Config.Users.SuperAdmin.Email, testCtx.DB)
 	testCtx.E = httptest.New(t, testCtx.App)
 	fetchTokens(t, testCtx)
+	createTestCases(testCtx)
 	return testCtx
 }
 
@@ -218,6 +219,9 @@ func fetchTokens(t *testing.T, ctx *TestContext) {
 		}
 		u.Token = lr.Token
 	}
+}
+
+func createTestCases(ctx *TestContext) {
 	ctx.AdminCheckTestCase = &TestCase{
 		Token:        ctx.Config.Users.User.Token,
 		RespContains: []string{`Droits administrateur requis`},
