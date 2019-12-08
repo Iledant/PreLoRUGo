@@ -20,26 +20,24 @@ func testBeneficiaryDatas(t *testing.T, c *TestContext) {
 // sent back
 func testGetBeneficiaryDatas(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			Sent:         []byte(`Page=2&Year=2010&Search=savigny`),
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			ID:           3,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Page=2&Year=a&Search=savigny`),
 			RespContains: []string{`Page de données bénéficiaire, décodage Year :`},
 			Count:        1,
 			ID:           3,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Page=2&Year=2010&Search=savigny`),
 			RespContains: []string{`"Datas":[],"Page":1,"ItemsCount":0`},
 			Count:        0,
 			ID:           0,
 			StatusCode:   http.StatusOK}, // 2 : bad ID
-		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Page=2&Year=2010&Search=`),
+		{
+			Token: c.Config.Users.User.Token,
+			Sent:  []byte(`Page=2&Year=2010&Search=`),
 			//cSpell: disable
 			RespContains: []string{`"Datas":[`, `"Date":`, `"Value":`, `"Name":"`,
 				`"IRISCode"`, `"Page":1`, `"ItemsCount":1`},
@@ -61,26 +59,24 @@ func testGetBeneficiaryDatas(t *testing.T, c *TestContext) {
 // and datas correctly sent back
 func testGetExportBeneficiaryDatas(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			Sent:         []byte(`Year=2010&Search=savigny`),
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			ID:           3,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Year=a&Search=savigny`),
 			RespContains: []string{`Export données bénéficiaire, décodage Year :`},
 			Count:        1,
 			ID:           3,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Year=2010&Search=savigny`),
 			RespContains: []string{`"BeneficiaryData":[]`},
 			Count:        0,
 			ID:           0,
 			StatusCode:   http.StatusOK}, // 2 : bad ID
-		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Year=2010&Search=`),
+		{
+			Token: c.Config.Users.User.Token,
+			Sent:  []byte(`Year=2010&Search=`),
 			//cSpell: disable
 			RespContains: []string{`"BeneficiaryData":[`, `"Date"`, `"Value":`,
 				`"IRISCode"`, `"Caducity":`},

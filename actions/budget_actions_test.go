@@ -27,23 +27,24 @@ func testBudgetAction(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateBudgetAction(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"BudgetAction":{"Code":"1234567890","Name":"Action"}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'action budgétaire, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : code empty
-		{Sent: []byte(`{"BudgetAction":{"Code":0,"Name":"Action"}}`),
+		{
+			Sent:         []byte(`{"BudgetAction":{"Code":0,"Name":"Action"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
-		{Sent: []byte(`{"BudgetAction":{"Code":1234567890,"Name":""}}`),
+		{
+			Sent:         []byte(`{"BudgetAction":{"Code":1234567890,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"BudgetAction":{"Code":1234567890,"Name":"Action"}}`),
+		{
+			Sent:         []byte(`{"BudgetAction":{"Code":1234567890,"Name":"Action"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			IDName:       `{"ID"`,
 			RespContains: []string{`"BudgetAction"`, `"Code":1234567890,"Name":"Action"`},
@@ -60,10 +61,9 @@ func testCreateBudgetAction(t *testing.T, c *TestContext) (ID int) {
 // testGetBudgetActions checks route is protected and datas sent back are well formed
 func testGetBudgetActions(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : token null
-		{Token: c.Config.Users.Admin.Token,
+		*c.UserCheckTestCase, // 0 : token null
+		{
+			Token:         c.Config.Users.Admin.Token,
 			RespContains:  []string{`BudgetAction`, `Name`, `Code`, `BudgetSector`},
 			Count:         1,
 			CountItemName: `"ID"`,
@@ -80,27 +80,29 @@ func testGetBudgetActions(t *testing.T, c *TestContext) {
 // is properly modified
 func testUpdateBudgetAction(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"BudgetAction":{"Code":"1234567890","Name":"Action"}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : code empty
-		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":0,"Name":"Action"}}`),
+		{
+			Sent:         []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":0,"Name":"Action"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code zero
-		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":1234567890,"Name":""}}`),
+		{
+			Sent:         []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":1234567890,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"BudgetAction":{"ID":0,"Code":1234567890,"Name":""}}`),
+		{
+			Sent:         []byte(`{"BudgetAction":{"ID":0,"Code":1234567890,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification d'action budgétaire : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : name empty
-		{Sent: []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":23456789,"Name":"Action modifiée"}}`),
+		{
+			Sent:         []byte(`{"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":23456789,"Name":"Action modifiée"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"BudgetAction":{"ID":` + strconv.Itoa(ID) + `,"Code":23456789,"Name":"Action modifiée","SectorID":null}}`},
 			StatusCode:   http.StatusOK}, // 5 : name empty
@@ -115,14 +117,14 @@ func testUpdateBudgetAction(t *testing.T, c *TestContext, ID int) {
 // testDeleteBudgetAction check route is admin protected and delete requests returns ok
 func testDeleteBudgetAction(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token:        c.Config.Users.Admin.Token,
 			ID:           0,
 			RespContains: []string{`Suppression d'action budgétaire, requête : Action budgétaire introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
 			RespContains: []string{`Action budgétaire supprimée`},
 			StatusCode:   http.StatusOK}, // 2 : ok

@@ -28,23 +28,24 @@ func testDepartment(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateDepartment(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Department":{"Code":78,"Name":"Essai"}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de département, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Department":{"Code":0,"Name":"Essai"}}`),
+		{
+			Sent:         []byte(`{"Department":{"Code":0,"Name":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de département : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
-		{Sent: []byte(`{"Department":{"Code":78,"Name":""}}`),
+		{
+			Sent:         []byte(`{"Department":{"Code":78,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de département : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"Department":{"Code":78,"Name":"Essai"}}`),
+		{
+			Sent:         []byte(`{"Department":{"Code":78,"Name":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			IDName:       `{"ID"`,
 			RespContains: []string{`"Department":{"ID":1,"Code":78,"Name":"Essai"`},
@@ -62,27 +63,29 @@ func testCreateDepartment(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateDepartment(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Department":{"Code":77,"Name":"Essai2"}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de département, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":0,"Name":"Essai2"}}`),
+		{
+			Sent:         []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":0,"Name":"Essai2"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de département : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
-		{Sent: []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":77,"Name":""}}`),
+		{
+			Sent:         []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":77,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de département : Champ code ou name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"Department":{"ID":0,"Code":77,"Name":"Essai2"}}`),
+		{
+			Sent:         []byte(`{"Department":{"ID":0,"Code":77,"Name":"Essai2"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de département, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
-		{Sent: []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":77,"Name":"Essai2"}}`),
+		{
+			Sent:         []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":77,"Name":"Essai2"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":77,"Name":"Essai2"}`},
 			StatusCode:   http.StatusOK}, // 5 : ok
@@ -97,15 +100,14 @@ func testUpdateDepartment(t *testing.T, c *TestContext, ID int) {
 // testGetDepartment checks if route is user protected and Department correctly sent back
 func testGetDepartment(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusInternalServerError,
 			RespContains: []string{`Récupération de département, requête :`},
 			ID:           0}, // 1 : bad ID
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":77,"Name":"Essai2"}}`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -120,11 +122,9 @@ func testGetDepartment(t *testing.T, c *TestContext, ID int) {
 // testGetDepartments checks if route is user protected and Departments correctly sent back
 func testGetDepartments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`{"Department":[{"ID":1,"Code":77,"Name":"Essai2"}]}`},
 			Count:         1,
 			CountItemName: `"ID"`,
@@ -140,14 +140,14 @@ func testGetDepartments(t *testing.T, c *TestContext) {
 // testDeleteDepartment checks if route is user protected and departments correctly sent back
 func testDeleteDepartment(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user token
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user token
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Suppression de département, requête : `},
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Département supprimé`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok

@@ -30,40 +30,42 @@ func testCoproForecast(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":0,"Value":1000000,` +
-			`"Comment":"Essai","CoproID":1000000}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.CoproCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":0,"Value":1000000,"Comment":"Essai","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + "}}"),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":0,"Value":1000000,"Comment":"Essai","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : commission ID null
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":0}}`),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":0}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : renew project ID null
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + "}}"),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : value null
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + `,"ActionID":0}}`),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":0}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : action ID null
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Project":null,"Comment":"Essai","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + `,"ActionID":2}}`),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Project":null,"Comment":"Essai","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":2}}`),
 			Token:  c.Config.Users.CoproUser.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"CoproForecast":{"ID":1,"CommissionID":` +
@@ -85,45 +87,49 @@ func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateCoproForecast(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":2000000,"Value":2000000,"Comment":null,"CoproID":2000000}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.CoproCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de prévision copro, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + "}}"),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : value nul
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":0,"Value":0,"Comment":"Essai2","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + "}}"),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":0,"Value":0,"Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + "}}"),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : commission ID nul
-		{Sent: []byte(`{"CoproForecast":{"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","CoproID":0}}`),
+		{
+			Sent: []byte(`{"CoproForecast":{"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","CoproID":0}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : renew project ID nul
-		{Sent: []byte(`{"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + `,"ActionID":0}}`),
+		{
+			Sent: []byte(`{"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":0}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de prévision copro : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : action ID nul
-		{Sent: []byte(`{"CoproForecast":{"ID":0,"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + `,"ActionID":3}}`),
+		{
+			Sent: []byte(`{"CoproForecast":{"ID":0,"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":3}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de prévision copro, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad ID
-		{Sent: []byte(`{"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
-			strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
-			strconv.Itoa(int(c.CoproID)) + `,"ActionID":3}}`),
+		{
+			Sent: []byte(`{"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
+				strconv.Itoa(int(c.CoproID)) + `,"ActionID":3}}`),
 			Token: c.Config.Users.CoproUser.Token,
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
@@ -142,15 +148,14 @@ func testUpdateCoproForecast(t *testing.T, c *TestContext, ID int) {
 // testGetCoproForecast checks if route is user protected and copro forecast correctly sent back
 func testGetCoproForecast(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusInternalServerError,
 			RespContains: []string{`Récupération de prévision copro, requête :`},
 			ID:           0}, // 1 : bad ID
-		{Token: c.Config.Users.User.Token,
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"CoproForecast":{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
 				`"CommissionName":"Commission test","Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
@@ -169,11 +174,9 @@ func testGetCoproForecast(t *testing.T, c *TestContext, ID int) {
 // testGetCoproForecasts checks if route is user protected and CoproForecasts correctly sent back
 func testGetCoproForecasts(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"CoproForecast":[{"ID":` + strconv.Itoa(ID) + `,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"CommissionDate":"2018-03-01T00:00:00Z",` +
 				`"CommissionName":"Commission test","Value":2000000,"Project":"projet copro","Comment":"Essai2","CoproID":` +
@@ -192,14 +195,14 @@ func testGetCoproForecasts(t *testing.T, c *TestContext, ID int) {
 // testDeleteCoproForecast checks if route is user protected and CoproForecasts correctly sent back
 func testDeleteCoproForecast(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user token
-		{Token: c.Config.Users.CoproUser.Token,
+		*c.CoproCheckTestCase, // 0 : user token
+		{
+			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Suppression de prévision copro, requête : `},
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.CoproUser.Token,
+		{
+			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Prévision copro supprimé`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -214,11 +217,9 @@ func testDeleteCoproForecast(t *testing.T, c *TestContext, ID int) {
 // testBatchCoproForecasts check route is limited to admin and batch import succeeds
 func testBatchCoproForecasts(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(``),
-			RespContains: []string{"Droits administrateur requis"},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"CoproForecast":[{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Project":null,"Comment":"Batch1","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203},{"ID":0,"CommissionID":` +
@@ -226,7 +227,8 @@ func testBatchCoproForecasts(t *testing.T, c *TestContext) {
 				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203}]}`),
 			RespContains: []string{"Batch de Prévision copros, requête : "},
 			StatusCode:   http.StatusInternalServerError}, // 1 : value nul
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"CoproForecast":[{"ID":0,"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":100,"Project":null,"Comment":"Batch1","CoproID":` +
 				strconv.Itoa(int(c.CoproID)) + `,"ActionCode":15400203},{"ID":0,"CommissionID":` +

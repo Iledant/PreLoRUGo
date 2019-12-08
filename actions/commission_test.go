@@ -41,19 +41,19 @@ func testCommission(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateCommission(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Commission":{"Name":"Essai","Date":2019-03-01T00:00:00}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de commission, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Commission":{}}`),
+		{
+			Sent:         []byte(`{"Commission":{}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de commission : Champ name vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Commission":{"Name":"Essai","Date":"2019-03-01T00:00:00Z"}}`),
+		{
+			Sent:         []byte(`{"Commission":{"Name":"Essai","Date":"2019-03-01T00:00:00Z"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			IDName:       `{"ID"`,
 			RespContains: []string{`"Commission":{"ID":1,"Name":"Essai","Date":"2019-03-01T00:00:00Z"`},
@@ -71,23 +71,24 @@ func testCreateCommission(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateCommission(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Commission":{"Name":"Essai2","Date":null}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de commission, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Commission":{}}`),
+		{
+			Sent:         []byte(`{"Commission":{}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de commission : Champ name vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Commission":{"ID":0,"Name":"Essai2","Date":null}}`),
+		{
+			Sent:         []byte(`{"Commission":{"ID":0,"Name":"Essai2","Date":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de commission, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
-		{Sent: []byte(`{"Commission":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","Date":null}}`),
+		{
+			Sent:         []byte(`{"Commission":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","Date":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"Commission":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","Date":null}`},
 			StatusCode:   http.StatusOK}, // 4 : ok
@@ -102,15 +103,14 @@ func testUpdateCommission(t *testing.T, c *TestContext, ID int) {
 // testGetCommission checks if route is user protected and Commission correctly sent back
 func testGetCommission(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusInternalServerError,
 			RespContains: []string{`Récupération de commission, requête :`},
 			ID:           0}, // 1 : bad ID
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`{"Commission":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","Date":null}}`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -125,11 +125,9 @@ func testGetCommission(t *testing.T, c *TestContext, ID int) {
 // testGetCommissions checks if route is user protected and Commissions correctly sent back
 func testGetCommissions(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`{"Commission":[{"ID":1,"Name":"Essai2","Date":null}]}`},
 			Count:         1,
 			CountItemName: `"ID"`,
@@ -145,14 +143,14 @@ func testGetCommissions(t *testing.T, c *TestContext) {
 // testDeleteCommission checks if route is user protected and commissions correctly sent back
 func testDeleteCommission(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user token
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user token
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Suppression de commission, requête : `},
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Commission supprimée`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok

@@ -18,17 +18,15 @@ func testBeneficiaryPayments(t *testing.T, c *TestContext) {
 // testGetBeneficiaryPayments checks if route is user protected and datas correctly sent back
 func testGetBeneficiaryPayments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			ID:           3,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`"BeneficiaryPayment":[]`},
 			Count:        0,
 			ID:           0,
 			StatusCode:   http.StatusOK}, // 1 : bad ID
-		{Token: c.Config.Users.User.Token,
+		{
+			Token: c.Config.Users.User.Token,
 			//cSpell: disable
 			RespContains: []string{`BeneficiaryPayment":[{"Year":2010,"Month":2,` +
 				`"Value":18968.8},{"Year":2011,"Month":6,"Value":4742.2}]`},

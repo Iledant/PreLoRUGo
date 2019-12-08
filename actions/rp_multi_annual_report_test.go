@@ -17,11 +17,9 @@ func testRPMultiAnnualReport(t *testing.T, c *TestContext) {
 // testGetRPMultiAnnualReports checks if route is user protected and RPMultiAnnualReports correctly sent back
 func testGetRPMultiAnnualReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`"RPMultiAnnualReport":[`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}

@@ -28,19 +28,19 @@ func testBudgetSector(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateBudgetSector(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"BudgetSector":{"Name":"Essai","FullName":"Essai"}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de secteur budgétaire, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"BudgetSector":{"Name":"","FullName":"Essai"}}`),
+		{
+			Sent:         []byte(`{"BudgetSector":{"Name":"","FullName":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de secteur budgétaire : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : empty name
-		{Sent: []byte(`{"BudgetSector":{"Name":"Essai","FullName":"Essai"}}`),
+		{
+			Sent:         []byte(`{"BudgetSector":{"Name":"Essai","FullName":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			IDName:       `{"ID"`,
 			RespContains: []string{`"BudgetSector":{"ID":2,"Name":"Essai","FullName":"Essai"`},
@@ -58,23 +58,24 @@ func testCreateBudgetSector(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateBudgetSector(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"BudgetSector":{"Name":"Essai2","FullName":null}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de secteur budgétaire, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"BudgetSector":{"Name":""}}`),
+		{
+			Sent:         []byte(`{"BudgetSector":{"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de secteur budgétaire : Champ incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"BudgetSector":{"ID":0,"Name":"Essai2","FullName":null}}`),
+		{
+			Sent:         []byte(`{"BudgetSector":{"ID":0,"Name":"Essai2","FullName":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de secteur budgétaire, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
-		{Sent: []byte(`{"BudgetSector":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","FullName":null}}`),
+		{
+			Sent:         []byte(`{"BudgetSector":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","FullName":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"BudgetSector":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","FullName":null}`},
 			StatusCode:   http.StatusOK}, // 4 : ok
@@ -89,15 +90,14 @@ func testUpdateBudgetSector(t *testing.T, c *TestContext, ID int) {
 // testGetBudgetSector checks if route is user protected and BudgetSector correctly sent back
 func testGetBudgetSector(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusInternalServerError,
 			RespContains: []string{`Récupération de secteur budgétaire, requête :`},
 			ID:           0}, // 1 : bad ID
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`{"BudgetSector":{"ID":` + strconv.Itoa(ID) + `,"Name":"Essai2","FullName":null}}`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -112,11 +112,9 @@ func testGetBudgetSector(t *testing.T, c *TestContext, ID int) {
 // testGetBudgetSectors checks if route is user protected and BudgetSectors correctly sent back
 func testGetBudgetSectors(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        2,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`{"BudgetSector":[{"ID":1,"Name":"LO","FullName":null},{"ID":2,"Name":"Essai2","FullName":null}]}`},
 			Count:         2,
 			CountItemName: `"ID"`,
@@ -132,14 +130,14 @@ func testGetBudgetSectors(t *testing.T, c *TestContext) {
 // testDeleteBudgetSector checks if route is user protected and budget_sectors correctly sent back
 func testDeleteBudgetSector(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user token
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user token
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Suppression de secteur budgétaire, requête : `},
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Logement supprimé`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok

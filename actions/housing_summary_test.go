@@ -29,11 +29,7 @@ var (
 // import succeeds
 func testBatchHousingSummary(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets logement requis`},
-			StatusCode:   http.StatusUnauthorized,
-		}, // 0 : token empty
+		*c.HousingCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.HousingUser.Token,
 			Sent:         tcSentBH1,

@@ -18,11 +18,9 @@ func testRPPerCommunityReport(t *testing.T, c *TestContext) {
 // RPPerCommunityReport correctly sent back
 func testGetRPPerCommunityReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RPPerCommunityReport":[{"CommunityID":2,` +
 				`"CommunityName":"CA SAINT GERMAIN BOUCLES DE SEINE (78-YVELINES)",` +
 				`"CommunityBudget":0,"Commitment":0,"Payment":0},{"CommunityID":4,` +

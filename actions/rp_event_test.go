@@ -28,29 +28,28 @@ func testRPEvent(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateRPEvent(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"RenewProjectID":` + strconv.FormatInt(c.RenewProjectID, 10) +
-			`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets RU requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.RPCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création d'événement RP, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"RenewProjectID":0,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
+		{
+			Sent: []byte(`{"RenewProjectID":0,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : RenewProjectID empty
-		{Sent: []byte(`{"RenewProjectID":` + strconv.FormatInt(c.RenewProjectID, 10) +
-			`,"RPEventTypeID":0,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
+		{
+			Sent: []byte(`{"RenewProjectID":` + strconv.FormatInt(c.RenewProjectID, 10) +
+				`,"RPEventTypeID":0,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : RPEventTypeID empty
-		{Sent: []byte(`{"RenewProjectID":` + strconv.FormatInt(c.RenewProjectID, 10) +
-			`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
+		{
+			Sent: []byte(`{"RenewProjectID":` + strconv.FormatInt(c.RenewProjectID, 10) +
+				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
 			Token:  c.Config.Users.RenewProjectUser.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"RPEvent":{"ID":1,"RenewProjectID":` +
@@ -71,39 +70,38 @@ func testCreateRPEvent(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateRPEvent(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
-			strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets RU requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.RPCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification d'événement RP, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":0` +
-			`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
+		{
+			Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":0` +
+				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : RenewProjectID null
-		{Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"RPEventTypeID":0,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
+		{
+			Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"RPEventTypeID":0,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
 			StatusCode:   http.StatusBadRequest}, // 3 : RenewProjectID null
-		{Sent: []byte(`{"ID":0,"RenewProjectID":` +
-			strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
+		{
+			Sent: []byte(`{"ID":0,"RenewProjectID":` +
+				strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification d'événement RP, requête : Événement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
-		{Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
-			strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
-			`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
+		{
+			Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
+				strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
+				`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
 			Token: c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
@@ -122,15 +120,14 @@ func testUpdateRPEvent(t *testing.T, c *TestContext, ID int) {
 // is properly filled
 func testGetRPEvent(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
+		*c.UserCheckTestCase, // 0 : no token
 		{
-			Token:        "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : no token
-		{ID: 0,
+			ID:           0,
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Récupération d'événement RP, requête :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{ID: ID,
+		{
+			ID:    ID,
 			Token: c.Config.Users.User.Token,
 			RespContains: []string{`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
@@ -149,10 +146,9 @@ func testGetRPEvent(t *testing.T, c *TestContext, ID int) {
 // sent back
 func testGetRPEvents(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "fake",
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.UserCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:  []byte(`fake`),
 			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RPEvent"`, `,"RenewProjectID":` +
 				strconv.FormatInt(c.RPEventTypeID, 10) +
@@ -173,19 +169,19 @@ func testGetRPEvents(t *testing.T, c *TestContext) {
 // delete request sends ok back
 func testDeleteRPEvent(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "fake",
-			ID:           0,
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : bad token
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : bad token
+		{
+			Token:        c.Config.Users.User.Token,
 			ID:           0,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 1 : user unauthorized
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{
+			Token:        c.Config.Users.RenewProjectUser.Token,
 			ID:           0,
 			RespContains: []string{`Suppression d'événement RP, requête : Événement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad ID
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{
+			Token:        c.Config.Users.RenewProjectUser.Token,
 			ID:           ID,
 			RespContains: []string{`Événement RP supprimé`},
 			StatusCode:   http.StatusOK}, // 3 : ok

@@ -18,15 +18,14 @@ func testCmtForecasts(t *testing.T, c *TestContext) {
 // correctly sent back
 func testGetCmtForecasts(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits administrateur requis`},
 			Count:        1,
 			StatusCode:   http.StatusUnauthorized}, // 1 : bad year parameter format
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:         c.Config.Users.Admin.Token,
 			RespContains:  []string{`{"CmtForecast":[]}`},
 			Count:         0,
 			CountItemName: `"Index"`,

@@ -29,11 +29,7 @@ func testRPCmtCityJoin(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{
-			Sent:         []byte(`{"CommitmentID":3,"CityCode":75101}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets RU requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized!
+		*c.RPCheckTestCase, // 0 : user unauthorized!
 		{
 			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
@@ -73,11 +69,7 @@ func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{
-			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":77001}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets RU requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.RPCheckTestCase, // 0 : user unauthorized
 		{
 			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
@@ -120,11 +112,7 @@ func testUpdateRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 // testGetRPCmtCityJoin checks if route is user protected and RPCmtCityJoin correctly sent back
 func testGetRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{
-			Token:        "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		*c.UserCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusInternalServerError,
@@ -147,11 +135,7 @@ func testGetRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 // testGetRPCmtCityJoins checks if route is user protected and RPCmtCityJoins correctly sent back
 func testGetRPCmtCityJoins(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		*c.UserCheckTestCase, // 0 : token empty
 		{
 			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`{"RPCmtCityJoin":[{"ID":2,"CommitmentID":4,"CityCode":77001}]}`},
@@ -169,10 +153,7 @@ func testGetRPCmtCityJoins(t *testing.T, c *TestContext) {
 // testDeleteRPCmtCityJoin checks if route is user protected and rp_cmt_city_joins correctly sent back
 func testDeleteRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets RU requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user token
+		*c.RPCheckTestCase, // 0 : user token
 		{
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Suppression de lien engagement ville, requête : `},

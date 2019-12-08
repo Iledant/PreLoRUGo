@@ -24,12 +24,7 @@ func testPreProg(t *testing.T, c *TestContext) {
 // returns successfully
 func testBatchCoproPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			Params:       "Year=2019",
-			Sent:         []byte(``),
-			RespContains: []string{"Droits préprogrammation sur les copropriétés requis"},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.CoproPreProgCheckTestCase, // 0 : user unauthorized
 		{
 			Token:  c.Config.Users.CoproPreProgUser.Token,
 			Params: "Year=a",
@@ -98,10 +93,7 @@ func testBatchCoproPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : token empty
+		*c.CoproCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.CoproUser.Token,
 			Params:       `Year=a`,
@@ -125,12 +117,7 @@ func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 // import returns successfully
 func testBatchHousingPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			Sent:         []byte(``),
-			Params:       "Year=2019",
-			RespContains: []string{"Droits préprogrammation sur les projets logement requis"},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.HousingPreProgCheckTestCase, // 0 : user unauthorized
 		{
 			Token:        c.Config.Users.HousingPreProgUser.Token,
 			Sent:         []byte(`{`),
@@ -199,10 +186,7 @@ func testBatchHousingPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetHousingPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets logement requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : token empty
+		*c.HousingCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.HousingUser.Token,
 			Params:       `Year=a`,
@@ -226,12 +210,7 @@ func testGetHousingPreProgs(t *testing.T, c *TestContext) {
 // successfully
 func testBatchRPPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			Sent:         []byte(``),
-			Params:       "Year=2019",
-			RespContains: []string{"Droits préprogrammation sur les projets RU requis"},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.RPPreProgCheckTestCase, // 0 : user unauthorized
 		{
 			Token:        c.Config.Users.RenewProjectPreProgUser.Token,
 			Sent:         []byte(`{`),
@@ -300,10 +279,7 @@ func testBatchRPPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetRPPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les projets RU requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : token empty
+		*c.RPCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			Params:       `Year=a`,
@@ -327,10 +303,7 @@ func testGetRPPreProgs(t *testing.T, c *TestContext) {
 //  correctly sent back
 func testGetPreProgs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : bad token
+		*c.AdminCheckTestCase, // 0 : bad token
 		{
 			Token:        c.Config.Users.Admin.Token,
 			Params:       `Year=a`,

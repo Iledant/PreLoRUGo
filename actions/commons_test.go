@@ -15,20 +15,6 @@ import (
 	"github.com/kataras/iris/httptest"
 )
 
-// TestContext contains all items for units tests in API.
-type TestContext struct {
-	DB               *sql.DB
-	App              *iris.Application
-	E                *httpexpect.Expect
-	Config           *config.PreLoRuGoConf
-	CommissionID     int64
-	RenewProjectID   int64
-	CoproID          int64
-	HousingID        int64
-	RPEventTypeID    int64
-	CoproEventTypeID int64
-}
-
 // TestCase is used as common structure for all request tests
 type TestCase struct {
 	Sent          []byte
@@ -40,6 +26,28 @@ type TestCase struct {
 	Count         int
 	CountItemName string
 	IDName        string
+}
+
+// TestContext contains all items for units tests in API.
+type TestContext struct {
+	DB                          *sql.DB
+	App                         *iris.Application
+	E                           *httpexpect.Expect
+	Config                      *config.PreLoRuGoConf
+	CommissionID                int64
+	RenewProjectID              int64
+	CoproID                     int64
+	HousingID                   int64
+	RPEventTypeID               int64
+	CoproEventTypeID            int64
+	AdminCheckTestCase          *TestCase
+	UserCheckTestCase           *TestCase
+	CoproCheckTestCase          *TestCase
+	CoproPreProgCheckTestCase   *TestCase
+	HousingCheckTestCase        *TestCase
+	HousingPreProgCheckTestCase *TestCase
+	RPCheckTestCase             *TestCase
+	RPPreProgCheckTestCase      *TestCase
 }
 
 // TestAll embeddes all test functions and is the only test entry point
@@ -209,6 +217,46 @@ func fetchTokens(t *testing.T, ctx *TestContext) {
 			return
 		}
 		u.Token = lr.Token
+	}
+	ctx.AdminCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits administrateur requis`},
+		StatusCode:   http.StatusUnauthorized,
+	}
+	ctx.UserCheckTestCase = &TestCase{
+		Token:        "",
+		RespContains: []string{`Token absent`},
+		StatusCode:   http.StatusInternalServerError,
+	}
+	ctx.CoproCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits sur les copropriétés requis`},
+		StatusCode:   http.StatusUnauthorized,
+	}
+	ctx.CoproPreProgCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits préprogrammation sur les copropriétés requis`},
+		StatusCode:   http.StatusUnauthorized,
+	}
+	ctx.HousingCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits sur les projets logement requis`},
+		StatusCode:   http.StatusUnauthorized,
+	}
+	ctx.HousingPreProgCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits préprogrammation sur les projets logement requis`},
+		StatusCode:   http.StatusUnauthorized,
+	}
+	ctx.RPCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits sur les projets RU requis`},
+		StatusCode:   http.StatusUnauthorized,
+	}
+	ctx.RPPreProgCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits préprogrammation sur les projets RU requis`},
+		StatusCode:   http.StatusUnauthorized,
 	}
 }
 

@@ -17,11 +17,9 @@ func testCoproReport(t *testing.T, c *TestContext) {
 // testGetCoproReports checks if route is user protected and CoproReports correctly sent back
 func testGetCoproReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`"CoproReport":[`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}

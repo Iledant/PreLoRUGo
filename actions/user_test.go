@@ -31,35 +31,39 @@ func testUser(t *testing.T, c *TestContext) {
 // testCreateUser checks route is protected and user correctly created
 func testCreateUser(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : User unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : User unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad JSON
-		{Sent: []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
+		{
+			Sent:         []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur : Champ name vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Name":"essai","Email":"","Password":"toto","Rights":0}`),
+		{
+			Sent:         []byte(`{"Name":"essai","Email":"","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur : Champ email vide`},
 			StatusCode:   http.StatusBadRequest}, // 3 : email empty
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"","Rights":0}`),
+		{
+			Sent:         []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur : Champ password vide`},
 			StatusCode:   http.StatusBadRequest}, // 4 : password empty
-		{Sent: []byte(`{"Name":"Utilisateur","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
+		{
+			Sent:         []byte(`{"Name":"Utilisateur","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur : Utilisateur existant`},
 			StatusCode:   http.StatusBadRequest}, // 5 : name already exists
-		{Sent: []byte(`{"Name":"essai","Email":"` + c.Config.Users.User.Email + `","Password":"toto","Rights":0}`),
+		{
+			Sent:         []byte(`{"Name":"essai","Email":"` + c.Config.Users.User.Email + `","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création d'utilisateur : Utilisateur existant`},
 			StatusCode:   http.StatusBadRequest}, // 6 : email already exists
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
+		{
+			Sent:         []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":0}`),
 			Token:        c.Config.Users.Admin.Token,
 			IDName:       `{"ID"`,
 			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Rights":0`},
@@ -102,22 +106,21 @@ func testLogout(t *testing.T, c *TestContext, ID int) {
 // testUpdateUser checks route is protected and user correctly modified
 func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
-			Token:        c.Config.Users.User.Token,
-			ID:           ID,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`{"Name":"essai","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
 			Token:        c.Config.Users.Admin.Token,
 			ID:           0,
 			RespContains: []string{`Modification d'utilisateur, get`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : ID doesn't exist
-		{Sent: []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
+		{
+			Sent:         []byte(`{"Name":"","Email":"toto@iledefrance.fr","Password":"toto","Rights":1}`),
 			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
 			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Rights":1`},
 			StatusCode:   http.StatusOK}, // 2 : name and email unchanged
-		{Sent: []byte(`{"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":3}`),
+		{
+			Sent:         []byte(`{"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":3}`),
 			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
 			RespContains: []string{`"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":3`},
@@ -133,27 +136,29 @@ func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 // testChangeUserPwd checks route is protected and user correctly modified
 func testChangeUserPwd(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"CurrentPassword":` + c.Config.Users.User.Password + `,"NewPassword":"toto2"}`),
-			Token:        "fake",
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : no token
-		{Sent: []byte(`{"CurrentPassword":"","NewPassword":"toto2"}`),
+		*c.UserCheckTestCase, // 0 : no token
+		{
+			Sent:         []byte(`{"CurrentPassword":"","NewPassword":"toto2"}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Changement de mot de passe : ancien et nouveau mots de passe requis`},
 			StatusCode:   http.StatusBadRequest}, // 1 : current password empty
-		{Sent: []byte(`{"CurrentPassword":"` + c.Config.Users.User.Password + `","NewPassword":""}`),
+		{
+			Sent:         []byte(`{"CurrentPassword":"` + c.Config.Users.User.Password + `","NewPassword":""}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Changement de mot de passe : ancien et nouveau mots de passe requis`},
 			StatusCode:   http.StatusBadRequest}, // 2 : new password empty
-		{Sent: []byte(`{"CurrentPassword":"fake","NewPassword":"toto2"}`),
+		{
+			Sent:         []byte(`{"CurrentPassword":"fake","NewPassword":"toto2"}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Changement de mot de passe : erreur de mot de passe`},
 			StatusCode:   http.StatusBadRequest}, // 3 : bad current password
-		{Sent: []byte(`{"CurrentPassword":"` + c.Config.Users.User.Password + `","NewPassword":"toto2"}`),
+		{
+			Sent:         []byte(`{"CurrentPassword":"` + c.Config.Users.User.Password + `","NewPassword":"toto2"}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Mot de passe changé`},
 			StatusCode:   http.StatusOK}, // 4 : ok
-		{Sent: []byte(`{"CurrentPassword":"toto2","NewPassword":"` + c.Config.Users.User.Password + `"}`),
+		{
+			Sent:         []byte(`{"CurrentPassword":"toto2","NewPassword":"` + c.Config.Users.User.Password + `"}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Mot de passe changé`},
 			StatusCode:   http.StatusOK}, // 5 : check new password works and restore
@@ -168,10 +173,9 @@ func testChangeUserPwd(t *testing.T, c *TestContext) {
 // testGetUsers checks route is protected for admin and 3 users are sent back
 func testGetUsers(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token:         c.Config.Users.Admin.Token,
 			RespContains:  []string{`"Christophe Saintillan"`, `"essai2"`, `"Utilisateur"`},
 			Count:         9,
 			CountItemName: `"ID"`,
@@ -187,15 +191,14 @@ func testGetUsers(t *testing.T, c *TestContext) {
 // testDeleteUser checks route is protected and user correctly modified
 func testDeleteUser(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			ID:           ID,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token:        c.Config.Users.Admin.Token,
 			ID:           0,
 			RespContains: []string{`Suppression d'utilisateur, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
 			RespContains: []string{`Utilisateur supprimé`},
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -210,22 +213,28 @@ func testDeleteUser(t *testing.T, c *TestContext, ID int) {
 // testSignUp checks a the user is created and inactive
 func testSignUp(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Sent: []byte(`fake}`),
+		{
+			Sent:         []byte(`fake}`),
 			RespContains: []string{`Inscription d'utilisateur, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
-		{Sent: []byte(`{"Name":""}`),
+		{
+			Sent:         []byte(`{"Name":""}`),
 			RespContains: []string{`Inscription d'utilisateur : Champ manquant ou incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 1 : name empty
-		{Sent: []byte(`{"Name":"Utilisateur","Email":""}`),
+		{
+			Sent:         []byte(`{"Name":"Utilisateur","Email":""}`),
 			RespContains: []string{`Inscription d'utilisateur : Champ manquant ou incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : email empty
-		{Sent: []byte(`{"Name":"Utilisateur","Email":"user@iledefrance.fr","Password":""}`),
+		{
+			Sent:         []byte(`{"Name":"Utilisateur","Email":"user@iledefrance.fr","Password":""}`),
 			RespContains: []string{`Inscription d'utilisateur : Champ manquant ou incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : password empty
-		{Sent: []byte(`{"Name":"Utilisateur","Email":"user@iledefrance.fr","Password":"tutu"}`),
+		{
+			Sent:         []byte(`{"Name":"Utilisateur","Email":"user@iledefrance.fr","Password":"tutu"}`),
 			RespContains: []string{`Inscription d'utilisateur, exists :`},
 			StatusCode:   http.StatusBadRequest}, // 4 : users exists
-		{Sent: []byte(`{"Name":"Utilisateur2","Email":"user2@iledefrance.fr","Password":"tutu"}`),
+		{
+			Sent:         []byte(`{"Name":"Utilisateur2","Email":"user2@iledefrance.fr","Password":"tutu"}`),
 			RespContains: []string{`Utilisateur créé, en attente d'activation`},
 			StatusCode:   http.StatusCreated}, // 5 : created
 	}

@@ -31,11 +31,7 @@ func testRPLS(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateRPLS(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{
-			Sent:         []byte(`{"RPLS":{"InseeCode":75101,"Year":2016,"Ratio":0.167}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.AdminCheckTestCase, // 0 : user unauthorized
 		{
 			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
@@ -76,11 +72,7 @@ func testCreateRPLS(t *testing.T, c *TestContext) (ID int) {
 // is properly modified
 func testUpdateRPLS(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{
-			Sent:         []byte(`{"RPLS":{"InseeCode":75101,"Year":2016,"Ratio":0.167}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.AdminCheckTestCase, // 0 : user unauthorized
 		{
 			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
@@ -126,11 +118,7 @@ func testUpdateRPLS(t *testing.T, c *TestContext, ID int) {
 // is properly modified
 func testDeleteRPLS(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{
-			ID:           0,
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.AdminCheckTestCase, // 0 : user unauthorized
 		{
 			ID:           0,
 			Token:        c.Config.Users.Admin.Token,
@@ -153,11 +141,7 @@ func testDeleteRPLS(t *testing.T, c *TestContext, ID int) {
 // is properly filled
 func testBatchRPLS(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Sent:         []byte(`{"RPLS":[{"InseeCode":75101,"Year":2016,"Ratio":0.167}]`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
+		*c.AdminCheckTestCase, // 0 : user unauthorized
 		{
 			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
@@ -201,10 +185,9 @@ func testBatchRPLS(t *testing.T, c *TestContext) {
 // correctly inserted and updated
 func testGetAllRPLS(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: `fake`,
-			StatusCode:   http.StatusInternalServerError,
-			RespContains: []string{`Token invalid`}},
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase,
+		{
+			Token:      c.Config.Users.User.Token,
 			StatusCode: http.StatusOK,
 			RespContains: []string{`{"RPLS":[{"ID":3,"InseeCode":75101,"CityName":` +
 				`"PARIS 1","Year":2016,"Ratio":0.167},{"ID":4,"InseeCode":77001,` +
@@ -223,10 +206,9 @@ func testGetAllRPLS(t *testing.T, c *TestContext) {
 // correctly sent back
 func testGetRPLSDatas(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: `fake`,
-			StatusCode:   http.StatusInternalServerError,
-			RespContains: []string{`Token invalid`}},
-		{Token: c.Config.Users.Admin.Token,
+		*c.UserCheckTestCase,
+		{
+			Token:      c.Config.Users.Admin.Token,
 			StatusCode: http.StatusOK,
 			RespContains: []string{`"RPLS":[{"ID":3,"InseeCode":75101,"CityName":` +
 				`"PARIS 1","Year":2016,"Ratio":0.167},{"ID":4,"InseeCode":77001,` +
@@ -246,10 +228,7 @@ func testGetRPLSDatas(t *testing.T, c *TestContext) {
 // correctly inserted and updated
 func testRPLSReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        `fake`,
-			StatusCode:   http.StatusInternalServerError,
-			RespContains: []string{`Token invalid`}}, // 0 bad token
+		*c.UserCheckTestCase, // 0 bad token
 		{
 			Token:        c.Config.Users.User.Token,
 			Params:       "RPLSYear=a&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=0.3",
@@ -293,10 +272,7 @@ func testRPLSReport(t *testing.T, c *TestContext) {
 // correctly inserted and updated
 func testRPLSDetailedReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        `fake`,
-			StatusCode:   http.StatusInternalServerError,
-			RespContains: []string{`Token invalid`}}, // 0 bad token
+		*c.UserCheckTestCase, // 0 bad token
 		{
 			Token:        c.Config.Users.User.Token,
 			Params:       "RPLSYear=a&FirstYear=2010&LastYear=2019&RPLSMin=0&RPLSMax=0.3",

@@ -17,11 +17,9 @@ func testHome(t *testing.T, c *TestContext) {
 // testGetHome checks if route is user protected and datas correctly sent back
 func testGetHome(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"Commitment":`, `"Payment":`, `"ImportLog":[`,
 				`"Programmation":[`, `"PaymentCreditSum":`,
 				`"HomeMessage":{"Title":"Message du jour","Body":"Corps du message"}`},

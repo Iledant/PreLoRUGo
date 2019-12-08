@@ -17,24 +17,18 @@ func testPaymentCreditJournals(t *testing.T, c *TestContext) {
 // batchPaymentCreditJournalsTest check route is admin protected and response is ok
 func batchPaymentCreditJournalsTest(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			StatusCode:   http.StatusUnauthorized,
-			RespContains: []string{"Droits administrateur requis"},
-		},
+		*c.AdminCheckTestCase,
 		{
 			Token:        c.Config.Users.Admin.Token,
 			StatusCode:   http.StatusBadRequest,
 			Sent:         []byte(`{"PaymentCredit":[`),
-			RespContains: []string{"Batch mouvements de crédits, décodage : "},
-		},
+			RespContains: []string{"Batch mouvements de crédits, décodage : "}},
 		{
 			Token:      c.Config.Users.Admin.Token,
 			StatusCode: http.StatusOK,
 			Sent: []byte(`{"PaymentCreditJournal":[{"Chapter":908,"Function":811,` +
 				`"CreationDate":20190310,"ModificationDate":20190315,"Name":"Mouvement","Value":100000}]}`),
-			RespContains: []string{"Mouvements de crédits importés"},
-		},
+			RespContains: []string{"Mouvements de crédits importés"}},
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/payment_credit_journal").
@@ -46,25 +40,19 @@ func batchPaymentCreditJournalsTest(t *testing.T, c *TestContext) {
 // getPaymentCreditJournalsTest check route is protected and datas sent back are correct
 func getPaymentCreditJournalsTest(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        "fake",
-			StatusCode:   http.StatusInternalServerError,
-			RespContains: []string{"Token invalide"},
-		},
+		*c.UserCheckTestCase,
 		{
 			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusBadRequest,
 			Params:       "a",
-			RespContains: []string{`Mouvements de crédits, décodage : `},
-		},
+			RespContains: []string{`Mouvements de crédits, décodage : `}},
 		{
 			Token:      c.Config.Users.User.Token,
 			StatusCode: http.StatusOK,
 			Params:     "2019",
 			RespContains: []string{`{"PaymentCreditJournal":[{"Chapter":908,"ID":1,` +
 				`"Function":811,"CreationDate":"2019-03-10T00:00:00Z","ModificationDate"` +
-				`:"2019-03-15T00:00:00Z","Name":"Mouvement","Value":100000}]}`},
-		},
+				`:"2019-03-15T00:00:00Z","Name":"Mouvement","Value":100000}]}`}},
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/payment_credit_journal").

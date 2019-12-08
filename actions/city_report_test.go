@@ -18,11 +18,7 @@ func testCityReport(t *testing.T, c *TestContext) {
 // CityReport correctly sent back
 func testGetCityReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		*c.UserCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`inseeCode=a1&firstYear=2015&lastYear=2019`),

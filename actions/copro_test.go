@@ -42,34 +42,37 @@ func testCopro(t *testing.T, c *TestContext) {
 // testCreateCopro check if route is protected and copro correctly created
 func testCreateCopro(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : no token
-		{Sent: []byte(`{"Copro":{"Reference":"","Name":"","Address":"","ZipCode":0,` +
-			`"LabelDate":null,"Budget":null}}`),
+		*c.AdminCheckTestCase, // 0 : no token
+		{
+			Sent: []byte(`{"Copro":{"Reference":"","Name":"","Address":"","ZipCode":0,` +
+				`"LabelDate":null,"Budget":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"Création de copropriété : champ reference vide"`},
 			StatusCode:   http.StatusBadRequest}, // 1 : reference empty
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"","Address":"",` +
-			`"ZipCode":0,"LabelDate":null,"Budget":null}}`),
+		{
+			Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"","Address":"",` +
+				`"ZipCode":0,"LabelDate":null,"Budget":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"Création de copropriété : champ name vide"`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
-			`"ZipCode":93200,"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000}}`),
+		{
+			Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
+				`"ZipCode":93200,"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de copropriété, requête :`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : zipcode doesn't exist
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
-			`"ZipCode":78146,"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000}}`),
+		{
+			Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"Copro","Address":"adresse",` +
+				`"ZipCode":78146,"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000}}`),
 			Token:  c.Config.Users.Admin.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"Copro":{"ID":2,"Reference":"CO001","Name":"Copro",` +
 				`"Address":"adresse","ZipCode":78146,"CityName":"CHATOU",` +
 				`"LabelDate":"2016-03-01T12:00:00Z","Budget":1000000`},
 			StatusCode: http.StatusCreated}, // 4 : ok
-		{Sent: []byte(`{"Copro":{"Reference":"CO100","Name":"Copro cadre","Address":null,` +
-			`"ZipCode":null,"LabelDate":null,"Budget":null}}`),
+		{
+			Sent: []byte(`{"Copro":{"Reference":"CO100","Name":"Copro cadre","Address":null,` +
+				`"ZipCode":null,"LabelDate":null,"Budget":null}}`),
 			Token:  c.Config.Users.Admin.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"Copro":{"ID":3,"Reference":"CO100","Name":"Copro cadre",` +
@@ -88,28 +91,30 @@ func testCreateCopro(t *testing.T, c *TestContext) (ID int) {
 // testModifyCopro check route is protected for admin and modifications are correctly done
 func testModifyCopro(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : no token
-		{Sent: []byte(`{"Copro":{"Reference":"","Name":"","Address":"","ZipCode":0,` +
-			`"LabelDate":null,"Budget":null}}`),
+		*c.AdminCheckTestCase, // 0 : no token
+		{
+			Sent: []byte(`{"Copro":{"Reference":"","Name":"","Address":"","ZipCode":0,` +
+				`"LabelDate":null,"Budget":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"Modification de copropriété : champ reference vide"`},
 			StatusCode:   http.StatusBadRequest}, // 1 : reference empty
-		{Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"","Address":"","ZipCode":0,` +
-			`"LabelDate":null,"Budget":null}}`),
+		{
+			Sent: []byte(`{"Copro":{"Reference":"CO001","Name":"","Address":"","ZipCode":0,` +
+				`"LabelDate":null,"Budget":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"Modification de copropriété : champ name vide"`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Copro":{"ID":0,"Reference":"CO002","Name":"Copro2",` +
-			`"Address":"adresse2","ZipCode":93100,"LabelDate":"2016-04-01T12:00:00Z",` +
-			`"Budget":2000000}}`),
+		{
+			Sent: []byte(`{"Copro":{"ID":0,"Reference":"CO002","Name":"Copro2",` +
+				`"Address":"adresse2","ZipCode":93100,"LabelDate":"2016-04-01T12:00:00Z",` +
+				`"Budget":2000000}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de copropriété, requête : Copro introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
-		{Sent: []byte(`{"Copro":{"ID":` + strconv.Itoa(ID) + `,"Reference":"CO002",` +
-			`"Name":"Copro2","Address":"adresse2","ZipCode":77001,` +
-			`"LabelDate":"2016-04-01T12:00:00Z","Budget":2000000}}`),
+		{
+			Sent: []byte(`{"Copro":{"ID":` + strconv.Itoa(ID) + `,"Reference":"CO002",` +
+				`"Name":"Copro2","Address":"adresse2","ZipCode":77001,` +
+				`"LabelDate":"2016-04-01T12:00:00Z","Budget":2000000}}`),
 			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"Copro":{"ID":` + strconv.Itoa(ID) +
 				`,"Reference":"CO002","Name":"Copro2","Address":"adresse2","ZipCode":77001,` +
@@ -126,10 +131,9 @@ func testModifyCopro(t *testing.T, c *TestContext, ID int) {
 // testGetCopros check route is protected and copro are correctly sent back
 func testGetCopros(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : no token
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : no token
+		{
+			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`"Copro"`, `"City"`, `"FcPreProg"`, `"CoproReport":[`},
 			Count:         2,
 			CountItemName: `"ID"`,
@@ -145,14 +149,14 @@ func testGetCopros(t *testing.T, c *TestContext) {
 // testGetCoproDatas check route is protected and copro datas are correctly sent back
 func testGetCoproDatas(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : no token
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : no token
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Données d'une copropriété, requête copro :`},
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.User.Token,
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"Copro"`, `"Commitment":[],"Payment":[],` +
 				`"Commission":[],"CoproForecast":[]`, `"BudgetAction"`, `"CoproDoc":[`},
 			Count:         1,
@@ -170,15 +174,14 @@ func testGetCoproDatas(t *testing.T, c *TestContext, ID int) {
 // testDeleteCopro check route is protected for admin and modifications are correctly done
 func testDeleteCopro(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			ID:           0,
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de copropriété, requête : Copro introuvable`},
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Copropriété supprimée`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -193,25 +196,25 @@ func testDeleteCopro(t *testing.T, c *TestContext, ID int) {
 // testBatchCopros check route is limited to admin and batch import succeeds
 func testBatchCopros(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(``),
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Copro":[{"Reference":"","Name":"copro3","Address":"adresse3",` +
 				`"ZipCode":77001,"LabelDate":null,"Budget":null},
 			{"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75000,` +
 				`"LabelDate":42461,"Budget":3000000}]}`),
 			RespContains: []string{`Batch de copropriétés, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 1 : reference empty
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Copro":[{"Reference":"","Name":"copro3","Address":"adresse3",` +
 				`"ZipCode":77001,"LabelDate":null,"Budget":null},
 			{"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75000,` +
 				`"LabelDate":42461,"Budget":3000000}]}`),
 			RespContains: []string{`Batch de copropriétés, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad zip code
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"Copro":[{"Reference":"CO003","Name":"copro3",` +
 				`"Address":"adresse3","ZipCode":77001,"LabelDate":null,"Budget":null},
 			{"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75101,` +

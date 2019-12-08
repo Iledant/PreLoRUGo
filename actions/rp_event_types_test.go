@@ -31,19 +31,23 @@ func testRPEventType(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateRPEventType(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"Comité"}`),
+		{
+			Sent:         []byte(`{"Name":"Comité"}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de type d'événement RP, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Name":""}`),
+		{
+			Sent:         []byte(`{"Name":""}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Création de type d'événement RP : Nom vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Name":"Comité"}`),
+		{
+			Sent:         []byte(`{"Name":"Comité"}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			IDName:       `{"ID"`,
 			RespContains: []string{`"RPEventType":{"ID":1,"Name":"Comité"`},
@@ -61,23 +65,28 @@ func testCreateRPEventType(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateRPEventType(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"Comité d'engagement"}`),
+		{
+			Sent:         []byte(`{"Name":"Comité d'engagement"}`),
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de type d'événement RP, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Name":""}`),
+		{
+			Sent:         []byte(`{"Name":""}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de type d'événement RP : Nom vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"ID":0,"Name":"Comité d'engagement"}`),
+		{
+			Sent:         []byte(`{"ID":0,"Name":"Comité d'engagement"}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`Modification de type d'événement RP, requête : Type d'événement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
-		{Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"Name":"Comité d'engagement"}`),
+		{
+			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"Name":"Comité d'engagement"}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
 			RespContains: []string{`"RPEventType":{"ID":` + strconv.Itoa(ID) + `,"Name":"Comité d'engagement"}`},
 			StatusCode:   http.StatusOK}, // 4 : ok
@@ -93,10 +102,7 @@ func testUpdateRPEventType(t *testing.T, c *TestContext, ID int) {
 // is properly filled
 func testGetRPEventType(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{
-			Token:        "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : no token
+		*c.UserCheckTestCase, // 0 : no token
 		{ID: 0,
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Récupération de type d'événement RP, requête :`},
@@ -117,10 +123,9 @@ func testGetRPEventType(t *testing.T, c *TestContext, ID int) {
 // sent back
 func testGetRPEventTypes(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "fake",
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.UserCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:          []byte(`fake`),
 			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`"RPEventType"`, `"Name":"Comité d'engagement"`},
 			Count:         1,
@@ -138,19 +143,19 @@ func testGetRPEventTypes(t *testing.T, c *TestContext) {
 // delete request sends ok back
 func testDeleteRPEventType(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "fake",
-			ID:           0,
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : bad token
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : bad token
+		{
+			Token:        c.Config.Users.User.Token,
 			ID:           0,
 			RespContains: []string{`Droits sur les projets RU requis`},
 			StatusCode:   http.StatusUnauthorized}, // 1 : user unauthorized
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{
+			Token:        c.Config.Users.RenewProjectUser.Token,
 			ID:           0,
 			RespContains: []string{`Suppression de type d'événement RP, requête : Type d'événement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad ID
-		{Token: c.Config.Users.RenewProjectUser.Token,
+		{
+			Token:        c.Config.Users.RenewProjectUser.Token,
 			ID:           ID,
 			RespContains: []string{`Type d'événement RP supprimé`},
 			StatusCode:   http.StatusOK}, // 3 : ok

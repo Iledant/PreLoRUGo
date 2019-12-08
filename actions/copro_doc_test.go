@@ -27,24 +27,24 @@ func testCoproDoc(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateCoproDoc(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"CoproDoc":{"InseeCode":1000000,"Name":"Essai",` +
-			`"CommunityID":1,"QPV":true}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.CoproCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création d'un document copro, décodage :`},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad request
-		{Sent: []byte(`{"CoproDoc":{"Name":null,"Link":"lien de document"}}`),
+		{
+			Sent:         []byte(`{"CoproDoc":{"Name":null,"Link":"lien de document"}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création d'un document copro, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 2 : name null
-		{Sent: []byte(`{"CoproDoc":{"Name":"nom de document","Link":null}}`),
+		{
+			Sent:         []byte(`{"CoproDoc":{"Name":"nom de document","Link":null}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création d'un document copro, requête :`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : link null
-		{Sent: []byte(`{"CoproDoc":{"Name":"nom de document","Link":"lien de document"}}`),
+		{
+			Sent:   []byte(`{"CoproDoc":{"Name":"nom de document","Link":"lien de document"}}`),
 			Token:  c.Config.Users.CoproUser.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"CoproDoc":{"ID":1,"CoproID":` +
@@ -63,32 +63,33 @@ func testCreateCoproDoc(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateCoproDoc(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"CoproDoc":{"InseeCode":2000000,"Name":"Essai2",` +
-			`"CommunityID":null,"QPV":false}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.CoproCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification d'un document copro, décodage :`},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad request
-		{Sent: []byte(`{"CoproDoc":{"InseeCode":0,"Name":"Essai2","CommunityID":null,` +
-			`"QPV":false}}`),
+		{
+			Sent: []byte(`{"CoproDoc":{"InseeCode":0,"Name":"Essai2","CommunityID":null,` +
+				`"QPV":false}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification d'un document copro, requête : link vide`},
 			StatusCode:   http.StatusInternalServerError}, // 2 : code nul
-		{Sent: []byte(`{"CoproDoc":{"InseeCode":2000000,"Name":"","CommunityID":null,` +
-			`"QPV":false}}`),
+		{
+			Sent: []byte(`{"CoproDoc":{"InseeCode":2000000,"Name":"","CommunityID":null,` +
+				`"QPV":false}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification d'un document copro, requête : nom vide`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : name empty
-		{Sent: []byte(`{"CoproDoc":{"InseeCode":2000000,"Name":"Essai2",` +
-			`"CommunityID":null,"QPV":false}}`),
+		{
+			Sent: []byte(`{"CoproDoc":{"InseeCode":2000000,"Name":"Essai2",` +
+				`"CommunityID":null,"QPV":false}}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification d'un document copro, requête : `},
 			StatusCode:   http.StatusInternalServerError}, // 4 : bad ID
-		{Sent: []byte(`{"CoproDoc":{"ID":` + strconv.Itoa(ID) +
-			`,"CoproID":` + strconv.FormatInt(c.CoproID, 10) + `,"Name":"nom2 de doc","Link":"lien2 de doc"}}`),
+		{
+			Sent: []byte(`{"CoproDoc":{"ID":` + strconv.Itoa(ID) +
+				`,"CoproID":` + strconv.FormatInt(c.CoproID, 10) + `,"Name":"nom2 de doc","Link":"lien2 de doc"}}`),
 			Token: c.Config.Users.CoproUser.Token,
 			RespContains: []string{`"CoproDoc":{"ID":` + strconv.Itoa(ID) +
 				`,"CoproID":` + strconv.FormatInt(c.CoproID, 10) + `,"Name":"nom2 de doc","Link":"lien2 de doc"}}`},
@@ -104,14 +105,14 @@ func testUpdateCoproDoc(t *testing.T, c *TestContext, ID int) {
 // testDeleteCoproDoc checks if route is user protected and cities correctly sent back
 func testDeleteCoproDoc(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user token
-		{Token: c.Config.Users.CoproUser.Token,
+		*c.CoproCheckTestCase, // 0 : user token
+		{
+			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Suppression d'un document copro, requête : `},
 			ID:           0,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.CoproUser.Token,
+		{
+			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Document supprimé`},
 			ID:           ID,
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -126,16 +127,15 @@ func testDeleteCoproDoc(t *testing.T, c *TestContext, ID int) {
 // testGetCoproDocs checks if route is user protected and CoproDocs correctly sent back
 func testGetCoproDocs(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Documents d'une copro, erreur CoproID : `},
 			Count:        1,
 			Params:       "a",
 			StatusCode:   http.StatusBadRequest}, // 1 : bad CoproID
-		{Token: c.Config.Users.User.Token,
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"CoproDoc"`, `"Name":"nom de document"`,
 				`"Link":"lien de document"`},
 			Count:         1,

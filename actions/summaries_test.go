@@ -18,10 +18,9 @@ func testSummaries(t *testing.T, c *TestContext) {
 // correctly sent back
 func testGetSummariesDatas(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: `fake`,
-			StatusCode:   http.StatusInternalServerError,
-			RespContains: []string{`Token invalid`}},
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase,
+		{
+			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusOK,
 			RespContains: []string{`"City":[`, `"RPLSYear":[2016]`}},
 	}

@@ -18,22 +18,21 @@ func testPmtForecasts(t *testing.T, c *TestContext) {
 // correctly sent back
 func testGetPmtForecasts(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			Sent:         []byte(`Year=2017`),
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits administrateur requis`},
 			Count:        1,
 			Sent:         []byte(`Year=a`),
 			StatusCode:   http.StatusUnauthorized}, // 1 : bad year parameter format
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Prévisions de paiements, décodage : `},
 			Count:        1,
 			Sent:         []byte(`Year=a`),
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad year parameter format
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`{"PmtForecast":[{"ActionID":3,"ActionCode":15400202,` +
 				`"ActionName":"Aide à la création de logements locatifs sociaux","Y0":0.8,` +
 				`"Y1":1.2,"Y2":0,"Y3":0,"Y4":0},{"ActionID":4,"ActionCode":15400203,` +

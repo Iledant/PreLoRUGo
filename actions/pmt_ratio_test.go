@@ -19,17 +19,15 @@ func testPmtRatio(t *testing.T, c *TestContext) {
 // testGetPmtRatios checks if route is user protected and Ratios correctly sent back
 func testGetPmtRatios(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			Sent:         []byte(`Year=2017`),
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Ratios de paiements, décodage : `},
 			Count:        1,
 			Sent:         []byte(`Year=a`),
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad year parameter format
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`"PmtRatio":[{"Index":0,"SectorID":1,"SectorName":"LO","Ratio":0.8},{"Index":1,"SectorID":1,"SectorName":"LO","Ratio":0.2}]`},
 			Count:         2,
 			CountItemName: `"Index"`,
@@ -46,15 +44,14 @@ func testGetPmtRatios(t *testing.T, c *TestContext) {
 // testBatchPmtRatios check route is limited to admin and batch import succeeds
 func testBatchPmtRatios(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(``),
-			RespContains: []string{"Droits administrateur requis"},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token:        c.Config.Users.Admin.Token,
 			Sent:         []byte(`"Year":2009,"Ratios":[{"Index":0,"Ratio":0.1},{"Index":1,"Ratio":0.2},{"Index":2,"Ratio":0.3}]}`),
 			RespContains: []string{"Batch de ratios de paiement, décodage :"},
 			StatusCode:   http.StatusBadRequest}, // 1 : bad payload
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			Sent:         []byte(`{"Year":2009,"Ratios":[{"Index":0,"SectorID":1,"Ratio":0.1},{"Index":1,"SectorID":1,"Ratio":0.2},{"Index":2,"SectorID":1,"Ratio":0.3}]}`),
 			RespContains: []string{"Batch de ratios de paiement traité"},
 			StatusCode:   http.StatusOK}, // 2 : OK
@@ -81,13 +78,13 @@ func testBatchPmtRatios(t *testing.T, c *TestContext) {
 // correctly sent back
 func testGetPmtRatiosYears(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{"Droits administrateur requis"},
 			StatusCode:   http.StatusUnauthorized}, // 1 : bad year parameter format
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"PmtRatiosYear":[2009]`},
 			StatusCode:   http.StatusOK}, // 2 : ok
 	}

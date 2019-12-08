@@ -29,32 +29,35 @@ func testRenewProject(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"RenewProject":{"Code":"PRU001","Name":"PRU"}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de projet de renouvellement, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"RenewProject":{"Reference":"","Name":"PRU"}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"Reference":"","Name":"PRU"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : reference empty
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":""}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":0}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":0}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : budget null
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000,"CityCode1":0}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000,"CityCode1":0}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : CityCode1 null
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU",` +
-			`"Budget":250000000,"CityCode1":75101,"BudgetCity1":100000}}`),
+		{
+			Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU",` +
+				`"Budget":250000000,"CityCode1":75101,"BudgetCity1":100000}}`),
 			Token:  c.Config.Users.Admin.Token,
 			IDName: `{"ID"`,
 			RespContains: []string{`"RenewProject":{"ID":1,"Reference":"PRU001",` +
@@ -76,34 +79,37 @@ func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"RenewProject":{"Code":"PRU001","Name":"PRU"}}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"RenewProject":{"Reference":"","Name":"PRU"}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"Reference":"","Name":"PRU"}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : reference empty
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":""}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
-		{Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":0}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":0}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement : Champ reference, name ou budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : budget null
-		{Sent: []byte(`{"RenewProject":{"ID":0,"Reference":"PRU001","Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,"CityCode2":null,"CityCode3":null,"Population":null,"CompositeIndex":null}}`),
+		{
+			Sent:         []byte(`{"RenewProject":{"ID":0,"Reference":"PRU001","Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,"CityCode2":null,"CityCode3":null,"Population":null,"CompositeIndex":null}}`),
 			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`Modification de projet de renouvellement, requête : Projet de renouvellement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 5 : bad ID
-		{Sent: []byte(`{"RenewProject":{"ID":` + strconv.Itoa(ID) +
-			`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,` +
-			`"CityCode1":77001,"CityCode2":75101,"CityCode3":78146,"Population":5400,` +
-			`"CompositeIndex":1,"BudgetCity1":null,"BudgetCity2":200,"BudgetCity3":5}}`),
+		{
+			Sent: []byte(`{"RenewProject":{"ID":` + strconv.Itoa(ID) +
+				`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,` +
+				`"CityCode1":77001,"CityCode2":75101,"CityCode3":78146,"Population":5400,` +
+				`"CompositeIndex":1,"BudgetCity1":null,"BudgetCity2":200,"BudgetCity3":5}}`),
 			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) +
 				`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,` +
@@ -123,10 +129,9 @@ func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 // sent back
 func testGetRenewProjects(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "fake",
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : user unauthorized
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RenewProject"`, `"Reference":"PRU002",` +
 				`"Name":"PRU2","Budget":150000000,"PRIN":false,"CityCode1":77001,` +
 				`"CityName1":"ACHERES-LA-FORET","BudgetCity1":null,"CityCode2":75101,` +
@@ -149,19 +154,19 @@ func testGetRenewProjects(t *testing.T, c *TestContext) {
 // sends ok back
 func testDeleteRenewProject(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "fake",
-			ID:           0,
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : bad token
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : bad token
+		{
+			Token:        c.Config.Users.User.Token,
 			ID:           0,
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 1 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			ID:           0,
 			RespContains: []string{`Suppression de projet de renouvellement, requête : Projet de renouvellement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad ID
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
 			RespContains: []string{`Projet de renouvellement supprimé`},
 			StatusCode:   http.StatusOK}, // 3 : ok
@@ -177,23 +182,25 @@ func testDeleteRenewProject(t *testing.T, c *TestContext, ID int) {
 // sends ok back
 func testBatchRenewProject(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "fake",
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : bad token
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : bad token
+		{
+			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Droits administrateur requis`},
 			StatusCode:   http.StatusUnauthorized}, // 1 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000},
 			{"Reference":"PRU003","Name":"Site RU 2","Budget":150000000}]}`),
 			RespContains: []string{`Batch de projets de renouvellement, décodage`},
 			StatusCode:   http.StatusBadRequest}, // 2 : bad payload
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000},
 			{"Reference":"PRU002","Name":"Site RU 2","Budget":150000000}]}`),
 			RespContains: []string{`Batch de projets de renouvellement, requête`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : duplicated reference
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token: c.Config.Users.Admin.Token,
 			Sent: []byte(`{"RenewProject":[{"Reference":"PRU002","Name":"Site RU 1","Budget":250000000,"PRIN":true,"CityCode1":75101,"CityCode2":null,"CityCode3":null,"Population":null,"CompositeIndex":null},
 			{"Reference":"PRU003","Name":"Site RU 2","Budget":150000000,"PRIN":false,"CityCode1":77001,"CityCode2":78146,"CityCode3":null,"Population":5400,"CompositeIndex":2}]}`),
 			RespContains: []string{`Batch de projets de renouvellement importé`},
@@ -229,15 +236,15 @@ func testBatchRenewProject(t *testing.T, c *TestContext) {
 // have correct fields
 func testGetRenewProjectDatas(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			ID:           0,
 			RespContains: []string{`Datas de projet de renouvellement, requête renewProject :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{Token: c.Config.Users.User.Token,
-			ID: ID,
+		{
+			Token: c.Config.Users.User.Token,
+			ID:    ID,
 			RespContains: []string{`"RenewProject":{"ID":` + strconv.Itoa(ID) +
 				`,"Reference":"PRU002","Name":"PRU2","Budget":150000000,"PRIN":false,` +
 				`"CityCode1":77001,"CityName1":"ACHERES-LA-FORET","BudgetCity1":null,` +

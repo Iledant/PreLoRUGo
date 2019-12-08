@@ -18,11 +18,9 @@ func testRenewProjectReport(t *testing.T, c *TestContext) {
 // RenewProjectReport correctly sent back
 func testGetRenewProjectReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"RenewProjectReport":[{"ID":3,"Reference":"PRU003",` +
 				`"Name":"Site RU 2","Budget":150000000,"Commitment":null,"Payment":null,` +
 				`"LastEventName":null,"LastEventDate":null,"City1Name":"ACHERES-LA-FORET",` +

@@ -18,10 +18,9 @@ func testSettings(t *testing.T, c *TestContext) {
 // sent back
 func testGetSettings(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"BudgetSector":[`, `"BudgetAction":[`, `"Commission":[`,
 				`"PaginatedCity":{`, `"Community":[`, `"PaginatedPayment":{`, `"PaginatedCommitment":{`},
 			Count:         15,

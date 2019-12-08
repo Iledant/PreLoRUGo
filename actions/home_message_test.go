@@ -17,10 +17,7 @@ func testHomeMessage(t *testing.T, c *TestContext) {
 // testSetHommeMessage checks route is admin protected and message correctly set
 func testSetHomeMessage(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user not allowed
+		*c.AdminCheckTestCase, // 0 : user not allowed
 		{
 			Token:        c.Config.Users.Admin.Token,
 			Sent:         []byte(`"Title":"`),

@@ -18,11 +18,7 @@ func testDepartmentReport(t *testing.T, c *TestContext) {
 // DepartmentReport correctly sent back
 func testGetDepartmentReport(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{
-			Token:        "",
-			RespContains: []string{`Token absent`},
-			ID:           0,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
+		*c.UserCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`firstYear=a&lastYear=2019`),
@@ -33,7 +29,8 @@ func testGetDepartmentReport(t *testing.T, c *TestContext) {
 			Sent:         []byte(`firstYear=2016&lastYear=a`),
 			RespContains: []string{`Rapport par département, décodage lastYear :`},
 			StatusCode:   http.StatusBadRequest}, // 2 : lastYear not ok
-		{Token: c.Config.Users.User.Token,
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`firstYear=2016&lastYear=2019`),
 			RespContains: []string{`"DptReport":[]`},
 			StatusCode:   http.StatusOK}, // 3 : ok

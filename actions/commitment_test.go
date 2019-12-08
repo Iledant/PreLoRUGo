@@ -26,15 +26,14 @@ func testBatchCommitments(t *testing.T, c *TestContext) {
 		t.Errorf("Impossible de lire le fichier commitment_batch.json")
 	}
 	tcc := []TestCase{
-		{Token: c.Config.Users.User.Token,
-			Sent:         []byte(``),
-			RespContains: []string{"Droits administrateur requis"},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Token: c.Config.Users.Admin.Token,
+		*c.AdminCheckTestCase, // 0 : user unauthorized
+		{
+			Token:        c.Config.Users.Admin.Token,
 			Sent:         []byte(`{"Commitment":[{"Year":2010}]}`),
 			RespContains: []string{"Batch de Engagements, requête : Ligne 1 : champs incorrects"},
 			StatusCode:   http.StatusInternalServerError}, // 1 : validation error
-		{Token: c.Config.Users.Admin.Token,
+		{
+			Token:        c.Config.Users.Admin.Token,
 			Sent:         correctBatch,
 			RespContains: []string{"Batch de Engagements importé"},
 			StatusCode:   http.StatusOK}, // 2 : ok
@@ -50,11 +49,9 @@ func testBatchCommitments(t *testing.T, c *TestContext) {
 // testGetCommitments checks if route is user protected and Commitments correctly sent back
 func testGetCommitments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token: c.Config.Users.User.Token,
 			// cSpell: disable
 			RespContains: []string{`"Commitment"`, `"Year":2012,"Code":"IRIS","Number"` +
 				`:362012,"Line":1,"CreationDate":"2012-02-02T00:00:00Z","ModificationDate":` +
@@ -78,18 +75,16 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 // commitments correctly sent back
 func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			Sent:         []byte(`Page=2&Year=2010&Search=savigny`),
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Page=2&Year=a&Search=savigny`),
 			RespContains: []string{`Page d'engagements, décodage Year :`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad params query
-		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Page=2&Year=2010&Search=savigny`),
+		{
+			Token: c.Config.Users.User.Token,
+			Sent:  []byte(`Page=2&Year=2010&Search=savigny`),
 			// cSpell: disable
 			RespContains: []string{`"Commitment":[`, `"Code":"IRIS ","Number":469347,` +
 				`"Line":1,"CreationDate":"2015-04-13T00:00:00Z","ModificationDate":` +
@@ -112,18 +107,16 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 // commitments correctly sent back
 func testGetUnlinkedCommitments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			Sent:         []byte(`Page=2&Year=2010&Search=savigny`),
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Page=2&Year=a&Search=savigny`),
 			RespContains: []string{`Page d'engagements non liés, décodage Year :`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad params query
-		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Page=2&Year=2010&Search=savigny`),
+		{
+			Token: c.Config.Users.User.Token,
+			Sent:  []byte(`Page=2&Year=2010&Search=savigny`),
 			// cSpell: disable
 			RespContains: []string{`"Commitment":[`, `"Year":2015,"Code":"IRIS ",` +
 				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z",` +
@@ -146,18 +139,16 @@ func testGetUnlinkedCommitments(t *testing.T, c *TestContext) {
 // commitments correctly sent back
 func testExportedCommitments(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "",
-			Sent:         []byte(`Year=2010&Search=savigny`),
-			RespContains: []string{`Token absent`},
-			Count:        1,
-			StatusCode:   http.StatusInternalServerError}, // 0 : token empty
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Year=a&Search=savigny`),
 			RespContains: []string{`Export d'engagements, décodage Year :`},
 			Count:        1,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad params query
-		{Token: c.Config.Users.User.Token,
-			Sent: []byte(`Year=2010&Search=savigny`),
+		{
+			Token: c.Config.Users.User.Token,
+			Sent:  []byte(`Year=2010&Search=savigny`),
 			// cSpell: disable
 			RespContains: []string{`"ExportedCommitment":[`, `"Year":2015,"Code":"IRIS ",` +
 				`"Number":469347,"Line":1,"CreationDate":"2015-04-13T00:00:00Z",` +

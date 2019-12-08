@@ -31,19 +31,19 @@ func testCoproEventType(t *testing.T, c *TestContext) {
 // is properly filled
 func testCreateCoproEventType(t *testing.T, c *TestContext) (ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"Comité"}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.CoproCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de type d'événement Copro, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Name":""}`),
+		{
+			Sent:         []byte(`{"Name":""}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Création de type d'événement Copro : name vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"Name":"Comité"}`),
+		{
+			Sent:         []byte(`{"Name":"Comité"}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			IDName:       `{"ID"`,
 			RespContains: []string{`"CoproEventType":{"ID":1,"Name":"Comité"`},
@@ -61,23 +61,24 @@ func testCreateCoproEventType(t *testing.T, c *TestContext) (ID int) {
 // is properly filled
 func testUpdateCoproEventType(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Sent: []byte(`{"Name":"Comité d'engagement"}`),
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits sur les copropriétés requis`},
-			StatusCode:   http.StatusUnauthorized}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.CoproCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:         []byte(`fake`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de type d'événement Copro, décodage :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad request
-		{Sent: []byte(`{"Name":""}`),
+		{
+			Sent:         []byte(`{"Name":""}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de type d'événement Copro : name vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : name empty
-		{Sent: []byte(`{"ID":0,"Name":"Comité d'engagement"}`),
+		{
+			Sent:         []byte(`{"ID":0,"Name":"Comité d'engagement"}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`Modification de type d'événement Copro, requête : Type d'événement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : bad ID
-		{Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"Name":"Comité d'engagement"}`),
+		{
+			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"Name":"Comité d'engagement"}`),
 			Token:        c.Config.Users.CoproUser.Token,
 			RespContains: []string{`"CoproEventType":{"ID":` + strconv.Itoa(ID) + `,"Name":"Comité d'engagement"}`},
 			StatusCode:   http.StatusOK}, // 4 : ok
@@ -93,15 +94,14 @@ func testUpdateCoproEventType(t *testing.T, c *TestContext, ID int) {
 // is properly filled
 func testGetCoproEventType(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
+		*c.UserCheckTestCase, // 0 : no token
 		{
-			Token:        "",
-			RespContains: []string{`Token absent`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : no token
-		{ID: 0,
+			ID:           0,
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`Récupération de type d'événement Copro, requête :`},
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
-		{ID: ID,
+		{
+			ID:           ID,
 			Token:        c.Config.Users.User.Token,
 			RespContains: []string{`"CoproEventType":{"ID":` + strconv.Itoa(ID) + `,"Name":"Comité d'engagement"}`},
 			StatusCode:   http.StatusOK}, // 4 : ok
@@ -117,10 +117,9 @@ func testGetCoproEventType(t *testing.T, c *TestContext, ID int) {
 // sent back
 func testGetCoproEventTypes(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
-		{Token: "fake",
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : user unauthorized
-		{Sent: []byte(`fake`),
+		*c.UserCheckTestCase, // 0 : user unauthorized
+		{
+			Sent:          []byte(`fake`),
 			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`"CoproEventType"`, `"Name":"Comité d'engagement"`},
 			Count:         1,
@@ -138,19 +137,19 @@ func testGetCoproEventTypes(t *testing.T, c *TestContext) {
 // delete request sends ok back
 func testDeleteCoproEventType(t *testing.T, c *TestContext, ID int) {
 	tcc := []TestCase{
-		{Token: "fake",
-			ID:           0,
-			RespContains: []string{`Token invalide`},
-			StatusCode:   http.StatusInternalServerError}, // 0 : bad token
-		{Token: c.Config.Users.User.Token,
+		*c.UserCheckTestCase, // 0 : bad token
+		{
+			Token:        c.Config.Users.User.Token,
 			ID:           0,
 			RespContains: []string{`Droits sur les copropriétés requis`},
 			StatusCode:   http.StatusUnauthorized}, // 1 : user unauthorized
-		{Token: c.Config.Users.CoproUser.Token,
+		{
+			Token:        c.Config.Users.CoproUser.Token,
 			ID:           0,
 			RespContains: []string{`Suppression de type d'événement Copro, requête : Type d'événement introuvable`},
 			StatusCode:   http.StatusInternalServerError}, // 2 : bad ID
-		{Token: c.Config.Users.CoproUser.Token,
+		{
+			Token:        c.Config.Users.CoproUser.Token,
 			ID:           ID,
 			RespContains: []string{`Type d'événement Copro supprimé`},
 			StatusCode:   http.StatusOK}, // 3 : ok
