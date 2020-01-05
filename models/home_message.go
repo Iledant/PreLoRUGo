@@ -22,7 +22,7 @@ func (h *HomeMessage) Get(db *sql.DB) error {
 // Set insert or update the send message
 func (h *HomeMessage) Set(db *sql.DB) error {
 	if _, err := db.Exec(`DELETE from home_message`); err != nil {
-		return fmt.Errorf("delete %v")
+		return fmt.Errorf("delete %v", err)
 	}
 	_, err := db.Exec(`INSERT INTO home_message (title,body) VALUES($1,$2)`,
 		h.Title, h.Body)

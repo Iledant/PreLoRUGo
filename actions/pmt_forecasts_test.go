@@ -34,10 +34,10 @@ func testGetPmtForecasts(t *testing.T, c *TestContext) {
 		{
 			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`{"PmtForecast":[{"ActionID":3,"ActionCode":15400202,` +
-				`"ActionName":"Aide à la création de logements locatifs sociaux","Y0":0.8,` +
-				`"Y1":1.2,"Y2":0,"Y3":0,"Y4":0},{"ActionID":4,"ActionCode":15400203,` +
+				`"ActionName":"Aide à la création de logements locatifs sociaux","Y0":1.2,` +
+				`"Y1":0,"Y2":0,"Y3":0,"Y4":0},{"ActionID":4,"ActionCode":15400203,` +
 				`"ActionName":"Aide à la création de logements locatifs très sociaux",` +
-				`"Y0":1,"Y1":1.5,"Y2":0,"Y3":0,"Y4":0}]}`},
+				`"Y0":1.5,"Y1":0,"Y2":0,"Y3":0,"Y4":0}]}`},
 			Count:         0,
 			CountItemName: `"Index"`,
 			Sent:          []byte(`Year=2009`),

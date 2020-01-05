@@ -49,12 +49,10 @@ func getPaymentCreditsTest(t *testing.T, c *TestContext) {
 			Params:       "a",
 			RespContains: []string{`Liste des enveloppes de crédits, décodage : `}},
 		{
-			Token:      c.Config.Users.User.Token,
-			StatusCode: http.StatusOK,
-			Params:     "2019",
-			RespContains: []string{`{"PaymentCredit":[{"Year":2019,` +
-				`"Chapter":908,"Function":811,"Primitive":1000000,"Reported":0,` +
-				`"Added":500000,"Modified":300000,"Movement":50000}]}`}},
+			Token:        c.Config.Users.User.Token,
+			StatusCode:   http.StatusOK,
+			Params:       "2019",
+			RespContains: []string{`{"PaymentCredit":[`}},
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/payment_credits").WithHeader("Authorization", "Bearer "+tc.Token).
