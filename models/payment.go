@@ -97,10 +97,17 @@ type ExportedPayments struct {
 	ExportedPayments []ExportedPayment `json:"ExportedPayment"`
 }
 
+// SectorPayment is used to fetch cumulated payments per sector
+type SectorPayment struct {
+	Month  int64   `json:"Month"`
+	Sector string  `json:"Sector"`
+	Value  float64 `json:"Value"`
+}
+
 // TwoYearsPayments is used to fetch payments of current and previous year
 type TwoYearsPayments struct {
-	CurrentYear  []MonthCumulatedValue `json:"CurrentYear"`
-	PreviousYear []MonthCumulatedValue `json:"PreviousYear"`
+	CurrentYear  []SectorPayment `json:"CurrentYear"`
+	PreviousYear []SectorPayment `json:"PreviousYear"`
 }
 
 // GetAll fetches all Payments from database
@@ -361,23 +368,27 @@ func (t *TwoYearsPayments) Get(db *sql.DB) error {
 	query := `WITH pmt_month as (
 		select max(extract(month from creation_date))::int as max_month
 		from payment where year=$1)
-	select pmt.m,sum(0.01 * pmt.v) OVER (ORDER BY m) from
-	(select q.m as m,COALESCE(sum_pmt.v,0) as v FROM
+	select pmt.m,name,sum(pmt.v) OVER (PARTITION BY name ORDER BY m) from
+	(select q.m as m,sum_pmt.name,COALESCE(sum_pmt.v,0)*0.00000001 as v FROM
 	(select generate_series(1,max_month) AS m from pmt_month) q
 	LEFT OUTER JOIN
-	(select extract(month from creation_date)::int as m,sum(value)::bigint as v
-	FROM payment WHERE year=$1
-	GROUP BY 1) sum_pmt
+	(select extract(month from p.creation_date)::int as m,s.name,sum(p.value)::bigint as v
+	FROM payment p
+	JOIN commitment c on p.commitment_id=c.id
+	JOIN budget_action ba ON c.action_id=ba.id
+	JOIN budget_sector s ON ba.sector_id=s.id
+	WHERE p.year=$1
+	GROUP BY 1,2) sum_pmt
 	ON sum_pmt.m=q.m) pmt;`
 	actualYear := time.Now().Year()
-	var row MonthCumulatedValue
+	var row SectorPayment
 	rows, err := db.Query(query, actualYear)
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.Month, &row.Value); err != nil {
+		if err = rows.Scan(&row.Month, &row.Sector, &row.Value); err != nil {
 			return err
 		}
 		t.CurrentYear = append(t.CurrentYear, row)
@@ -387,7 +398,7 @@ func (t *TwoYearsPayments) Get(db *sql.DB) error {
 		return err
 	}
 	if len(t.CurrentYear) == 0 {
-		t.CurrentYear = []MonthCumulatedValue{}
+		t.CurrentYear = []SectorPayment{}
 	}
 	rows, err = db.Query(query, actualYear-1)
 	if err != nil {
@@ -395,14 +406,14 @@ func (t *TwoYearsPayments) Get(db *sql.DB) error {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.Month, &row.Value); err != nil {
+		if err = rows.Scan(&row.Month, &row.Sector, &row.Value); err != nil {
 			return err
 		}
 		t.PreviousYear = append(t.PreviousYear, row)
 	}
 	err = rows.Err()
 	if len(t.PreviousYear) == 0 {
-		t.PreviousYear = []MonthCumulatedValue{}
+		t.PreviousYear = []SectorPayment{}
 	}
 	return err
 }
