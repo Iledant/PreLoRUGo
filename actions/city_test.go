@@ -62,7 +62,9 @@ func testCreateCity(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/city").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCity", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCity", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -107,7 +109,9 @@ func testUpdateCity(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/city").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateCity")
+	for _, r := range chkFactory(tcc, f, "UpdateCity") {
+		t.Error(r)
+	}
 }
 
 // testGetCity checks if route is user protected and City correctly sent back
@@ -132,7 +136,9 @@ func testGetCity(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/city/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCity")
+	for _, r := range chkFactory(tcc, f, "GetCity") {
+		t.Error(r)
+	}
 }
 
 // testGetCities checks if route is user protected and Cities correctly sent back
@@ -152,7 +158,9 @@ func testGetCities(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/cities").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCities")
+	for _, r := range chkFactory(tcc, f, "GetCities") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCity checks if route is user protected and cities correctly sent back
@@ -174,7 +182,9 @@ func testDeleteCity(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/city/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCity")
+	for _, r := range chkFactory(tcc, f, "DeleteCity") {
+		t.Error(r)
+	}
 }
 
 // testBatchCities check route is limited to admin and batch import succeeds
@@ -210,7 +220,9 @@ func testBatchCities(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/cities").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchCity")
+	for _, r := range chkFactory(tcc, f, "BatchCity") {
+		t.Error(r)
+	}
 }
 
 // testGetPaginatedCities checks if route is user protected and Cities correctly sent back
@@ -234,5 +246,7 @@ func testGetPaginatedCities(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/cities/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPaginatedCities")
+	for _, r := range chkFactory(tcc, f, "GetPaginatedCities") {
+		t.Error(r)
+	}
 }

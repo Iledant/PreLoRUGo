@@ -83,5 +83,7 @@ func testBatchHousingSummary(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/housing_summary").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchHousingSummary")
+	for _, r := range chkFactory(tcc, f, "BatchHousingSummary") {
+		t.Error(r)
+	}
 }

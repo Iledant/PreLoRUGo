@@ -31,5 +31,7 @@ func testGetHome(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/home").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHomes")
+	for _, r := range chkFactory(tcc, f, "GetHomes") {
+		t.Error(r)
+	}
 }

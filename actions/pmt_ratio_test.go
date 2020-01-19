@@ -38,7 +38,9 @@ func testGetPmtRatios(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/ratios").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPmtRatios")
+	for _, r := range chkFactory(tcc, f, "GetPmtRatios") {
+		t.Error(r)
+	}
 }
 
 // testBatchPmtRatios check route is limited to admin and batch import succeeds
@@ -60,17 +62,21 @@ func testBatchPmtRatios(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/ratios").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	if chkFactory(t, tcc, f, "BatchRatios") {
-		var count int
-		if err := c.DB.QueryRow(`SELECT count(1) FROM ratio WHERE year=2009`).
-			Scan(&count); err != nil {
-			t.Errorf("BatchRatios[final]\n  ->impossible de vérifier %v", err)
-			return
-		}
-		if count != 3 {
-			t.Errorf("BatchRatios[final]  ->nombre attendu %d  ->trouvé: %d", 3, count)
-		}
-
+	resp := chkFactory(tcc, f, "BatchRatios")
+	for _, r := range resp {
+		t.Error(r)
+	}
+	if len(resp) > 0 {
+		return
+	}
+	var count int
+	if err := c.DB.QueryRow(`SELECT count(1) FROM ratio WHERE year=2009`).
+		Scan(&count); err != nil {
+		t.Errorf("BatchRatios[final]\n  ->impossible de vérifier %v", err)
+		return
+	}
+	if count != 3 {
+		t.Errorf("BatchRatios[final]  ->nombre attendu %d  ->trouvé: %d", 3, count)
 	}
 }
 
@@ -92,5 +98,7 @@ func testGetPmtRatiosYears(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/ratios/years").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPmtRatiosYears")
+	for _, r := range chkFactory(tcc, f, "GetPmtRatiosYears") {
+		t.Error(r)
+	}
 }

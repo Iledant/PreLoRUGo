@@ -27,5 +27,7 @@ func testGetCoproReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/copro/report").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproReport")
+	for _, r := range chkFactory(tcc, f, "GetCoproReport") {
+		t.Error(r)
+	}
 }

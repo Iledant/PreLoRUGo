@@ -269,27 +269,27 @@ type tcRespFunc func(TestCase) *httpexpect.Response
 // chkFactory launch the test cases against the callback function and check the status
 //  and the content of a response according. If test field CountItemName is filled,
 // it also checks that the count of such elements is the one give in the Count field
-func chkFactory(t *testing.T, tcc []TestCase, f tcRespFunc, name string, b ...*int) bool {
-	ok := true
+func chkFactory(tcc []TestCase, f tcRespFunc, name string, b ...*int) []string {
+	var resp []string
 	for i, tc := range tcc {
 		response := f(tc)
 		body := string(response.Content)
 		for _, r := range tc.RespContains {
 			if !strings.Contains(body, r) {
-				ok = false
-				t.Errorf("%s[%d]\n  ->attendu %s\n  ->reçu: %s", name, i, r, body)
+				resp = append(resp,
+					fmt.Sprintf("%s[%d]\n  ->attendu %s\n  ->reçu: %s", name, i, r, body))
 			}
 		}
 		status := response.Raw().StatusCode
 		if status != tc.StatusCode {
-			ok = false
-			t.Errorf("%s[%d]  ->status attendu %d  ->reçu: %d", name, i, tc.StatusCode, status)
+			resp = append(resp,
+				fmt.Sprintf("%s[%d]  ->status attendu %d  ->reçu: %d", name, i, tc.StatusCode, status))
 		}
 		if status == http.StatusOK && tc.CountItemName != "" {
 			count := strings.Count(body, tc.CountItemName)
 			if count != tc.Count {
-				ok = false
-				t.Errorf("%s[%d]  ->nombre attendu %d  ->reçu: %d", name, i, tc.Count, count)
+				resp = append(resp,
+					fmt.Sprintf("%s[%d]  ->nombre attendu %d  ->reçu: %d", name, i, tc.Count, count))
 			}
 		}
 		if status == http.StatusCreated && tc.StatusCode == http.StatusCreated && len(b) > 0 {
@@ -299,5 +299,5 @@ func chkFactory(t *testing.T, tcc []TestCase, f tcRespFunc, name string, b ...*i
 			}
 		}
 	}
-	return ok
+	return resp
 }

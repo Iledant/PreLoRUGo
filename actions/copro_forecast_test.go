@@ -79,7 +79,9 @@ func testCreateCoproForecast(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/copro_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCoproForecast", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCoproForecast", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -142,7 +144,9 @@ func testUpdateCoproForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/copro_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateCoproForecast")
+	for _, r := range chkFactory(tcc, f, "UpdateCoproForecast") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproForecast checks if route is user protected and copro forecast correctly sent back
@@ -168,7 +172,9 @@ func testGetCoproForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/copro_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproForecast")
+	for _, r := range chkFactory(tcc, f, "GetCoproForecast") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproForecasts checks if route is user protected and CoproForecasts correctly sent back
@@ -189,7 +195,9 @@ func testGetCoproForecasts(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/copro_forecasts").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproForecasts")
+	for _, r := range chkFactory(tcc, f, "GetCoproForecasts") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCoproForecast checks if route is user protected and CoproForecasts correctly sent back
@@ -211,7 +219,9 @@ func testDeleteCoproForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/copro_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCoproForecast")
+	for _, r := range chkFactory(tcc, f, "DeleteCoproForecast") {
+		t.Error(r)
+	}
 }
 
 // testBatchCoproForecasts check route is limited to admin and batch import succeeds
@@ -241,15 +251,20 @@ func testBatchCoproForecasts(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/copro_forecasts").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	if chkFactory(t, tcc, f, "BatchCoproForecast") {
-		response := c.E.GET("/api/copro_forecasts").
-			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
-		body := string(response.Content)
-		for _, j := range []string{`"Value":100,"Project":null,"Comment":"Batch1"`,
-			`"Value":200,"Project":"projet copro 2","Comment":"Batch2"`} {
-			if !strings.Contains(body, j) {
-				t.Errorf("BatchCoproForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
-			}
+	resp := chkFactory(tcc, f, "BatchCoproForecast")
+	for _, r := range resp {
+		t.Error(r)
+	}
+	if len(resp) > 0 {
+		return
+	}
+	response := c.E.GET("/api/copro_forecasts").
+		WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
+	body := string(response.Content)
+	for _, j := range []string{`"Value":100,"Project":null,"Comment":"Batch1"`,
+		`"Value":200,"Project":"projet copro 2","Comment":"Batch2"`} {
+		if !strings.Contains(body, j) {
+			t.Errorf("BatchCoproForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
 		}
 	}
 }

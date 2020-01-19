@@ -57,7 +57,9 @@ func testCreateRPEventType(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/rp_event_type").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateRPEventType", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateRPEventType", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -95,7 +97,9 @@ func testUpdateRPEventType(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/rp_event_type").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateRPEventType")
+	for _, r := range chkFactory(tcc, f, "UpdateRPEventType") {
+		t.Error(r)
+	}
 }
 
 // testGetRPEventType checks if route is user protected and RPEventType
@@ -116,7 +120,9 @@ func testGetRPEventType(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/rp_event_type/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPEventType")
+	for _, r := range chkFactory(tcc, f, "GetRPEventType") {
+		t.Error(r)
+	}
 }
 
 // testGetRPEventTypes checks route is protected and all RPEventType are correctly
@@ -136,7 +142,9 @@ func testGetRPEventTypes(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rp_event_types").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPEventTypes")
+	for _, r := range chkFactory(tcc, f, "GetRPEventTypes") {
+		t.Error(r)
+	}
 }
 
 // testDeleteRPEventType checks that route is renew project protected and
@@ -164,7 +172,9 @@ func testDeleteRPEventType(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/rp_event_type/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteRPEventType")
+	for _, r := range chkFactory(tcc, f, "DeleteRPEventType") {
+		t.Error(r)
+	}
 }
 
 // fetchRPEventTypeID create an RPEventType and fetches its ID to store in the

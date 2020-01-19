@@ -56,7 +56,9 @@ func testCreateCommunity(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/community").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCommunity", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCommunity", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -96,7 +98,9 @@ func testUpdateCommunity(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/community").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateCommunity")
+	for _, r := range chkFactory(tcc, f, "UpdateCommunity") {
+		t.Error(r)
+	}
 }
 
 // testGetCommunity checks if route is user protected and Community correctly sent back
@@ -119,7 +123,9 @@ func testGetCommunity(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/community/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCommunity")
+	for _, r := range chkFactory(tcc, f, "GetCommunity") {
+		t.Error(r)
+	}
 }
 
 // testGetCommunities checks if route is user protected and Communities correctly sent back
@@ -138,7 +144,9 @@ func testGetCommunities(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/communities").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCommunities")
+	for _, r := range chkFactory(tcc, f, "GetCommunities") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCommunity checks if route is user protected and communities correctly sent back
@@ -160,7 +168,9 @@ func testDeleteCommunity(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/community/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCommunity")
+	for _, r := range chkFactory(tcc, f, "DeleteCommunity") {
+		t.Error(r)
+	}
 }
 
 // testBatchCommunities check route is limited to admin and batch import succeeds
@@ -190,5 +200,7 @@ func testBatchCommunities(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/communities").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchCommunity")
+	for _, r := range chkFactory(tcc, f, "BatchCommunity") {
+		t.Error(r)
+	}
 }

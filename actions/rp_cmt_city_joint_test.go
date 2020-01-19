@@ -61,7 +61,9 @@ func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/rp_cmt_city_join").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateRPCmtCityJoin", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateRPCmtCityJoin", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -106,7 +108,9 @@ func testUpdateRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/rp_cmt_city_join").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateRPCmtCityJoin")
+	for _, r := range chkFactory(tcc, f, "UpdateRPCmtCityJoin") {
+		t.Error(r)
+	}
 }
 
 // testGetRPCmtCityJoin checks if route is user protected and RPCmtCityJoin correctly sent back
@@ -129,7 +133,9 @@ func testGetRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/rp_cmt_city_join/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPCmtCityJoin")
+	for _, r := range chkFactory(tcc, f, "GetRPCmtCityJoin") {
+		t.Error(r)
+	}
 }
 
 // testGetRPCmtCityJoins checks if route is user protected and RPCmtCityJoins correctly sent back
@@ -147,7 +153,9 @@ func testGetRPCmtCityJoins(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rp_cmt_city_joins").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPCmtCityJoins")
+	for _, r := range chkFactory(tcc, f, "GetRPCmtCityJoins") {
+		t.Error(r)
+	}
 }
 
 // testDeleteRPCmtCityJoin checks if route is user protected and rp_cmt_city_joins correctly sent back
@@ -169,5 +177,7 @@ func testDeleteRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/rp_cmt_city_join/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteRPCmtCityJoin")
+	for _, r := range chkFactory(tcc, f, "DeleteRPCmtCityJoin") {
+		t.Error(r)
+	}
 }

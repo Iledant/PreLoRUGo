@@ -27,5 +27,7 @@ func testGetRPMultiAnnualReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/renew_project/multi_annual_report").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPMultiAnnualReport")
+	for _, r := range chkFactory(tcc, f, "GetRPMultiAnnualReport") {
+		t.Error(r)
+	}
 }

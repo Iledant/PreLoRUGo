@@ -71,7 +71,9 @@ func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/renew_project").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateRenewProject", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateRenewProject", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -122,7 +124,9 @@ func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/renew_project").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateRenewProject")
+	for _, r := range chkFactory(tcc, f, "UpdateRenewProject") {
+		t.Error(r)
+	}
 }
 
 // testGetRenewProjects checks route is protected and all renew projects are correctly
@@ -147,7 +151,9 @@ func testGetRenewProjects(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/renew_projects").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRenewProjects")
+	for _, r := range chkFactory(tcc, f, "GetRenewProjects") {
+		t.Error(r)
+	}
 }
 
 // testDeleteRenewProject checks that route is admin protected and delete request
@@ -175,7 +181,9 @@ func testDeleteRenewProject(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/renew_project/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteRenewProject")
+	for _, r := range chkFactory(tcc, f, "DeleteRenewProject") {
+		t.Error(r)
+	}
 }
 
 // testBatchRenewProject checks that route is admin protected and batch request
@@ -210,25 +218,30 @@ func testBatchRenewProject(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/renew_projects").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	if chkFactory(t, tcc, f, "BatchRenewProject") {
-		var count int64
-		err := c.DB.QueryRow("SELECT count(1) FROM renew_project").Scan(&count)
-		if err != nil {
-			t.Errorf("Impossible de lire le nombre d'éléments insérés")
-			t.FailNow()
-			return
-		}
-		if count != 2 {
-			t.Errorf("BatchRenewProject : 2 projets devaient être insérés, trouvés : %d", count)
-			t.FailNow()
-			return
-		}
-		if err = c.DB.QueryRow("SELECT id FROM renew_project WHERE reference='PRU003'").
-			Scan(&c.RenewProjectID); err != nil {
-			t.Errorf("Impossible de récupérer l'ID du projet de renouvellement")
-			t.FailNow()
-			return
-		}
+	resp := chkFactory(tcc, f, "BatchRenewProject")
+	for _, r := range resp {
+		t.Error(r)
+	}
+	if len(resp) > 0 {
+		return
+	}
+	var count int64
+	err := c.DB.QueryRow("SELECT count(1) FROM renew_project").Scan(&count)
+	if err != nil {
+		t.Errorf("Impossible de lire le nombre d'éléments insérés")
+		t.FailNow()
+		return
+	}
+	if count != 2 {
+		t.Errorf("BatchRenewProject : 2 projets devaient être insérés, trouvés : %d", count)
+		t.FailNow()
+		return
+	}
+	if err = c.DB.QueryRow("SELECT id FROM renew_project WHERE reference='PRU003'").
+		Scan(&c.RenewProjectID); err != nil {
+		t.Errorf("Impossible de récupérer l'ID du projet de renouvellement")
+		t.FailNow()
+		return
 	}
 }
 
@@ -261,5 +274,7 @@ func testGetRenewProjectDatas(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/renew_project/"+strconv.Itoa(tc.ID)+"/datas").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRenewProjectData")
+	for _, r := range chkFactory(tcc, f, "GetRenewProjectData") {
+		t.Error(r)
+	}
 }

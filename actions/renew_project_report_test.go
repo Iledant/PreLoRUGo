@@ -40,5 +40,7 @@ func testGetRenewProjectReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/renew_project/report").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRenewProjectReport")
+	for _, r := range chkFactory(tcc, f, "GetRenewProjectReport") {
+		t.Error(r)
+	}
 }

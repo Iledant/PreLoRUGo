@@ -47,5 +47,7 @@ func testGetPmtForecasts(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/payments/forecasts").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPmtForecasts")
+	for _, r := range chkFactory(tcc, f, "GetPmtForecasts") {
+		t.Error(r)
+	}
 }

@@ -35,5 +35,7 @@ func testGetCmtForecasts(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/commitments/forecasts").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCmtForecasts")
+	for _, r := range chkFactory(tcc, f, "GetCmtForecasts") {
+		t.Error(r)
+	}
 }

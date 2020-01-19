@@ -74,7 +74,9 @@ func testCreateHousing(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/housing").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateHousing", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateHousing", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -115,7 +117,9 @@ func testUpdateHousing(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/housing").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateHousing")
+	for _, r := range chkFactory(tcc, f, "UpdateHousing") {
+		t.Error(r)
+	}
 }
 
 // testGetHousing checks if route is user protected and Housing correctly
@@ -140,7 +144,9 @@ func testGetHousing(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/housing/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHousing")
+	for _, r := range chkFactory(tcc, f, "GetHousing") {
+		t.Error(r)
+	}
 }
 
 // testGetHousingDatas checks if route is user protected and Housing correctly
@@ -166,7 +172,9 @@ func testGetHousingDatas(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/housing/"+strconv.Itoa(tc.ID)+"/datas").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHousingDatas")
+	for _, r := range chkFactory(tcc, f, "GetHousingDatas") {
+		t.Error(r)
+	}
 }
 
 // testGetHousings checks if route is user protected and Housings correctly
@@ -187,7 +195,9 @@ func testGetHousings(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/housings").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHousings")
+	for _, r := range chkFactory(tcc, f, "GetHousings") {
+		t.Error(r)
+	}
 }
 
 // testDeleteHousing checks if route is user protected and housings correctly
@@ -210,7 +220,9 @@ func testDeleteHousing(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/housing/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteHousing")
+	for _, r := range chkFactory(tcc, f, "DeleteHousing") {
+		t.Error(r)
+	}
 }
 
 // testBatchHousings check route is limited to admin and batch import succeeds
@@ -289,5 +301,7 @@ func testGetPaginatedHousings(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/housings/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPaginatedHousings")
+	for _, r := range chkFactory(tcc, f, "GetPaginatedHousings") {
+		t.Error(r)
+	}
 }

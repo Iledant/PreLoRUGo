@@ -40,5 +40,7 @@ func testGetBeneficiaryPayments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/beneficiary/"+strconv.Itoa(tc.ID)+"/payments").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetBeneficiaryPayments")
+	for _, r := range chkFactory(tcc, f, "GetBeneficiaryPayments") {
+		t.Error(r)
+	}
 }

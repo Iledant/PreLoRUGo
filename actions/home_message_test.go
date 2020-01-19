@@ -32,5 +32,7 @@ func testSetHomeMessage(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/home_message").
 			WithHeader("Authorization", "Bearer "+tc.Token).WithBytes(tc.Sent).Expect()
 	}
-	chkFactory(t, tcc, f, "SetHomeMessage")
+	for _, r := range chkFactory(tcc, f, "SetHomeMessage") {
+		t.Error(r)
+	}
 }

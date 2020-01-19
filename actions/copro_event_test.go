@@ -62,7 +62,9 @@ func testCreateCoproEvent(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/copro_event").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCoproEvent", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCoproEvent", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -113,7 +115,9 @@ func testUpdateCoproEvent(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/copro_event").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateCoproEvent")
+	for _, r := range chkFactory(tcc, f, "UpdateCoproEvent") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproEvent checks if route is user protected and CoproEvent
@@ -137,7 +141,9 @@ func testGetCoproEvent(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/copro_event/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproEvent")
+	for _, r := range chkFactory(tcc, f, "GetCoproEvent") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproEvents checks route is protected and all CoproEvent are correctly
@@ -160,7 +166,9 @@ func testGetCoproEvents(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/copro_events").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproEvents")
+	for _, r := range chkFactory(tcc, f, "GetCoproEvents") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCoproEvent checks that route is renew project protected and
@@ -188,5 +196,7 @@ func testDeleteCoproEvent(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/copro_event/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCoproEvent")
+	for _, r := range chkFactory(tcc, f, "DeleteCoproEvent") {
+		t.Error(r)
+	}
 }

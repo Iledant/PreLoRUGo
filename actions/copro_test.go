@@ -84,7 +84,9 @@ func testCreateCopro(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/copro").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCopro", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCopro", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -125,7 +127,9 @@ func testModifyCopro(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/copro").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "ModifyCopro")
+	for _, r := range chkFactory(tcc, f, "ModifyCopro") {
+		t.Error(r)
+	}
 }
 
 // testGetCopros check route is protected and copro are correctly sent back
@@ -143,7 +147,9 @@ func testGetCopros(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/copro").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCopros")
+	for _, r := range chkFactory(tcc, f, "GetCopros") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproDatas check route is protected and copro datas are correctly sent back
@@ -168,7 +174,9 @@ func testGetCoproDatas(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/copro/"+strconv.Itoa(tc.ID)+"/datas").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoprosDatas")
+	for _, r := range chkFactory(tcc, f, "GetCoprosDatas") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCopro check route is protected for admin and modifications are correctly done
@@ -190,7 +198,9 @@ func testDeleteCopro(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/copro/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCopro")
+	for _, r := range chkFactory(tcc, f, "DeleteCopro") {
+		t.Error(r)
+	}
 }
 
 // testBatchCopros check route is limited to admin and batch import succeeds
@@ -226,18 +236,23 @@ func testBatchCopros(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/copros").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	if chkFactory(t, tcc, f, "BatchCopro") {
-		response := c.E.GET("/api/copro").
-			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
-		body := string(response.Content)
-		for _, j := range []string{`"Reference":"CO003","Name":"copro3",` +
-			`"Address":"adresse3","ZipCode":77001,"CityName":"ACHERES-LA-FORET",` +
-			`"LabelDate":null,"Budget":null`,
-			`"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75101,` +
-				`"CityName":"PARIS 1","LabelDate":"2016-04-01T00:00:00Z","Budget":3000000`} {
-			if !strings.Contains(body, j) {
-				t.Errorf("BatchCopro[final]\n  ->attendu %s\n  ->reçu: %s", j, body)
-			}
+	resp := chkFactory(tcc, f, "BatchCopro")
+	for _, r := range resp {
+		t.Error(r)
+	}
+	if len(resp) > 0 {
+		return
+	}
+	response := c.E.GET("/api/copro").
+		WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
+	body := string(response.Content)
+	for _, j := range []string{`"Reference":"CO003","Name":"copro3",` +
+		`"Address":"adresse3","ZipCode":77001,"CityName":"ACHERES-LA-FORET",` +
+		`"LabelDate":null,"Budget":null`,
+		`"Reference":"CO004","Name":"copro4","Address":"adresse4","ZipCode":75101,` +
+			`"CityName":"PARIS 1","LabelDate":"2016-04-01T00:00:00Z","Budget":3000000`} {
+		if !strings.Contains(body, j) {
+			t.Errorf("BatchCopro[final]\n  ->attendu %s\n  ->reçu: %s", j, body)
 		}
 	}
 }

@@ -34,7 +34,9 @@ func batchPaymentCreditJournalsTest(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/payment_credit_journal").
 			WithHeader("Authorization", "Bearer "+tc.Token).WithBytes(tc.Sent).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchPaymentCreditJournals")
+	for _, r := range chkFactory(tcc, f, "BatchPaymentCreditJournals") {
+		t.Error(r)
+	}
 }
 
 // getPaymentCreditJournalsTest check route is protected and datas sent back are correct
@@ -58,5 +60,7 @@ func getPaymentCreditJournalsTest(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/payment_credit_journal").
 			WithHeader("Authorization", "Bearer "+tc.Token).WithQuery("Year", tc.Params).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPaymentCreditJournals")
+	for _, r := range chkFactory(tcc, f, "GetPaymentCreditJournals") {
+		t.Error(r)
+	}
 }

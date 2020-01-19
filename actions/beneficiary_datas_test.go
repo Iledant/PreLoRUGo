@@ -52,7 +52,9 @@ func testGetBeneficiaryDatas(t *testing.T, c *TestContext) {
 			WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetBeneficiaryDatas")
+	for _, r := range chkFactory(tcc, f, "GetBeneficiaryDatas") {
+		t.Error(r)
+	}
 }
 
 // testExportGetBeneficiaryDatas checks if route is user protected
@@ -91,5 +93,7 @@ func testGetExportBeneficiaryDatas(t *testing.T, c *TestContext) {
 			WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetExportBeneficiaryDatas")
+	for _, r := range chkFactory(tcc, f, "GetExportBeneficiaryDatas") {
+		t.Error(r)
+	}
 }

@@ -73,7 +73,9 @@ func testCreateUser(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/user").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateUser", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateUser", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -130,7 +132,9 @@ func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/user/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateUser")
+	for _, r := range chkFactory(tcc, f, "UpdateUser") {
+		t.Error(r)
+	}
 }
 
 // testChangeUserPwd checks route is protected and user correctly modified
@@ -167,7 +171,9 @@ func testChangeUserPwd(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/user/password").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "ChangeUserPwd")
+	for _, r := range chkFactory(tcc, f, "ChangeUserPwd") {
+		t.Error(r)
+	}
 }
 
 // testGetUsers checks route is protected for admin and 3 users are sent back
@@ -185,7 +191,9 @@ func testGetUsers(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/users").WithHeader("Authorization", "Bearer "+tc.Token).
 			Expect()
 	}
-	chkFactory(t, tcc, f, "GetUsers")
+	for _, r := range chkFactory(tcc, f, "GetUsers") {
+		t.Error(r)
+	}
 }
 
 // testDeleteUser checks route is protected and user correctly modified
@@ -207,7 +215,9 @@ func testDeleteUser(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/user/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteUser")
+	for _, r := range chkFactory(tcc, f, "DeleteUser") {
+		t.Error(r)
+	}
 }
 
 // testSignUp checks a the user is created and inactive
@@ -241,5 +251,7 @@ func testSignUp(t *testing.T, c *TestContext) {
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/user/sign_up").WithBytes(tc.Sent).Expect()
 	}
-	chkFactory(t, tcc, f, "SignUp")
+	for _, r := range chkFactory(tcc, f, "SignUp") {
+		t.Error(r)
+	}
 }

@@ -63,7 +63,9 @@ func testCreateCommission(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/commission").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCommission", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCommission", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -97,7 +99,9 @@ func testUpdateCommission(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/commission").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateCommission")
+	for _, r := range chkFactory(tcc, f, "UpdateCommission") {
+		t.Error(r)
+	}
 }
 
 // testGetCommission checks if route is user protected and Commission correctly sent back
@@ -119,7 +123,9 @@ func testGetCommission(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/commission/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCommission")
+	for _, r := range chkFactory(tcc, f, "GetCommission") {
+		t.Error(r)
+	}
 }
 
 // testGetCommissions checks if route is user protected and Commissions correctly sent back
@@ -137,7 +143,9 @@ func testGetCommissions(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/commissions").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCommissions")
+	for _, r := range chkFactory(tcc, f, "GetCommissions") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCommission checks if route is user protected and commissions correctly sent back
@@ -159,5 +167,7 @@ func testDeleteCommission(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/commission/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCommission")
+	for _, r := range chkFactory(tcc, f, "DeleteCommission") {
+		t.Error(r)
+	}
 }

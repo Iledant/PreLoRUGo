@@ -62,7 +62,9 @@ func testCreateRPEvent(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/rp_event").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateRPEvent", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateRPEvent", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -113,7 +115,9 @@ func testUpdateRPEvent(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/rp_event").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateRPEvent")
+	for _, r := range chkFactory(tcc, f, "UpdateRPEvent") {
+		t.Error(r)
+	}
 }
 
 // testGetRPEvent checks if route is user protected and RPEvent
@@ -139,7 +143,9 @@ func testGetRPEvent(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/rp_event/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPEvent")
+	for _, r := range chkFactory(tcc, f, "GetRPEvent") {
+		t.Error(r)
+	}
 }
 
 // testGetRPEvents checks route is protected and all RPEvent are correctly
@@ -162,7 +168,9 @@ func testGetRPEvents(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rp_events").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPEvents")
+	for _, r := range chkFactory(tcc, f, "GetRPEvents") {
+		t.Error(r)
+	}
 }
 
 // testDeleteRPEvent checks that route is renew project protected and
@@ -190,5 +198,7 @@ func testDeleteRPEvent(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/rp_event/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteRPEvent")
+	for _, r := range chkFactory(tcc, f, "DeleteRPEvent") {
+		t.Error(r)
+	}
 }

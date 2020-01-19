@@ -34,7 +34,9 @@ func testGetBeneficiaries(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/beneficiaries").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetBeneficiaries")
+	for _, r := range chkFactory(tcc, f, "GetBeneficiaries") {
+		t.Error(r)
+	}
 }
 
 // testGetPaginatedBeneficiaries checks if route is user protected and Beneficiaries correctly sent back
@@ -57,5 +59,7 @@ func testGetPaginatedBeneficiaries(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/beneficiaries/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPaginatedBeneficiaries")
+	for _, r := range chkFactory(tcc, f, "GetPaginatedBeneficiaries") {
+		t.Error(r)
+	}
 }

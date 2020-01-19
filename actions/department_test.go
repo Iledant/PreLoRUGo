@@ -55,7 +55,9 @@ func testCreateDepartment(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/department").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateDepartment", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateDepartment", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -94,7 +96,9 @@ func testUpdateDepartment(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/department").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateDepartment")
+	for _, r := range chkFactory(tcc, f, "UpdateDepartment") {
+		t.Error(r)
+	}
 }
 
 // testGetDepartment checks if route is user protected and Department correctly sent back
@@ -116,7 +120,9 @@ func testGetDepartment(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/department/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetDepartment")
+	for _, r := range chkFactory(tcc, f, "GetDepartment") {
+		t.Error(r)
+	}
 }
 
 // testGetDepartments checks if route is user protected and Departments correctly sent back
@@ -134,7 +140,9 @@ func testGetDepartments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/departments").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetDepartments")
+	for _, r := range chkFactory(tcc, f, "GetDepartments") {
+		t.Error(r)
+	}
 }
 
 // testDeleteDepartment checks if route is user protected and departments correctly sent back
@@ -156,5 +164,7 @@ func testDeleteDepartment(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/department/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteDepartment")
+	for _, r := range chkFactory(tcc, f, "DeleteDepartment") {
+		t.Error(r)
+	}
 }

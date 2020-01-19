@@ -79,7 +79,9 @@ func testCreateHousingForecast(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/housing_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateHousingForecast", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateHousingForecast", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -138,7 +140,9 @@ func testUpdateHousingForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/housing_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateHousingForecast")
+	for _, r := range chkFactory(tcc, f, "UpdateHousingForecast") {
+		t.Error(r)
+	}
 }
 
 // testGetHousingForecast checks if route is user protected and housing forecast correctly sent back
@@ -163,7 +167,9 @@ func testGetHousingForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/housing_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHousingForecast")
+	for _, r := range chkFactory(tcc, f, "GetHousingForecast") {
+		t.Error(r)
+	}
 }
 
 // testGetHousingForecasts checks if route is user protected and HousingForecasts correctly sent back
@@ -183,7 +189,9 @@ func testGetHousingForecasts(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/housing_forecasts").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHousingForecasts")
+	for _, r := range chkFactory(tcc, f, "GetHousingForecasts") {
+		t.Error(r)
+	}
 }
 
 // testDeleteHousingForecast checks if route is user protected and HousingForecasts correctly sent back
@@ -205,7 +213,9 @@ func testDeleteHousingForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/housing_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteHousingForecast")
+	for _, r := range chkFactory(tcc, f, "DeleteHousingForecast") {
+		t.Error(r)
+	}
 }
 
 // testBatchHousingForecasts check route is limited to admin and batch import succeeds
@@ -233,14 +243,19 @@ func testBatchHousingForecasts(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/housing_forecasts").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	if chkFactory(t, tcc, f, "BatchHousingForecast") {
-		response := c.E.GET("/api/housing_forecasts").
-			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
-		body := string(response.Content)
-		for _, j := range []string{`"Value":100,"Comment":"Batch1"`, `"Value":200,"Comment":"Batch2"`} {
-			if !strings.Contains(body, j) {
-				t.Errorf("BatchHousingForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
-			}
+	resp := chkFactory(tcc, f, "BatchHousingForecast")
+	for _, r := range resp {
+		t.Error(r)
+	}
+	if len(resp) > 0 {
+		return
+	}
+	response := c.E.GET("/api/housing_forecasts").
+		WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
+	body := string(response.Content)
+	for _, j := range []string{`"Value":100,"Comment":"Batch1"`, `"Value":200,"Comment":"Batch2"`} {
+		if !strings.Contains(body, j) {
+			t.Errorf("BatchHousingForecast[all]\n  ->attendu %s\n  ->reçu: %s", j, body)
 		}
 	}
 }
@@ -266,5 +281,7 @@ func testGetHousingsDatas(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/housings/datas").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHousingsDatas")
+	for _, r := range chkFactory(tcc, f, "GetHousingsDatas") {
+		t.Error(r)
+	}
 }

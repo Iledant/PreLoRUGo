@@ -39,5 +39,7 @@ func testLinkCommitmentsHousings(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/housing/commitments").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "LinkCommitmentsHousings")
+	for _, r := range chkFactory(tcc, f, "LinkCommitmentsHousings") {
+		t.Error(r)
+	}
 }

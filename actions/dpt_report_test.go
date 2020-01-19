@@ -39,5 +39,7 @@ func testGetDepartmentReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/department_report").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetDepartmentReport")
+	for _, r := range chkFactory(tcc, f, "GetDepartmentReport") {
+		t.Error(r)
+	}
 }

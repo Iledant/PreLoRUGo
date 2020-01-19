@@ -64,7 +64,9 @@ func testCreateRPLS(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/rpls").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateRPLS", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateRPLS", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -111,7 +113,9 @@ func testUpdateRPLS(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/rpls").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateRPLS")
+	for _, r := range chkFactory(tcc, f, "UpdateRPLS") {
+		t.Error(r)
+	}
 }
 
 // testDeleteRPLS checks if route is admin protected and RPLS
@@ -134,7 +138,9 @@ func testDeleteRPLS(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/rpls/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteRPLS")
+	for _, r := range chkFactory(tcc, f, "DeleteRPLS") {
+		t.Error(r)
+	}
 }
 
 // testBatchRPLS checks if route is admin protected and created RPLS
@@ -178,7 +184,9 @@ func testBatchRPLS(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/rpls/batch").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchRPLS")
+	for _, r := range chkFactory(tcc, f, "BatchRPLS") {
+		t.Error(r)
+	}
 }
 
 // testGetAllRPLS check if route is user protected and batch RPLS have been
@@ -198,7 +206,9 @@ func testGetAllRPLS(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rpls").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetAllRPLS")
+	for _, r := range chkFactory(tcc, f, "GetAllRPLS") {
+		t.Error(r)
+	}
 
 }
 
@@ -220,7 +230,9 @@ func testGetRPLSDatas(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rpls/datas").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPLSDatas")
+	for _, r := range chkFactory(tcc, f, "GetRPLSDatas") {
+		t.Error(r)
+	}
 
 }
 
@@ -264,7 +276,9 @@ func testRPLSReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rpls/report").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "RPLSReport")
+	for _, r := range chkFactory(tcc, f, "RPLSReport") {
+		t.Error(r)
+	}
 
 }
 
@@ -308,6 +322,8 @@ func testRPLSDetailedReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/rpls/detailed_report").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "RPLSDetailedReport")
+	for _, r := range chkFactory(tcc, f, "RPLSDetailedReport") {
+		t.Error(r)
+	}
 
 }

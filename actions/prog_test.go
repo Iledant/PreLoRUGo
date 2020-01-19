@@ -90,7 +90,9 @@ func testBatchProg(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/prog").WithQueryString(tc.Params).WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchProg")
+	for _, r := range chkFactory(tcc, f, "BatchProg") {
+		t.Error(r)
+	}
 	// Content will be checked by get test
 }
 
@@ -116,7 +118,9 @@ func testGetProg(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/prog").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetProg")
+	for _, r := range chkFactory(tcc, f, "GetProg") {
+		t.Error(r)
+	}
 }
 
 // testGetProgDatas checks if route is user protected and prog and others datas
@@ -143,7 +147,9 @@ func testGetProgDatas(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/prog/datas").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetProgDatas")
+	for _, r := range chkFactory(tcc, f, "GetProgDatas") {
+		t.Error(r)
+	}
 }
 
 // testGetProgYears checks if route is user protected and programmation years
@@ -160,5 +166,7 @@ func testGetProgYears(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/prog/years").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetProgYears")
+	for _, r := range chkFactory(tcc, f, "GetProgYears") {
+		t.Error(r)
+	}
 }

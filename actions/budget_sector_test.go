@@ -50,7 +50,9 @@ func testCreateBudgetSector(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/budget_sector").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateBudgetSector", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateBudgetSector", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -84,7 +86,9 @@ func testUpdateBudgetSector(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/budget_sector").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateBudgetSector")
+	for _, r := range chkFactory(tcc, f, "UpdateBudgetSector") {
+		t.Error(r)
+	}
 }
 
 // testGetBudgetSector checks if route is user protected and BudgetSector correctly sent back
@@ -106,7 +110,9 @@ func testGetBudgetSector(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/budget_sector/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetBudgetSector")
+	for _, r := range chkFactory(tcc, f, "GetBudgetSector") {
+		t.Error(r)
+	}
 }
 
 // testGetBudgetSectors checks if route is user protected and BudgetSectors correctly sent back
@@ -124,7 +130,9 @@ func testGetBudgetSectors(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/budget_sectors").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetBudgetSectors")
+	for _, r := range chkFactory(tcc, f, "GetBudgetSectors") {
+		t.Error(r)
+	}
 }
 
 // testDeleteBudgetSector checks if route is user protected and budget_sectors correctly sent back
@@ -146,5 +154,7 @@ func testDeleteBudgetSector(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/budget_sector/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteBudgetSector")
+	for _, r := range chkFactory(tcc, f, "DeleteBudgetSector") {
+		t.Error(r)
+	}
 }

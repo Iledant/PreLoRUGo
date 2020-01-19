@@ -53,7 +53,9 @@ func testCreateCoproEventType(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/copro_event_type").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCoproEventType", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCoproEventType", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -87,7 +89,9 @@ func testUpdateCoproEventType(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/copro_event_type").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateCoproEventType")
+	for _, r := range chkFactory(tcc, f, "UpdateCoproEventType") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproEventType checks if route is user protected and CoproEventType
@@ -110,7 +114,9 @@ func testGetCoproEventType(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/copro_event_type/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproEventType")
+	for _, r := range chkFactory(tcc, f, "GetCoproEventType") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproEventTypes checks route is protected and all CoproEventType are correctly
@@ -130,7 +136,9 @@ func testGetCoproEventTypes(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/copro_event_types").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproEventTypes")
+	for _, r := range chkFactory(tcc, f, "GetCoproEventTypes") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCoproEventType checks that route is renew project protected and
@@ -158,7 +166,9 @@ func testDeleteCoproEventType(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/copro_event_type/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCoproEventType")
+	for _, r := range chkFactory(tcc, f, "DeleteCoproEventType") {
+		t.Error(r)
+	}
 }
 
 // fetchCoproEventTypeID create an CoproEventType and fetches its ID to store in the

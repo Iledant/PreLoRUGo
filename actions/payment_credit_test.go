@@ -36,7 +36,9 @@ func batchPaymentCreditsTest(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/payment_credits").
 			WithHeader("Authorization", "Bearer "+tc.Token).WithBytes(tc.Sent).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchPaymentCredits")
+	for _, r := range chkFactory(tcc, f, "BatchPaymentCredits") {
+		t.Error(r)
+	}
 }
 
 // getPaymentCreditsTest check route is protected and datas sent back are correct
@@ -58,5 +60,7 @@ func getPaymentCreditsTest(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/payment_credits").WithHeader("Authorization", "Bearer "+tc.Token).
 			WithQuery("Year", tc.Params).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPaymentCredits")
+	for _, r := range chkFactory(tcc, f, "GetPaymentCredits") {
+		t.Error(r)
+	}
 }

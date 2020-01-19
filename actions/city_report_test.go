@@ -44,5 +44,7 @@ func testGetCityReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/city_report").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCityReport")
+	for _, r := range chkFactory(tcc, f, "GetCityReport") {
+		t.Error(r)
+	}
 }

@@ -28,6 +28,8 @@ func testGetSummariesDatas(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/summaries/datas").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetSummariesDatas")
+	for _, r := range chkFactory(tcc, f, "GetSummariesDatas") {
+		t.Error(r)
+	}
 
 }

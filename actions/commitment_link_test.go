@@ -70,7 +70,9 @@ func testLinkCommitment(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/commitments/link").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "LinkCommitment")
+	for _, r := range chkFactory(tcc, f, "LinkCommitment") {
+		t.Error(r)
+	}
 }
 
 // testUnlinkCommitment check route is limited to admin and batch import succeeds
@@ -97,5 +99,7 @@ func testUnlinkCommitment(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/commitments/unlink").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UnlinkCommitmentLink")
+	for _, r := range chkFactory(tcc, f, "UnlinkCommitmentLink") {
+		t.Error(r)
+	}
 }

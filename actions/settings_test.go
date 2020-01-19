@@ -31,5 +31,7 @@ func testGetSettings(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/settings").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetSettings")
+	for _, r := range chkFactory(tcc, f, "GetSettings") {
+		t.Error(r)
+	}
 }

@@ -42,7 +42,9 @@ func testBatchPayments(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/payments").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchPayment")
+	for _, r := range chkFactory(tcc, f, "BatchPayment") {
+		t.Error(r)
+	}
 	// GelAllTest checks if data are correctly analyzed
 }
 
@@ -62,7 +64,9 @@ func testGetPayments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/payments").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPayments")
+	for _, r := range chkFactory(tcc, f, "GetPayments") {
+		t.Error(r)
+	}
 }
 
 // testGetPaginatedPayments checks if route is user protected and Payments correctly sent back
@@ -89,7 +93,9 @@ func testGetPaginatedPayments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/payments/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPaginatedPayments")
+	for _, r := range chkFactory(tcc, f, "GetPaginatedPayments") {
+		t.Error(r)
+	}
 }
 
 // testExportedPayments checks if route is user protected and Payments correctly sent back
@@ -116,5 +122,7 @@ func testExportedPayments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/payments/export").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "ExportedPayments")
+	for _, r := range chkFactory(tcc, f, "ExportedPayments") {
+		t.Error(r)
+	}
 }

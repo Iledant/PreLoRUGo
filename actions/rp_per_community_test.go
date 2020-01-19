@@ -32,5 +32,7 @@ func testGetRPPerCommunityReport(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/renew_project/report_per_community").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPPerCommunityReport")
+	for _, r := range chkFactory(tcc, f, "GetRPPerCommunityReport") {
+		t.Error(r)
+	}
 }

@@ -55,7 +55,9 @@ func testCreateCoproDoc(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/copro/"+strconv.FormatInt(c.CoproID, 10)+"/copro_doc").
 			WithBytes(tc.Sent).WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateCoproDoc", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateCoproDoc", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -99,7 +101,9 @@ func testUpdateCoproDoc(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/copro/"+strconv.FormatInt(c.CoproID, 10)+"/copro_doc").
 			WithBytes(tc.Sent).WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateCoproDoc")
+	for _, r := range chkFactory(tcc, f, "UpdateCoproDoc") {
+		t.Error(r)
+	}
 }
 
 // testDeleteCoproDoc checks if route is user protected and cities correctly sent back
@@ -121,7 +125,9 @@ func testDeleteCoproDoc(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/copro/"+strconv.FormatInt(c.CoproID, 10)+"/copro_doc/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteCoproDoc")
+	for _, r := range chkFactory(tcc, f, "DeleteCoproDoc") {
+		t.Error(r)
+	}
 }
 
 // testGetCoproDocs checks if route is user protected and CoproDocs correctly sent back
@@ -147,5 +153,7 @@ func testGetCoproDocs(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/copro/"+tc.Params+"/copro_docs").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproDocs")
+	for _, r := range chkFactory(tcc, f, "GetCoproDocs") {
+		t.Error(r)
+	}
 }

@@ -39,14 +39,19 @@ func testLinkCommitmentsCopros(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/copro/commitments").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	if chkFactory(t, tcc, f, "LinkCommitmentsCopros") {
-		var count int64
-		if err := c.DB.QueryRow(`SELECT count(1) FROM commitment 
+	resp := chkFactory(tcc, f, "LinkCommitmentsCopros")
+	for _, r := range resp {
+		t.Error(r)
+	}
+	if len(resp) > 0 {
+		return
+	}
+	var count int64
+	if err := c.DB.QueryRow(`SELECT count(1) FROM commitment 
 		WHERE iris_code='13021233' AND copro_id IS NOT NULL`).Scan(&count); err != nil {
-			t.Errorf("LinkCommitmentsCopros, erreur sur la requête de vérification %v", err)
-		}
-		if count != 1 {
-			t.Errorf("LinkCommitmentsCopros: échec de la vérification -> attendu 1  -> reçu %d\n", count)
-		}
+		t.Errorf("LinkCommitmentsCopros, erreur sur la requête de vérification %v", err)
+	}
+	if count != 1 {
+		t.Errorf("LinkCommitmentsCopros: échec de la vérification -> attendu 1  -> reçu %d\n", count)
 	}
 }

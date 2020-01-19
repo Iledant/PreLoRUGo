@@ -54,7 +54,9 @@ func testCreateBudgetAction(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/budget_action").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateBudgetAction", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateBudgetAction", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -73,7 +75,9 @@ func testGetBudgetActions(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/budget_actions").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetBudgetActions")
+	for _, r := range chkFactory(tcc, f, "GetBudgetActions") {
+		t.Error(r)
+	}
 }
 
 // testUpdateBudgetAction checks if route is admin protected and budget action
@@ -111,7 +115,9 @@ func testUpdateBudgetAction(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/budget_action").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateBudgetAction")
+	for _, r := range chkFactory(tcc, f, "UpdateBudgetAction") {
+		t.Error(r)
+	}
 }
 
 // testDeleteBudgetAction check route is admin protected and delete requests returns ok
@@ -133,5 +139,7 @@ func testDeleteBudgetAction(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/budget_action/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteBudgetAction")
+	for _, r := range chkFactory(tcc, f, "DeleteBudgetAction") {
+		t.Error(r)
+	}
 }

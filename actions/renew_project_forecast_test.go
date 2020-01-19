@@ -78,7 +78,9 @@ func testCreateRenewProjectForecast(t *testing.T, c *TestContext) (ID int) {
 		return c.E.POST("/api/renew_project_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "CreateRenewProjectForecast", &ID)
+	for _, r := range chkFactory(tcc, f, "CreateRenewProjectForecast", &ID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -137,7 +139,9 @@ func testUpdateRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.PUT("/api/renew_project_forecast").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "UpdateRenewProjectForecast")
+	for _, r := range chkFactory(tcc, f, "UpdateRenewProjectForecast") {
+		t.Error(r)
+	}
 }
 
 // testGetRenewProjectForecast checks if route is user protected and RenewProjectForecast correctly sent back
@@ -162,7 +166,9 @@ func testGetRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/renew_project_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRenewProjectForecast")
+	for _, r := range chkFactory(tcc, f, "GetRenewProjectForecast") {
+		t.Error(r)
+	}
 }
 
 // testGetRenewProjectForecasts checks if route is user protected and
@@ -186,7 +192,9 @@ func testGetRenewProjectForecasts(t *testing.T, c *TestContext, ID int) {
 		return c.E.GET("/api/renew_project_forecasts").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRenewProjectForecasts")
+	for _, r := range chkFactory(tcc, f, "GetRenewProjectForecasts") {
+		t.Error(r)
+	}
 }
 
 // testDeleteRenewProjectForecast checks if route is user protected and renew_project_forecasts correctly sent back
@@ -208,7 +216,9 @@ func testDeleteRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 		return c.E.DELETE("/api/renew_project_forecast/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "DeleteRenewProjectForecast")
+	for _, r := range chkFactory(tcc, f, "DeleteRenewProjectForecast") {
+		t.Error(r)
+	}
 }
 
 // testBatchRenewProjectForecasts check route is limited to admin and batch import succeeds
@@ -238,15 +248,20 @@ func testBatchRenewProjectForecasts(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/renew_project_forecasts").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	if chkFactory(t, tcc, f, "BatchRenewProjectForecast") {
-		response := c.E.GET("/api/renew_project_forecasts").
-			WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
-		body := string(response.Content)
-		for _, j := range []string{`"Value":100,"Project":"projet","Comment":"Batch1"`,
-			`"Value":200,"Project":null,"Comment":"Batch2"`} {
-			if !strings.Contains(body, j) {
-				t.Errorf("BatchRenewProjectForecast[final]\n  ->attendu %s\n  ->reçu: %s", j, body)
-			}
+	resp := chkFactory(tcc, f, "BatchRenewProjectForecast")
+	for _, r := range resp {
+		t.Error(r)
+	}
+	if len(resp) > 0 {
+		return
+	}
+	response := c.E.GET("/api/renew_project_forecasts").
+		WithHeader("Authorization", "Bearer "+c.Config.Users.Admin.Token).Expect()
+	body := string(response.Content)
+	for _, j := range []string{`"Value":100,"Project":"projet","Comment":"Batch1"`,
+		`"Value":200,"Project":null,"Comment":"Batch2"`} {
+		if !strings.Contains(body, j) {
+			t.Errorf("BatchRenewProjectForecast[final]\n  ->attendu %s\n  ->reçu: %s", j, body)
 		}
 	}
 }

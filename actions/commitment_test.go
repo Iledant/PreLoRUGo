@@ -42,7 +42,9 @@ func testBatchCommitments(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/commitments").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchCommitment")
+	for _, r := range chkFactory(tcc, f, "BatchCommitment") {
+		t.Error(r)
+	}
 	// the testGetCommitments is used to check datas have been correctly imported
 }
 
@@ -68,7 +70,9 @@ func testGetCommitments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/commitments").
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCommitments")
+	for _, r := range chkFactory(tcc, f, "GetCommitments") {
+		t.Error(r)
+	}
 }
 
 // testGetPaginatedCommitments checks if route is user protected and paginated
@@ -100,7 +104,9 @@ func testGetPaginatedCommitments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/commitments/paginated").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPaginatedCommitments")
+	for _, r := range chkFactory(tcc, f, "GetPaginatedCommitments") {
+		t.Error(r)
+	}
 }
 
 // testGetUnlinkedCommitments checks if route is user protected and paginated
@@ -132,7 +138,9 @@ func testGetUnlinkedCommitments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/commitments/unlinked").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetUnlinkedCommitments")
+	for _, r := range chkFactory(tcc, f, "GetUnlinkedCommitments") {
+		t.Error(r)
+	}
 }
 
 // testExportedCommitments checks if route is user protected and exported
@@ -163,5 +171,7 @@ func testExportedCommitments(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/commitments/export").WithQueryString(string(tc.Sent)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetExportedCommitments")
+	for _, r := range chkFactory(tcc, f, "GetExportedCommitments") {
+		t.Error(r)
+	}
 }

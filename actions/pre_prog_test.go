@@ -85,7 +85,9 @@ func testBatchCoproPreProgs(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/pre_prog/copro").WithQueryString(tc.Params).
 			WithBytes(tc.Sent).WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchCoproPreProgs")
+	for _, r := range chkFactory(tcc, f, "BatchCoproPreProgs") {
+		t.Error(r)
+	}
 	// Content will be checked by get test
 }
 
@@ -110,7 +112,9 @@ func testGetCoproPreProgs(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/pre_prog/copro").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetCoproPreProgs")
+	for _, r := range chkFactory(tcc, f, "GetCoproPreProgs") {
+		t.Error(r)
+	}
 }
 
 // testBatchHousingPreProgs check route is housing user protected and batch
@@ -178,7 +182,9 @@ func testBatchHousingPreProgs(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/pre_prog/housing").WithQueryString(tc.Params).WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchHousingPreProgs")
+	for _, r := range chkFactory(tcc, f, "BatchHousingPreProgs") {
+		t.Error(r)
+	}
 	// Content will be checked by get test
 }
 
@@ -203,7 +209,9 @@ func testGetHousingPreProgs(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/pre_prog/housing").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetHousingPreProgs")
+	for _, r := range chkFactory(tcc, f, "GetHousingPreProgs") {
+		t.Error(r)
+	}
 }
 
 // testBatchRPPreProgs check route admin protected and batch import returns
@@ -271,7 +279,9 @@ func testBatchRPPreProgs(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/pre_prog/renew_project").WithQueryString(tc.Params).
 			WithBytes(tc.Sent).WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "BatchRPPreProgs")
+	for _, r := range chkFactory(tcc, f, "BatchRPPreProgs") {
+		t.Error(r)
+	}
 	// Content will be checked by get test
 }
 
@@ -296,7 +306,9 @@ func testGetRPPreProgs(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/pre_prog/renew_project").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetRPPreProgs")
+	for _, r := range chkFactory(tcc, f, "GetRPPreProgs") {
+		t.Error(r)
+	}
 }
 
 // testGetPreProgs checks if route is admin user protected and pre prog
@@ -321,5 +333,7 @@ func testGetPreProgs(t *testing.T, c *TestContext) {
 		return c.E.GET("/api/pre_prog").WithQueryString(tc.Params).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	chkFactory(t, tcc, f, "GetPreProgs")
+	for _, r := range chkFactory(tcc, f, "GetPreProgs") {
+		t.Error(r)
+	}
 }
