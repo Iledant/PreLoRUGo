@@ -104,6 +104,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 
 	adminParty.Post("/home_message", SetHomeMessage)
 
+	adminParty.Post("/placements", BatchPlacements)
+
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
@@ -189,6 +191,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/beneficiary/{ID}/datas", GetPaginatedBeneficiaryDatas)
 	userParty.Get("/beneficiary/{ID}/export", GetExportBeneficiaryDatas)
 	userParty.Get("/beneficiary/{ID}/payments", GetBeneficiaryPayments)
+	userParty.Get("/beneficiary/{ID}/placements", GetBeneficiaryPlacements)
 
 	userParty.Get("/payments", GetPayments)
 	userParty.Get("/payments/paginated", GetPaginatedPayments)
@@ -266,4 +269,6 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/payment_credit_journal", GetAllPaymentCreditJournals)
 
 	userParty.Get("/payment_credits_and_journal", GetPaymentCreditsAndJournal)
+
+	userParty.Get("/placements", GetPlacements)
 }

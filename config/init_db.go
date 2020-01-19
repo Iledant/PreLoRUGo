@@ -530,26 +530,37 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		title varchar(255),
 		body text
 	);`, // 49 home_message
+	`CREATE TABLE IF NOT EXISTS placement (
+		id SERIAL PRIMARY KEY,
+		iris_code varchar(20) NOT NULL UNIQUE,
+		count int,
+		contract_year int
+	);`, // 50
+	`CREATE TABLE IF NOT EXISTS temp_placement (
+		iris_code varchar(20) NOT NULL,
+		count int,
+		contract_year int
+	);`, // 51
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 50
-	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 51
+	$log_cmt$ LANGUAGE plpgsql;`, // 52
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 53
 	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 52
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 54
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 53
-	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 54
+	$log_cmt$ LANGUAGE plpgsql;`, // 55
+	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 56
 	`CREATE TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 55
+	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 57
 }
 
 // createTablesAndViews launches the queries against the database to create all

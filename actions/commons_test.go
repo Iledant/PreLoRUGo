@@ -101,6 +101,7 @@ func TestAll(t *testing.T) {
 	testRPMultiAnnualReport(t, cfg)
 	testPaymentCredits(t, cfg)
 	testPaymentCreditJournals(t, cfg)
+	testPlacement(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
