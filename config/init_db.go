@@ -534,12 +534,15 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		id SERIAL PRIMARY KEY,
 		iris_code varchar(20) NOT NULL UNIQUE,
 		count int,
-		contract_year int
+		contract_year int,
+		comment varchar(150),
+		commitment_id int REFERENCES commitment(id)
 	);`, // 50
 	`CREATE TABLE IF NOT EXISTS temp_placement (
 		iris_code varchar(20) NOT NULL,
 		count int,
-		contract_year int
+		contract_year int,
+		comment varchar(150)
 	);`, // 51
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN

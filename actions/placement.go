@@ -58,3 +58,32 @@ func GetBeneficiaryPlacements(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
+
+type updatePlacementReq struct {
+	models.Placement `json:"Placement"`
+}
+
+// UpdatePlacement handles the put query to change the comment of a placement
+func UpdatePlacement(ctx iris.Context) {
+	var req updatePlacementReq
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Engagement de stagiaires, paramètre : " + err.Error()})
+		return
+	}
+	if err = ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Engagement de stagiaire, décodage : " + err.Error()})
+		return
+	}
+	req.ID = ID
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := req.Update(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Liste des stages, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(req)
+}

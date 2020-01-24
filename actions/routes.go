@@ -105,6 +105,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Post("/home_message", SetHomeMessage)
 
 	adminParty.Post("/placements", BatchPlacements)
+	adminParty.Put("/placement/{ID}", UpdatePlacement)
 
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
