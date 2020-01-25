@@ -59,8 +59,8 @@ func (p *Placements) Get(db *sql.DB) error {
 func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,p.comment
 	FROM placement p
-	JOIN commitment c ON p.iris_code=p.iris_code
-	WHERE p.beneficiary_id=$1`, bID)
+	JOIN commitment c ON p.iris_code=c.iris_code
+	WHERE c.beneficiary_id=$1`, bID)
 	if err != nil {
 		return err
 	}

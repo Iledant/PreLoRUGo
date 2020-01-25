@@ -12,6 +12,7 @@ func testPlacement(t *testing.T, c *TestContext) {
 	t.Run("Placement", func(t *testing.T) {
 		testBatchPlacements(t, c)
 		testGetPlacements(t, c)
+		testGetBeneficiaryPlacements(t, c)
 		testUpdatePlacement(t, c)
 	})
 }
