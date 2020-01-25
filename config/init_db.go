@@ -537,13 +537,22 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 		contract_year int,
 		comment varchar(150),
 		commitment_id int REFERENCES commitment(id)
-	);`, // 50
+	);`, // 50 placement
 	`CREATE TABLE IF NOT EXISTS temp_placement (
 		iris_code varchar(20) NOT NULL,
 		count int,
 		contract_year int,
 		comment varchar(150)
-	);`, // 51
+	);`, // 51 temp_placement
+	`CREATE TABLE IF NOT EXISTS beneficiary_group (
+		id SERIAL PRIMARY KEY,
+		name varchar(150) NOT NULL UNIQUE
+	)`, // 52 beneficiary_group
+	`CREATE TABLE IF NOT EXISTS beneficiary_belong (
+		id SERIAL PRIMARY KEY,
+		beneficiary_id int REFERENCES beneficiary(id) ON DELETE CASCADE,
+		group_id int REFERENCES beneficiary_group(id) ON DELETE CASCADE
+	)`, // 53 beneficiary_belong
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)

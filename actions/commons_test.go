@@ -102,6 +102,7 @@ func TestAll(t *testing.T) {
 	testPaymentCredits(t, cfg)
 	testPaymentCreditJournals(t, cfg)
 	testPlacement(t, cfg)
+	testBeneficiaryGroup(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
