@@ -39,8 +39,8 @@ func (p *Placement) Update(db *sql.DB) error {
 
 // Get fetches all placements from database
 func (p *Placements) Get(db *sql.DB) error {
-	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,p.comment,c.creation_date
-		FROM placement p
+	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
+	p.comment,c.creation_date FROM placement p
 		LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code`)
 	if err != nil {
 		return err
@@ -63,8 +63,8 @@ func (p *Placements) Get(db *sql.DB) error {
 
 // GetByBeneficiary fetches all placements linked to a beneficiary
 func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
-	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,p.comment,c.creation_date
-	FROM placement p
+	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
+	p.comment,c.creation_date FROM placement p
 	JOIN commitment c ON p.iris_code=c.iris_code
 	WHERE c.beneficiary_id=$1`, bID)
 	if err != nil {
