@@ -541,8 +541,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	`CREATE TABLE IF NOT EXISTS temp_placement (
 		iris_code varchar(20) NOT NULL,
 		count int,
-		contract_year int,
-		comment varchar(150)
+		contract_year int
 	);`, // 51 temp_placement
 	`CREATE TABLE IF NOT EXISTS beneficiary_group (
 		id SERIAL PRIMARY KEY,

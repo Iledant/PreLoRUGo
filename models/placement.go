@@ -9,12 +9,14 @@ import (
 
 // Placement model
 type Placement struct {
-	ID           int64      `json:"ID"`
-	IrisCode     string     `json:"IrisCode"`
-	Count        NullInt64  `json:"Count"`
-	ContractYear NullInt64  `json:"ContractYear"`
-	Comment      NullString `json:"Comment"`
-	CreationDate NullTime   `json:"CreationDate"`
+	ID              int64      `json:"ID"`
+	IrisCode        string     `json:"IrisCode"`
+	Count           NullInt64  `json:"Count"`
+	ContractYear    NullInt64  `json:"ContractYear"`
+	Comment         NullString `json:"Comment"`
+	CreationDate    NullTime   `json:"CreationDate"`
+	BeneficiaryName NullString `json:"BeneficiaryName"`
+	BeneficiaryCode NullInt64  `json:"BeneficiaryCode"`
 }
 
 // Placements embeddes an array of Placement for json export and dedicated queries
@@ -28,10 +30,15 @@ func (p *Placement) Update(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("update %v", err)
 	}
-	if err = db.QueryRow(`SELECT p.iris_code,p.count,p.contract_year,c.creation_date
-	FROM placement p LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
-	WHERE p.id=$1`, p.ID).
-		Scan(&p.IrisCode, &p.Count, &p.ContractYear, &p.CreationDate); err != nil {
+	if err = db.QueryRow(`SELECT p.iris_code,p.count,p.contract_year,
+		MIN(c.creation_date),b.code,b.name
+	FROM placement p
+	LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
+	JOIN beneficiary b ON c.beneficiary_id=b.id
+	WHERE p.id=$1
+	GROUP BY 1,2,3,5,6`, p.ID).
+		Scan(&p.IrisCode, &p.Count, &p.ContractYear, &p.CreationDate,
+			&p.BeneficiaryCode, &p.BeneficiaryName); err != nil {
 		return fmt.Errorf("select %v", err)
 	}
 	return nil
@@ -40,16 +47,18 @@ func (p *Placement) Update(db *sql.DB) error {
 // Get fetches all placements from database
 func (p *Placements) Get(db *sql.DB) error {
 	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
-	p.comment,c.creation_date FROM placement p
-		LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code`)
+	p.comment,MIN(c.creation_date),b.code,b.name FROM placement p
+		LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
+		JOIN beneficiary b ON c.beneficiary_id=b.id
+		GROUP BY 1,2,3,4,5,7,8`)
 	if err != nil {
 		return err
 	}
 	var row Placement
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count,
-			&row.ContractYear, &row.Comment, &row.CreationDate); err != nil {
+		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count, &row.ContractYear,
+			&row.Comment, &row.CreationDate, &row.BeneficiaryCode, &row.BeneficiaryName); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
@@ -98,13 +107,13 @@ func (p *Placements) Save(db *sql.DB) error {
 		return err
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_placement", "iris_code", "count",
-		"contract_year", "comment"))
+		"contract_year"))
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 	for _, r := range p.Lines {
-		if _, err = stmt.Exec(r.IrisCode, r.Count, r.ContractYear, r.Comment); err != nil {
+		if _, err = stmt.Exec(r.IrisCode, r.Count, r.ContractYear); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("insertion de %+v : %s", r, err.Error())
 		}
