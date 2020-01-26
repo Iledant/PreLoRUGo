@@ -14,6 +14,7 @@ type Placement struct {
 	Count        NullInt64  `json:"Count"`
 	ContractYear NullInt64  `json:"ContractYear"`
 	Comment      NullString `json:"Comment"`
+	CreationDate NullTime   `json:"CreationDate"`
 }
 
 // Placements embeddes an array of Placement for json export and dedicated queries
@@ -23,19 +24,24 @@ type Placements struct {
 
 // Update changes the comment of a placement
 func (p *Placement) Update(db *sql.DB) error {
-	err := db.QueryRow(`UPDATE placement SET comment=$1 WHERE id=$2
-		RETURNING iris_code,count,contract_year`,
-		p.Comment, p.ID).Scan(&p.IrisCode, &p.Count, &p.ContractYear)
+	_, err := db.Exec(`UPDATE placement SET comment=$1 WHERE id=$2`, p.Comment, p.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
+	}
+	if err = db.QueryRow(`SELECT p.iris_code,p.count,p.contract_year,c.creation_date
+	FROM placement p LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
+	WHERE p.id=$1`, p.ID).
+		Scan(&p.IrisCode, &p.Count, &p.ContractYear, &p.CreationDate); err != nil {
+		return fmt.Errorf("select %v", err)
 	}
 	return nil
 }
 
 // Get fetches all placements from database
 func (p *Placements) Get(db *sql.DB) error {
-	rows, err := db.Query(`SELECT id,iris_code,count,contract_year,comment
-		FROM placement`)
+	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,p.comment,c.creation_date
+		FROM placement p
+		LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code`)
 	if err != nil {
 		return err
 	}
@@ -43,7 +49,7 @@ func (p *Placements) Get(db *sql.DB) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count,
-			&row.ContractYear, &row.Comment); err != nil {
+			&row.ContractYear, &row.Comment, &row.CreationDate); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
@@ -57,7 +63,7 @@ func (p *Placements) Get(db *sql.DB) error {
 
 // GetByBeneficiary fetches all placements linked to a beneficiary
 func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
-	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,p.comment
+	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,p.comment,c.creation_date
 	FROM placement p
 	JOIN commitment c ON p.iris_code=c.iris_code
 	WHERE c.beneficiary_id=$1`, bID)
@@ -68,7 +74,7 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count,
-			&row.ContractYear, &row.Comment); err != nil {
+			&row.ContractYear, &row.Comment, &row.CreationDate); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
