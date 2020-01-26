@@ -35,8 +35,8 @@ func testBatchPlacements(t *testing.T, c *TestContext) {
 			StatusCode:   http.StatusInternalServerError}, // 2 : IrisCode empty
 		{
 			Token: c.Config.Users.Admin.Token,
-			Sent: []byte(`{"Placement":[{"IrisCode":"13021233","Count":1,"ContractYear":null,"Comment":null},
-			{"IrisCode":"14004240","Count":0,"ContractYear":2019,"Comment":"commentaire"}]}`),
+			Sent: []byte(`{"Placement":[{"IrisCode":"13021233","Count":1,"ContractYear":null},
+			{"IrisCode":"14004240","Count":0,"ContractYear":2019}]}`),
 			RespContains: []string{"Batch de stages importé"},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}
@@ -57,7 +57,7 @@ func testGetPlacements(t *testing.T, c *TestContext) {
 		{
 			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"IrisCode":"13021233","Count":1,"ContractYear":null,"Comment":null`,
-				`"IrisCode":"14004240","Count":0,"ContractYear":2019,"Comment":"commentaire"`},
+				`"IrisCode":"14004240","Count":0,"ContractYear":2019,"Comment":null`},
 			Count:         2,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -78,7 +78,7 @@ func testGetBeneficiaryPlacements(t *testing.T, c *TestContext) {
 		{
 			Token:         c.Config.Users.User.Token,
 			Params:        "2",
-			RespContains:  []string{`"IrisCode":"14004240","Count":0,"ContractYear":2019,"Comment":"commentaire"`},
+			RespContains:  []string{`"IrisCode":"14004240","Count":0,"ContractYear":2019,"Comment":null`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
@@ -101,7 +101,7 @@ func testUpdatePlacement(t *testing.T, c *TestContext) {
 			Token:        c.Config.Users.Admin.Token,
 			Params:       "1",
 			Sent:         []byte(`{"Placement":{"IrisCode":"xxx","Count":3,"ContractYear":12,"Comment":"nouveau"}}`),
-			RespContains: []string{`"IrisCode":"13021233","Count":1,"ContractYear":null,"Comment":"nouveau"`},
+			RespContains: []string{`"IrisCode":"13021233","Count":1,"ContractYear":null,"Comment":"nouveau","CreationDate":"2014-02-05T00:00:00Z"`},
 			StatusCode:   http.StatusOK}, // 1 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {

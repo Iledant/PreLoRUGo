@@ -113,13 +113,19 @@ func (p *Placements) Save(db *sql.DB) error {
 		tx.Rollback()
 		return fmt.Errorf("statement exec flush %v", err)
 	}
-	queries := []string{`INSERT INTO placement(iris_code,count,contract_year,comment,
+	queries := []string{`INSERT INTO placement(iris_code,count,contract_year,
 		commitment_id) 
-	SELECT t.iris_code,t.count,t.contract_year,t.comment,c.id FROM temp_placement t
+	SELECT t.iris_code,t.count,t.contract_year,MIN(c.id) FROM temp_placement t
 	LEFT OUTER JOIN commitment c ON t.iris_code=c.iris_code
-	ON CONFLICT (iris_code) DO UPDATE SET count=excluded.count,
-		contract_year=excluded.contract_year, comment=excluded.comment, 
-		commitment_id=excluded.commitment_id`,
+	WHERE t.iris_code NOT IN (SELECT DISTINCT iris_code FROM placement)
+  GROUP BY 1,2,3`,
+		`UPDATE placement SET count=t.count,contract_year=t.contract_year,
+		commitment_id=t.id FROM
+		(SELECT t.iris_code,t.count,t.contract_year,MIN(c.id) id FROM temp_placement t
+			LEFT OUTER JOIN commitment c ON t.iris_code=c.iris_code
+			WHERE t.iris_code IN (SELECT DISTINCT iris_code FROM placement)
+			GROUP BY 1,2,3) t
+		WHERE placement.iris_code=t.iris_code`,
 		`DELETE FROM temp_placement`,
 	}
 	for i, q := range queries {
