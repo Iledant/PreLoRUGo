@@ -17,6 +17,7 @@ type Placement struct {
 	CreationDate    NullTime   `json:"CreationDate"`
 	BeneficiaryName NullString `json:"BeneficiaryName"`
 	BeneficiaryCode NullInt64  `json:"BeneficiaryCode"`
+	CommitmentValue NullInt64  `json:"CommitmentValue"`
 }
 
 // Placements embeddes an array of Placement for json export and dedicated queries
@@ -31,13 +32,13 @@ func (p *Placement) Update(db *sql.DB) error {
 		return fmt.Errorf("update %v", err)
 	}
 	if err = db.QueryRow(`SELECT p.iris_code,p.count,p.contract_year,
-		MIN(c.creation_date),b.code,b.name
+		MIN(c.creation_date),c.value,b.code,b.name
 	FROM placement p
 	LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
 	JOIN beneficiary b ON c.beneficiary_id=b.id
 	WHERE p.id=$1
-	GROUP BY 1,2,3,5,6`, p.ID).
-		Scan(&p.IrisCode, &p.Count, &p.ContractYear, &p.CreationDate,
+	GROUP BY 1,2,3,5,6,7`, p.ID).
+		Scan(&p.IrisCode, &p.Count, &p.ContractYear, &p.CreationDate, &p.CommitmentValue,
 			&p.BeneficiaryCode, &p.BeneficiaryName); err != nil {
 		return fmt.Errorf("select %v", err)
 	}
@@ -47,10 +48,10 @@ func (p *Placement) Update(db *sql.DB) error {
 // Get fetches all placements from database
 func (p *Placements) Get(db *sql.DB) error {
 	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
-	p.comment,MIN(c.creation_date),b.code,b.name FROM placement p
+	p.comment,MIN(c.creation_date),c.value,b.code,b.name FROM placement p
 		LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
 		JOIN beneficiary b ON c.beneficiary_id=b.id
-		GROUP BY 1,2,3,4,5,7,8`)
+		GROUP BY 1,2,3,4,5,7,8,9`)
 	if err != nil {
 		return err
 	}
@@ -58,7 +59,8 @@ func (p *Placements) Get(db *sql.DB) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count, &row.ContractYear,
-			&row.Comment, &row.CreationDate, &row.BeneficiaryCode, &row.BeneficiaryName); err != nil {
+			&row.Comment, &row.CreationDate, &row.CommitmentValue, &row.BeneficiaryCode,
+			&row.BeneficiaryName); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
