@@ -60,20 +60,21 @@ func UpdateBeneficiaryGroup(ctx iris.Context) {
 
 // DeleteBeneficiaryGroup handles the delete request to delete a beneficiary group
 func DeleteBeneficiaryGroup(ctx iris.Context) {
-	var req beneficiaryGroupReq
-	if err := ctx.ReadJSON(&req); err != nil {
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Suppression de groupe de bénéficiaires, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Suppression de groupe de bénéficiaires, paramètre : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := req.BeneficiaryGroup.Delete(db); err != nil {
+	b := models.BeneficiaryGroup{ID: ID}
+	if err := b.Delete(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Suppression de groupe de bénéficiaires, requête : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(req)
+	ctx.JSON(jsonMessage{"Groupe de bénéficiaires supprimé"})
 }
 
 type beneficiaryBelongReq struct {
@@ -102,8 +103,14 @@ func SetBeneficiaryGroup(ctx iris.Context) {
 		ctx.JSON(jsonError{"Fixation de groupe de bénéficiaires, requête : " + err.Error()})
 		return
 	}
+	var resp models.Beneficiaries
+	if err := resp.GroupGet(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Fixation de groupe de bénéficiaires, requête : " + err.Error()})
+		return
+	}
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(req)
+	ctx.JSON(resp)
 }
 
 // GetBeneficiaryGroups handles the get request to get all beneficiary groups

@@ -109,7 +109,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 
 	adminParty.Post("/beneficiary_group", CreateBeneficiaryGroup)
 	adminParty.Put("/beneficiary_group", UpdateBeneficiaryGroup)
-	adminParty.Delete("/beneficiary_group", DeleteBeneficiaryGroup)
+	adminParty.Delete("/beneficiary_group/{ID}", DeleteBeneficiaryGroup)
 	adminParty.Post("/beneficiary_group/{ID}", SetBeneficiaryGroup)
 
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))

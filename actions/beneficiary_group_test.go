@@ -131,11 +131,13 @@ func testSetBeneficiaryGroup(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`Fixation de groupe de bénéficiaires, requête`},
 			StatusCode:   http.StatusInternalServerError}, // 3 : bad beneficiary ID
 		{
-			Sent:         []byte(`{"BeneficiaryIDs":[1,2,4]}`),
-			Token:        c.Config.Users.Admin.Token,
-			ID:           ID,
-			RespContains: []string{`"BeneficiaryIDs"`},
-			StatusCode:   http.StatusOK}, // 4 : ok
+			Sent:          []byte(`{"BeneficiaryIDs":[1,2,4]}`),
+			Token:         c.Config.Users.Admin.Token,
+			ID:            ID,
+			CountItemName: `"ID"`,
+			Count:         3,
+			RespContains:  []string{`"Beneficiary":[`, `"Name":"SCA FONCIERE HABITAT ET HUMANISME"`},
+			StatusCode:    http.StatusOK}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/beneficiary_group/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).
@@ -183,22 +185,17 @@ func testDeleteBeneficiaryGroup(t *testing.T, c *TestContext, ID int) {
 		*c.AdminCheckTestCase, // 0 : user unauthorized
 		{
 			Token:        c.Config.Users.Admin.Token,
-			Sent:         []byte(`{"BeneficiaryGroup":{"ID":` + strconv.Itoa(ID) + ``),
-			RespContains: []string{`Suppression de groupe de bénéficiaires, décodage`},
-			StatusCode:   http.StatusBadRequest}, // 1 : bad payload
-		{
-			Token:        c.Config.Users.Admin.Token,
-			Sent:         []byte(`{"BeneficiaryGroup":{"ID":0}}`),
+			ID:           0,
 			RespContains: []string{`Suppression de groupe de bénéficiaires, requête :`},
-			StatusCode:   http.StatusInternalServerError}, // 2 : ok
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
 		{
 			Token:        c.Config.Users.Admin.Token,
-			Sent:         []byte(`{"BeneficiaryGroup":{"ID":` + strconv.Itoa(ID) + `}}`),
-			RespContains: []string{`"BeneficiaryGroup":`, `"ID":` + strconv.Itoa(ID)},
-			StatusCode:   http.StatusOK}, // 3 : ok
+			ID:           ID,
+			RespContains: []string{`Groupe de bénéficiaires supprimé`},
+			StatusCode:   http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
-		return c.E.DELETE("/api/beneficiary_group").WithBytes(tc.Sent).
+		return c.E.DELETE("/api/beneficiary_group/"+strconv.Itoa(tc.ID)).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	for _, r := range chkFactory(tcc, f, "DeleteBeneficiaryGroup") {
