@@ -54,6 +54,16 @@ func testCreateBeneficiaryGroup(t *testing.T, c *TestContext) (ID int) {
 	for _, r := range chkFactory(tcc, f, "CreateBeneficiaryGroup", &ID) {
 		t.Error(r)
 	}
+	tcc = []TestCase{
+		{
+			Sent:       []byte(`{"BeneficiaryGroup":{"Name":"Groupe de test"}}`),
+			Token:      c.Config.Users.Admin.Token,
+			IDName:     `"ID"`,
+			StatusCode: http.StatusCreated}, // 4 : ok
+	}
+	for _, r := range chkFactory(tcc, f, "CreateBeneficiaryGroupID", &c.BeneficiaryGroupID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -96,7 +106,7 @@ func testGetBeneficiaryGroups(t *testing.T, c *TestContext) {
 			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`"BeneficiaryGroup":[`, `"Name":"Groupe modifié"`},
 			CountItemName: `"ID"`,
-			Count:         1,
+			Count:         2,
 			StatusCode:    http.StatusOK}, // 1 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -138,6 +148,11 @@ func testSetBeneficiaryGroup(t *testing.T, c *TestContext, ID int) {
 			Count:         3,
 			RespContains:  []string{`"Beneficiary":[`, `"Name":"SCA FONCIERE HABITAT ET HUMANISME"`},
 			StatusCode:    http.StatusOK}, // 4 : ok
+		{
+			Sent:       []byte(`{"BeneficiaryIDs":[1,2,4]}`),
+			Token:      c.Config.Users.Admin.Token,
+			ID:         c.BeneficiaryGroupID,
+			StatusCode: http.StatusOK}, // 5 : fill beneficiary test group
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/beneficiary_group/"+strconv.Itoa(tc.ID)).WithBytes(tc.Sent).

@@ -280,4 +280,6 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 
 	userParty.Get("/beneficiary_groups", GetBeneficiaryGroups)
 	userParty.Get("/beneficiary_group/{ID}", GetBeneficiaryGroupItems)
+	userParty.Get("/beneficiary_group/{ID}/datas", GetPaginatedBeneficiaryGroupDatas)
+	userParty.Get("/beneficiary_group/{ID}/export", GetExportBeneficiaryGroupDatas)
 }
