@@ -18,6 +18,9 @@ type Placement struct {
 	BeneficiaryName NullString `json:"BeneficiaryName"`
 	BeneficiaryCode NullInt64  `json:"BeneficiaryCode"`
 	CommitmentValue NullInt64  `json:"CommitmentValue"`
+	ActionCode      NullInt64  `json:"ActionCode"`
+	ActionName      NullString `json:"ActionName"`
+	Sector          NullString `json:"Sector"`
 }
 
 // Placements embeddes an array of Placement for json export and dedicated queries
@@ -32,14 +35,16 @@ func (p *Placement) Update(db *sql.DB) error {
 		return fmt.Errorf("update %v", err)
 	}
 	if err = db.QueryRow(`SELECT p.iris_code,p.count,p.contract_year,
-		MIN(c.creation_date),c.value,b.code,b.name
+		MIN(c.creation_date),c.value,b.code,b.name,ba.code,ba.name,bs.name
 	FROM placement p
 	LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
+	JOIN budget_action ba ON c.action_id=ba.id
+	JOIN budget_sector bs ON ba.sector_id=bs.id
 	JOIN beneficiary b ON c.beneficiary_id=b.id
 	WHERE p.id=$1
-	GROUP BY 1,2,3,5,6,7`, p.ID).
+	GROUP BY 1,2,3,5,6,7,8,9,10`, p.ID).
 		Scan(&p.IrisCode, &p.Count, &p.ContractYear, &p.CreationDate, &p.CommitmentValue,
-			&p.BeneficiaryCode, &p.BeneficiaryName); err != nil {
+			&p.BeneficiaryCode, &p.BeneficiaryName, &p.ActionCode, &p.ActionName, &p.Sector); err != nil {
 		return fmt.Errorf("select %v", err)
 	}
 	return nil
@@ -48,10 +53,13 @@ func (p *Placement) Update(db *sql.DB) error {
 // Get fetches all placements from database
 func (p *Placements) Get(db *sql.DB) error {
 	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
-	p.comment,MIN(c.creation_date),c.value,b.code,b.name FROM placement p
-		LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
-		JOIN beneficiary b ON c.beneficiary_id=b.id
-		GROUP BY 1,2,3,4,5,7,8,9`)
+		p.comment,MIN(c.creation_date),c.value,b.code,b.name,ba.code,ba.name,bs.name
+	FROM placement p
+	LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
+	JOIN budget_action ba ON c.action_id=ba.id
+	JOIN budget_sector bs ON ba.sector_id=bs.id
+	JOIN beneficiary b ON c.beneficiary_id=b.id
+		GROUP BY 1,2,3,4,5,7,8,9,10,11,12`)
 	if err != nil {
 		return err
 	}
@@ -60,7 +68,7 @@ func (p *Placements) Get(db *sql.DB) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count, &row.ContractYear,
 			&row.Comment, &row.CreationDate, &row.CommitmentValue, &row.BeneficiaryCode,
-			&row.BeneficiaryName); err != nil {
+			&row.BeneficiaryName, &row.ActionCode, &row.ActionName, &row.Sector); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
@@ -100,21 +108,26 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 // GetByBeneficiaryGroup fetches all placements linked to the beneficiaries that
 // belong to a group
 func (p *Placements) GetByBeneficiaryGroup(bID int64, db *sql.DB) error {
-	rows, err := db.Query(`SELECT p.id,p.iris_code,c.value,b.code,b.name,p.count,p.contract_year,
-	p.comment,MIN(c.creation_date) FROM placement p
+	rows, err := db.Query(`SELECT p.id,p.iris_code,c.value,b.code,b.name,p.count,
+	p.contract_year,p.comment,MIN(c.creation_date),ba.code,ba.name,bs.name
+	FROM placement p
 	JOIN commitment c ON p.iris_code=c.iris_code
+	JOIN budget_action ba ON c.action_id=ba.id
+	JOIN budget_sector bs ON ba.sector_id=bs.id
 	JOIN beneficiary b ON c.beneficiary_id=b.id
 	WHERE c.beneficiary_id IN 
 		(SELECT beneficiary_id FROM beneficiary_belong WHERE group_id=$1)
-	GROUP BY 1,2,3,4,5,6,7,8`, bID)
+	GROUP BY 1,2,3,4,5,6,7,8,10,11,12`, bID)
 	if err != nil {
 		return err
 	}
 	var row Placement
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.IrisCode, &row.CommitmentValue, &row.BeneficiaryCode, &row.BeneficiaryName, &row.Count,
-			&row.ContractYear, &row.Comment, &row.CreationDate); err != nil {
+		if err = rows.Scan(&row.ID, &row.IrisCode, &row.CommitmentValue,
+			&row.BeneficiaryCode, &row.BeneficiaryName, &row.Count, &row.ContractYear,
+			&row.Comment, &row.CreationDate, &row.ActionCode, &row.ActionName,
+			&row.Sector); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
