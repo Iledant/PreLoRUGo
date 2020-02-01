@@ -97,6 +97,33 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 	return err
 }
 
+// GetByBeneficiaryGroup fetches all placements linked to the beneficiaries that
+// belong to a group
+func (p *Placements) GetByBeneficiaryGroup(bID int64, db *sql.DB) error {
+	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
+	p.comment,c.creation_date FROM placement p
+	JOIN commitment c ON p.iris_code=c.iris_code
+	WHERE c.beneficiary_id IN 
+		(SELECT beneficiary_id FROM beneficiary_belong WHERE group_id=$1)`, bID)
+	if err != nil {
+		return err
+	}
+	var row Placement
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count,
+			&row.ContractYear, &row.Comment, &row.CreationDate); err != nil {
+			return err
+		}
+		p.Lines = append(p.Lines, row)
+	}
+	err = rows.Err()
+	if len(p.Lines) == 0 {
+		p.Lines = []Placement{}
+	}
+	return err
+}
+
 // Save update the database with a set of Placement
 func (p *Placements) Save(db *sql.DB) error {
 	for i, r := range p.Lines {

@@ -21,6 +21,7 @@ func testBeneficiaryGroup(t *testing.T, c *TestContext) {
 		testGetBeneficiaryGroups(t, c)
 		testSetBeneficiaryGroup(t, c, ID)
 		testGetBeneficiaryGroupItems(t, c, ID)
+		testGetBeneficiaryGroupPlacements(t, c, ID)
 		testDeleteBeneficiaryGroup(t, c, ID)
 	})
 }
@@ -214,6 +215,35 @@ func testDeleteBeneficiaryGroup(t *testing.T, c *TestContext, ID int) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	for _, r := range chkFactory(tcc, f, "DeleteBeneficiaryGroup") {
+		t.Error(r)
+	}
+}
+
+// testGetBeneficiaryGroupPlacements checks if route is user protected and
+// Placements correctly sent back
+func testGetBeneficiaryGroupPlacements(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:         c.Config.Users.User.Token,
+			Params:        "0",
+			RespContains:  []string{`"Placement":[]`},
+			Count:         0,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 1 : bad group ID
+		{
+			Token:         c.Config.Users.User.Token,
+			Params:        strconv.Itoa(ID),
+			RespContains:  []string{`"IrisCode":"14004240","Count":0,"ContractYear":2019,"Comment":null`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/beneficiary_group/"+tc.Params+"/placements").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "GetBeneficiaryGroupPlacements") {
 		t.Error(r)
 	}
 }

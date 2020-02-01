@@ -46,13 +46,33 @@ func GetBeneficiaryPlacements(ctx iris.Context) {
 	ID, err := ctx.Params().GetInt64("ID")
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Batch de stages, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Stages d'un bénéficiaire, décodage : " + err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := resp.GetByBeneficiary(ID, db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Liste des stages, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Stages d'un bénéficiaire, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
+// GetBeneficiaryGroupPlacements hadles the get request to fetch all placements
+// linked to beneficiaries that belong to a group from database
+func GetBeneficiaryGroupPlacements(ctx iris.Context) {
+	var resp models.Placements
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Stagiaires d'un groupe de bénéficiaires, décodage : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := resp.GetByBeneficiaryGroup(ID, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Stagiaires d'un groupe de bénéficiaires, requête : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
