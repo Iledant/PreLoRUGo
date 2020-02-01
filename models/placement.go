@@ -100,18 +100,20 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 // GetByBeneficiaryGroup fetches all placements linked to the beneficiaries that
 // belong to a group
 func (p *Placements) GetByBeneficiaryGroup(bID int64, db *sql.DB) error {
-	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
-	p.comment,c.creation_date FROM placement p
+	rows, err := db.Query(`SELECT p.id,p.iris_code,c.value,b.code,b.name,p.count,p.contract_year,
+	p.comment,MIN(c.creation_date) FROM placement p
 	JOIN commitment c ON p.iris_code=c.iris_code
+	JOIN beneficiary b ON c.beneficiary_id=b.id
 	WHERE c.beneficiary_id IN 
-		(SELECT beneficiary_id FROM beneficiary_belong WHERE group_id=$1)`, bID)
+		(SELECT beneficiary_id FROM beneficiary_belong WHERE group_id=$1)
+	GROUP BY 1,2,3,4,5,6,7,8`, bID)
 	if err != nil {
 		return err
 	}
 	var row Placement
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count,
+		if err = rows.Scan(&row.ID, &row.IrisCode, &row.CommitmentValue, &row.BeneficiaryCode, &row.BeneficiaryName, &row.Count,
 			&row.ContractYear, &row.Comment, &row.CreationDate); err != nil {
 			return err
 		}
