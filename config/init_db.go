@@ -578,15 +578,15 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 	)`, // 60 housing_typology
 	`CREATE TABLE IF NOT EXISTS housing_convention (
 		id SERIAL PRIMARY KEY,
-		name varchar(30)
+		name varchar(30) UNIQUE
 	)`, // 61 housing_typology
 	`CREATE TABLE IF NOT EXISTS housing_transfer (
 		id SERIAL PRIMARY KEY,
-		name varchar(50)
+		name varchar(50) UNIQUE
 	)`, // 62 housing_typology
 	`CREATE TABLE IF NOT EXISTS housing_comment (
 		id SERIAL PRIMARY KEY,
-		name varchar(150)
+		name varchar(150) UNIQUE
 	)`, // 63 housing_typology
 	`CREATE TABLE IF NOT EXISTS reservation_fee (
 		id SERIAL PRIMARY KEY,
