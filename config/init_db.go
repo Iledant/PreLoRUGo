@@ -558,20 +558,76 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`,
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 52
-	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 53
+	$log_cmt$ LANGUAGE plpgsql;`, // 54
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 55
 	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 54
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 56
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 55
-	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 56
+	$log_cmt$ LANGUAGE plpgsql;`, // 57
+	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 58
 	`CREATE TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 57
+	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 59
+	`CREATE TABLE IF NOT EXISTS housing_typology (
+		id SERIAL PRIMARY KEY,
+		name varchar(30)
+	)`, // 60 housing_typology
+	`CREATE TABLE IF NOT EXISTS housing_convention (
+		id SERIAL PRIMARY KEY,
+		name varchar(30)
+	)`, // 61 housing_typology
+	`CREATE TABLE IF NOT EXISTS housing_transfer (
+		id SERIAL PRIMARY KEY,
+		name varchar(50)
+	)`, // 62 housing_typology
+	`CREATE TABLE IF NOT EXISTS housing_comment (
+		id SERIAL PRIMARY KEY,
+		name varchar(150)
+	)`, // 63 housing_typology
+	`CREATE TABLE IF NOT EXISTS reservation_fee (
+		id SERIAL PRIMARY KEY,
+		current_beneficiary_id int NOT NULL REFERENCES beneficiary(id),
+		past_beneficiary_id int REFERENCES beneficiary(id),
+		city_code int REFERENCES city(insee_code),
+		address_number varchar(20),
+		address_street varchar(100),
+		convention varchar(80),
+		rpls varchar(15),
+		convention_id int REFERENCES housing_convention(id),
+		count int,
+		transfer_date date,
+		transfer_id int REFERENCES housing_transfer(id),
+		comment_id int REFERENCES housing_comment(id),
+		convention_date date,
+		elise_ref varchar(30),
+		area double precision,
+		end_year int,
+		loan double precision,
+		charges double precision
+	)`, // 64 reservation_fee
+	`CREATE TABLE IF NOT EXISTS reservation_fee (
+		beneficiary varchar(80),
+		city varchar(50),
+		address_number varchar(20),
+		address_street varchar(100),
+		convention varchar(80),
+		rpls varchar(15),
+		convention varchar(30),
+		count int,
+		transfer_date date,
+		transfer varchar(50),
+		comment varchar(150),
+		convention_date date,
+		elise_ref varchar(30),
+		area double precision,
+		end_year int,
+		loan double precision,
+		charges double precision
+	)`, // 65 temp_reservation_fee
 }
 
 // createTablesAndViews launches the queries against the database to create all

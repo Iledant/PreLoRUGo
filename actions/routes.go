@@ -112,6 +112,10 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Delete("/beneficiary_group/{ID}", DeleteBeneficiaryGroup)
 	adminParty.Post("/beneficiary_group/{ID}", SetBeneficiaryGroup)
 
+	adminParty.Post("/housing_typology", CreateHousingTypology)
+	adminParty.Put("/housing_typology", UpdateHousingTypology)
+	adminParty.Delete("/housing_typology/{ID}", DeleteHousingTypology)
+
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
@@ -283,4 +287,6 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/beneficiary_group/{ID}/datas", GetPaginatedBeneficiaryGroupDatas)
 	userParty.Get("/beneficiary_group/{ID}/export", GetExportBeneficiaryGroupDatas)
 	userParty.Get("/beneficiary_group/{ID}/placements", GetBeneficiaryGroupPlacements)
+
+	userParty.Get("/housing_typologies", GetHousingTypologies)
 }
