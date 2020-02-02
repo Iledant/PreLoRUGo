@@ -120,6 +120,14 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Put("/housing_convention", UpdateHousingConvention)
 	adminParty.Delete("/housing_convention/{ID}", DeleteHousingConvention)
 
+	adminParty.Post("/housing_comment", CreateHousingComment)
+	adminParty.Put("/housing_comment", UpdateHousingComment)
+	adminParty.Delete("/housing_comment/{ID}", DeleteHousingComment)
+
+	adminParty.Post("/housing_transfer", CreateHousingTransfer)
+	adminParty.Put("/housing_transfer", UpdateHousingTransfer)
+	adminParty.Delete("/housing_transfer/{ID}", DeleteHousingTransfer)
+
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
@@ -295,4 +303,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/housing_typologies", GetHousingTypologies)
 
 	userParty.Get("/housing_conventions", GetHousingConventions)
+
+	userParty.Get("/housing_comments", GetHousingComments)
+
+	userParty.Get("/housing_transfers", GetHousingTransfers)
 }
