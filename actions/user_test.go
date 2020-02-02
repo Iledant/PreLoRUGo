@@ -183,7 +183,7 @@ func testGetUsers(t *testing.T, c *TestContext) {
 		{
 			Token:         c.Config.Users.Admin.Token,
 			RespContains:  []string{`"Christophe Saintillan"`, `"essai2"`, `"Utilisateur"`},
-			Count:         9,
+			Count:         10,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 0 : user unauthorized
 	}

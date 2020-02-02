@@ -186,6 +186,9 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	housingPreProgUserParty := api.Party("", RightsMiddleWare(&housingPreProgHandler))
 	housingPreProgUserParty.Post("/pre_prog/housing", SetHousingPreProgs)
 
+	reservationUserParty := api.Party("", RightsMiddleWare(&reservationHandler))
+	reservationUserParty.Post("/reservation_fee", CreateReservationFee)
+
 	userParty := api.Party("", RightsMiddleWare(&userHandler))
 	userParty.Post("/user/password", ChangeUserPwd)
 	userParty.Post("/user/logout", Logout)

@@ -39,6 +39,8 @@ const (
 	HousingBit = 1 << 6
 	// PreProgBit of user's rights fields specifies the user can modify the preprogramming
 	PreProgBit = 1 << 7
+	// ReservationBit of user's right field specifies the user can modify the reservation fee
+	ReservationBit = 1 << 8
 	// RightsMask is used to check if user's rights field are correctly filled
 	RightsMask = ActiveBit | SuperAdminBit | AdminBit | CoproBit | RenewProjectBit | ObserverBit
 	// ActiveAdminMask is used to check if a user is an active admin
@@ -57,6 +59,8 @@ const (
 	ActiveHousingMask = ActiveBit | HousingBit
 	// ActiveHousingPreProgMask is used to check is a user is active and has housing and pre prog rights
 	ActiveHousingPreProgMask = ActiveBit | HousingBit | PreProgBit
+	// ActiveReservationMask is used to check is a user is active and has housing and pre prog rights
+	ActiveReservationMask = ActiveBit | ReservationBit
 )
 
 // Validate checks if field are correctly filled for database constraints

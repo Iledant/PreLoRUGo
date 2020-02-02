@@ -89,6 +89,14 @@ var userHandler = RightHandler{
 	Message: "Connexion requise",
 }
 
+var reservationHandler = RightHandler{
+	Masks: []int64{
+		models.SuperAdminBit,
+		models.ActiveAdminMask,
+		models.ActiveReservationMask},
+	Message: "Droits sur les réservations requis",
+}
+
 // RightsMiddleWare checks if the user attached to the token match with the bit
 // rights sent
 func RightsMiddleWare(r *RightHandler) func(iris.Context) {

@@ -53,6 +53,7 @@ type TestContext struct {
 	HousingPreProgCheckTestCase *TestCase
 	RPCheckTestCase             *TestCase
 	RPPreProgCheckTestCase      *TestCase
+	ReservationFeeCheckTestCase *TestCase
 }
 
 // TestAll embeddes all test functions and is the only test entry point
@@ -113,6 +114,7 @@ func TestAll(t *testing.T) {
 	testHousingConvention(t, cfg)
 	testHousingComment(t, cfg)
 	testHousingTransfer(t, cfg)
+	testReservationFee(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
@@ -188,6 +190,11 @@ func createUsers(t *testing.T, db *sql.DB, cfg *config.PreLoRuGoConf) {
 			Email:    cfg.Users.HousingPreProgUser.Email,
 			Password: cfg.Users.HousingPreProgUser.Password,
 			Rights:   models.ActiveHousingPreProgMask},
+		{
+			Name:     "Utilisateur réservation",
+			Email:    cfg.Users.ReservationFeeUser.Email,
+			Password: cfg.Users.ReservationFeeUser.Password,
+			Rights:   models.ActiveReservationMask},
 	}
 	for _, u := range users {
 		if err := createUser(&u, db); err != nil {
@@ -221,6 +228,7 @@ func fetchTokens(t *testing.T, ctx *TestContext) {
 		&ctx.Config.Users.RenewProjectPreProgUser,
 		&ctx.Config.Users.HousingUser,
 		&ctx.Config.Users.HousingPreProgUser,
+		&ctx.Config.Users.ReservationFeeUser,
 	} {
 		c := fmt.Sprintf(`{"Email":"%s","Password":"%s"}`, u.Email, u.Password)
 		response := ctx.E.POST("/api/user/login").WithBytes([]byte(c)).Expect()
@@ -272,6 +280,11 @@ func createTestCases(ctx *TestContext) {
 	ctx.RPPreProgCheckTestCase = &TestCase{
 		Token:        ctx.Config.Users.User.Token,
 		RespContains: []string{`Droits préprogrammation sur les projets RU requis`},
+		StatusCode:   http.StatusUnauthorized,
+	}
+	ctx.ReservationFeeCheckTestCase = &TestCase{
+		Token:        ctx.Config.Users.User.Token,
+		RespContains: []string{`Droits sur les réservations requis`},
 		StatusCode:   http.StatusUnauthorized,
 	}
 }

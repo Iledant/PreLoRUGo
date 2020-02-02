@@ -595,7 +595,6 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		city_code int REFERENCES city(insee_code),
 		address_number varchar(20),
 		address_street varchar(100),
-		convention varchar(80),
 		rpls varchar(15),
 		convention_id int REFERENCES housing_convention(id),
 		count int,
@@ -609,14 +608,13 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		loan double precision,
 		charges double precision
 	)`, // 65 reservation_fee
-	`CREATE TABLE IF NOT EXISTS reservation_fee (
+	`CREATE TABLE IF NOT EXISTS temp_reservation_fee (
 		beneficiary varchar(80),
 		city varchar(50),
 		address_number varchar(20),
 		address_street varchar(100),
 		convention varchar(80),
 		rpls varchar(15),
-		convention varchar(30),
 		count int,
 		transfer_date date,
 		transfer varchar(50),

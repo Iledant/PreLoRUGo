@@ -52,6 +52,7 @@ type Users struct {
 	RenewProjectPreProgUser Credentials `yaml:"renewproject_pre_prog_user"`
 	HousingUser             Credentials `yaml:"housinguser"`
 	HousingPreProgUser      Credentials `yaml:"housing_pre_prog_user"`
+	ReservationFeeUser      Credentials `yaml:"reservation_fee_user"`
 }
 
 // DBConf includes all informations for connecting to a database.
