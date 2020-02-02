@@ -42,6 +42,7 @@ type TestContext struct {
 	CoproEventTypeID            int64
 	BeneficiaryGroupID          int
 	HousingTypologyID           int
+	HousingConventionID         int
 	AdminCheckTestCase          *TestCase
 	UserCheckTestCase           *TestCase
 	CoproCheckTestCase          *TestCase
@@ -107,6 +108,7 @@ func TestAll(t *testing.T) {
 	testBeneficiaryGroup(t, cfg)
 	testBeneficiaryGroupDatas(t, cfg)
 	testHousingTypology(t, cfg)
+	testHousingConvention(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
