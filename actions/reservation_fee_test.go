@@ -18,6 +18,7 @@ func testReservationFee(t *testing.T, c *TestContext) {
 			return
 		}
 		testUpdateReservationFee(t, c, ID)
+		testDeleteReservationFee(t, c, ID)
 	})
 }
 
@@ -149,6 +150,31 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	for _, r := range chkFactory(tcc, f, "UpdateReservationFee", &ID) {
+		t.Error(r)
+	}
+}
+
+// testDeleteReservationFee checks if route is admin protected and modified reservation
+// fee is sent back
+func testDeleteReservationFee(t *testing.T, c *TestContext, ID int) {
+	tcc := []TestCase{
+		*c.ReservationFeeCheckTestCase, // 0 : user unauthorized
+		{
+			Token:        c.Config.Users.ReservationFeeUser.Token,
+			ID:           0,
+			RespContains: []string{`Suppression de réservation de logement, requête : réservation non trouvée`},
+			StatusCode:   http.StatusInternalServerError}, // 1 : bad ID
+		{
+			Token:        c.Config.Users.ReservationFeeUser.Token,
+			ID:           ID,
+			RespContains: []string{`Réservation de logement supprimée`},
+			StatusCode:   http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.DELETE("/api/reservation_fee/"+strconv.Itoa(tc.ID)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "DeleteReservationFee", &ID) {
 		t.Error(r)
 	}
 }

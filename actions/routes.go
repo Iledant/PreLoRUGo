@@ -189,6 +189,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	reservationUserParty := api.Party("", RightsMiddleWare(&reservationHandler))
 	reservationUserParty.Post("/reservation_fee", CreateReservationFee)
 	reservationUserParty.Put("/reservation_fee", UpdateReservationFee)
+	reservationUserParty.Delete("/reservation_fee/{ID}", DeleteReservationFee)
 
 	userParty := api.Party("", RightsMiddleWare(&userHandler))
 	userParty.Post("/user/password", ChangeUserPwd)

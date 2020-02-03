@@ -57,3 +57,22 @@ func UpdateReservationFee(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(req)
 }
+
+// DeleteReservationFee handles the delete request to delete a housing transfer
+func DeleteReservationFee(ctx iris.Context) {
+	ID, err := ctx.Params().GetInt64("ID")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Suppression de réservation de logement, paramètre : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	b := models.ReservationFee{ID: ID}
+	if err := b.Delete(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Suppression de réservation de logement, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Réservation de logement supprimée"})
+}

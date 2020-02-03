@@ -110,3 +110,19 @@ func (r *ReservationFee) Update(db *sql.DB) error {
 	}
 	return nil
 }
+
+// Delete removes a reservation fee from database
+func (r *ReservationFee) Delete(db *sql.DB) error {
+	res, err := db.Exec(`DELETE FROM reservation_fee WHERE id=$1`, r.ID)
+	if err != nil {
+		return fmt.Errorf("delete %v", err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("count %v", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("réservation non trouvée")
+	}
+	return nil
+}
