@@ -34,3 +34,26 @@ func CreateReservationFee(ctx iris.Context) {
 	ctx.StatusCode(http.StatusCreated)
 	ctx.JSON(req)
 }
+
+// UpdateReservationFee handles the put request to change a reservation fee
+func UpdateReservationFee(ctx iris.Context) {
+	var req reservationFeeReq
+	if err := ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Modification de réservation de logement, décodage : " + err.Error()})
+		return
+	}
+	if err := req.ReservationFee.Valid(); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Modification de réservation de logement, paramètre : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := req.ReservationFee.Update(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Modification de réservation de logement, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(req)
+}
