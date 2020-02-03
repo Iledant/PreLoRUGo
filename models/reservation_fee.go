@@ -24,6 +24,7 @@ type ReservationFee struct {
 	Comment              NullString  `json:"Comment"`
 	TransferID           NullInt64   `json:"TransferID"`
 	Transfer             NullString  `json:"Transfer"`
+	PMR                  bool        `json:"PMR"`
 	ConventionDate       NullTime    `json:"ConventionDate"`
 	EliseRef             NullString  `json:"EliseRef"`
 	Area                 NullFloat64 `json:"Area"`
@@ -70,11 +71,11 @@ func (r *ReservationFee) getOuterFields(db *sql.DB) error {
 func (r *ReservationFee) Create(db *sql.DB) error {
 	if err := db.QueryRow(`INSERT into reservation_fee (current_beneficiary_id,
 		past_beneficiary_id,city_code,address_number,address_street,rpls,
-		convention_id,count,transfer_date,transfer_id,comment_id,convention_date,
+		convention_id,count,transfer_date,transfer_id,pmr,comment_id,convention_date,
 		elise_ref,area,end_year,loan,charges) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,
-			$10,$11,$12,$13,$14,$15,$16,$17) RETURNING ID`, r.CurrentBeneficiaryID,
+			$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING ID`, r.CurrentBeneficiaryID,
 		r.PastBeneficiaryID, r.CityCode, r.AddressNumber, r.AddressStreet,
-		r.RPLS, r.ConventionID, r.Count, r.TransferDate, r.TransferID,
+		r.RPLS, r.ConventionID, r.Count, r.TransferDate, r.TransferID, r.PMR,
 		r.CommentID, r.ConventionDate, r.EliseRef, r.Area, r.EndYear, r.Loan,
 		r.Charges).Scan(&r.ID); err != nil {
 		return fmt.Errorf("insert %v", err)
@@ -91,10 +92,10 @@ func (r *ReservationFee) Update(db *sql.DB) error {
 		past_beneficiary_id=$2,city_code=$3,address_number=$4,address_street=$5,
 		rpls=$6,convention_id=$7,count=$8,transfer_date=$9,transfer_id=$10,
 		comment_id=$11,convention_date=$12,elise_ref=$13,area=$14,end_year=$15,
-		loan=$16,charges=$17 WHERE ID=$18`, r.CurrentBeneficiaryID, r.PastBeneficiaryID, r.CityCode,
+		loan=$16,charges=$17,pmr=$18 WHERE ID=$19`, r.CurrentBeneficiaryID, r.PastBeneficiaryID, r.CityCode,
 		r.AddressNumber, r.AddressStreet, r.RPLS, r.ConventionID, r.Count,
 		r.TransferDate, r.TransferID, r.CommentID, r.ConventionDate, r.EliseRef,
-		r.Area, r.EndYear, r.Loan, r.Charges, r.ID)
+		r.Area, r.EndYear, r.Loan, r.Charges, r.PMR, r.ID)
 	if err != nil {
 		return fmt.Errorf("update %v", err)
 	}

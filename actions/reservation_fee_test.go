@@ -38,7 +38,7 @@ func testCreateReservationFee(t *testing.T, c *TestContext) (ID int) {
 			"AddressStreet":"rue de Vaugirard","RPLS":"RPLS123",
 			"ConventionID":` + strconv.Itoa(c.HousingConventionID) + `,"Count":1,
 			"TransferDate":null,"CommentID":` + strconv.Itoa(c.HousingCommentID) + `,
-			"TransferID":` + strconv.Itoa(c.HousingTransferID) + `,"ConventionDate":null,
+			"TransferID":` + strconv.Itoa(c.HousingTransferID) + `,"PMR":false,"ConventionDate":null,
 			"EliseRef":"D2020-XXXXX-00001","Area":10.23,"EndYear":2020,"Loan":350.12,
 			"Charges":124.56}}`),
 			Token:        c.Config.Users.ReservationFeeUser.Token,
@@ -132,7 +132,7 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			"AddressStreet":"boulevard Pasteur","RPLS":"RPLS1234",
 			"ConventionID":null,"Count":2,
 			"TransferDate":"2020-01-03T00:00:00Z","CommentID":null,
-			"TransferID":null,"ConventionDate":"2019-03-10T00:00:00Z",
+			"TransferID":null,"PMR":true,"ConventionDate":"2019-03-10T00:00:00Z",
 			"EliseRef":"D2020-XXXXX-00002","Area":23.08,"EndYear":2017,"Loan":235.67,
 			"Charges":99.99}}`),
 			Token: c.Config.Users.ReservationFeeUser.Token,
@@ -142,7 +142,7 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 				`"TransferDate":"2020-01-03T00:00:00Z"`, `"CommentID":null`,
 				`"TransferID":null`, `"ConventionDate":"2019-03-10T00:00:00Z"`,
 				`"EliseRef":"D2020-XXXXX-00002"`, `"Area":23.08`, `"EndYear":2017`,
-				`"Loan":235.67`, `"Charges":99.99`},
+				`"Loan":235.67`, `"Charges":99.99`, `"PMR":true`},
 			StatusCode: http.StatusOK}, // 7 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
