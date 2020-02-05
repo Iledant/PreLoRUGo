@@ -580,6 +580,10 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		id SERIAL PRIMARY KEY,
 		name varchar(30) UNIQUE
 	)`, // 62 housing_convention
+	`CREATE TABLE IF NOT EXISTS convention_type (
+		id SERIAL PRIMARY KEY,
+		name varchar(15) UNIQUE
+	)`, // 62 housing_convention
 	`CREATE TABLE IF NOT EXISTS housing_transfer (
 		id SERIAL PRIMARY KEY,
 		name varchar(50) UNIQUE
@@ -610,12 +614,15 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		charges double precision
 	)`, // 65 reservation_fee
 	`CREATE TABLE IF NOT EXISTS temp_reservation_fee (
-		beneficiary varchar(80),
+		current_beneficiary varchar(80),
+		first_beneficiary varchar(80),
 		city varchar(50),
 		address_number varchar(20),
 		address_street varchar(100),
 		convention varchar(80),
+		typology varchar(30),
 		rpls varchar(15),
+		convention_type varchar(15),
 		count int,
 		transfer_date date,
 		transfer varchar(50),
