@@ -19,6 +19,8 @@ func testReservationFee(t *testing.T, c *TestContext) {
 		}
 		testUpdateReservationFee(t, c, ID)
 		testDeleteReservationFee(t, c, ID)
+		//testBatchReservationFees(t,c)
+		//testGetPaginatedReservationFees(t,cz)
 	})
 }
 
@@ -34,9 +36,9 @@ func testCreateReservationFee(t *testing.T, c *TestContext) (ID int) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad request
 		{
 			Sent: []byte(`{"ReservationFee":{"CurrentBeneficiaryID":2,
-			"PastBeneficiaryID":null,"CityCode":75101,"AddressNumber":"12",
+			"FirstBeneficiaryID":null,"CityCode":75101,"AddressNumber":"12",
 			"AddressStreet":"rue de Vaugirard","RPLS":"RPLS123",
-			"ConventionID":` + strconv.Itoa(c.HousingConventionID) + `,"Count":1,
+			"ConventionTypeID":` + strconv.Itoa(c.HousingConventionID) + `,"Count":1,
 			"TransferDate":null,"CommentID":` + strconv.Itoa(c.HousingCommentID) + `,
 			"TransferID":` + strconv.Itoa(c.HousingTransferID) + `,"PMR":false,"ConventionDate":null,
 			"EliseRef":"D2020-XXXXX-00001","Area":10.23,"EndYear":2020,"Loan":350.12,
@@ -68,9 +70,9 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusBadRequest}, // 1 : bad request
 		{
 			Sent: []byte(`{"ReservationFee":{"ID":` + strconv.Itoa(ID) + `,"CurrentBeneficiaryID":0,
-			"PastBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
+			"FirstBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
 			"AddressStreet":"boulevard Pasteur","RPLS":"RPLS1234",
-			"ConventionID":null,"Count":2,
+			"ConventionTypeID":null,"Count":2,
 			"TransferDate":"2020-01-03T00:00:00Z","CommentID":null,
 			"TransferID":null,"ConventionDate":"2019-03-10T00:00:00Z",
 			"EliseRef":"D2020-XXXXX-00002","Area":23.08,"EndYear":2017,"Loan":235.67,
@@ -80,9 +82,9 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusBadRequest}, // 2 : bad current beneficiary ID
 		{
 			Sent: []byte(`{"ReservationFee":{"ID":` + strconv.Itoa(ID) + `,"CurrentBeneficiaryID":2,
-			"PastBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
+			"FirstBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
 			"AddressStreet":"boulevard Pasteur","RPLS":"RPLS1234",
-			"ConventionID":null,"Count":0,
+			"ConventionTypeID":null,"Count":0,
 			"TransferDate":"2020-01-03T00:00:00Z","CommentID":null,
 			"TransferID":null,"ConventionDate":"2019-03-10T00:00:00Z",
 			"EliseRef":"D2020-XXXXX-00002","Area":23.08,"EndYear":2017,"Loan":235.67,
@@ -92,9 +94,9 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusBadRequest}, // 3 : bad count
 		{
 			Sent: []byte(`{"ReservationFee":{"ID":` + strconv.Itoa(ID) + `,"CurrentBeneficiaryID":2,
-			"PastBeneficiaryID":3,"CityCode":0,"AddressNumber":"25",
+			"FirstBeneficiaryID":3,"CityCode":0,"AddressNumber":"25",
 			"AddressStreet":"boulevard Pasteur","RPLS":"RPLS1234",
-			"ConventionID":null,"Count":2,
+			"ConventionTypeID":null,"Count":2,
 			"TransferDate":"2020-01-03T00:00:00Z","CommentID":null,
 			"TransferID":null,"ConventionDate":"2019-03-10T00:00:00Z",
 			"EliseRef":"D2020-XXXXX-00002","Area":23.08,"EndYear":2017,"Loan":235.67,
@@ -104,21 +106,21 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusBadRequest}, // 4 : bad city code
 		{
 			Sent: []byte(`{"ReservationFee":{"ID":` + strconv.Itoa(ID) + `,"CurrentBeneficiaryID":2,
-			"PastBeneficiaryID":123,"CityCode":75101,"AddressNumber":"25",
+			"FirstBeneficiaryID":123,"CityCode":75101,"AddressNumber":"25",
 			"AddressStreet":"boulevard Pasteur","RPLS":"RPLS1234",
-			"ConventionID":null,"Count":2,
+			"ConventionTypeID":null,"Count":2,
 			"TransferDate":"2020-01-03T00:00:00Z","CommentID":null,
 			"TransferID":null,"ConventionDate":"2019-03-10T00:00:00Z",
 			"EliseRef":"D2020-XXXXX-00002","Area":23.08,"EndYear":2017,"Loan":235.67,
 			"Charges":99.99}}`),
 			Token:        c.Config.Users.ReservationFeeUser.Token,
 			RespContains: []string{`Modification de réservation de logement, requête :`},
-			StatusCode:   http.StatusInternalServerError}, // 5 : past beneficiary ID doesn't
+			StatusCode:   http.StatusInternalServerError}, // 5 : first beneficiary ID doesn't
 		{
 			Sent: []byte(`{"ReservationFee":{"ID":0,"CurrentBeneficiaryID":2,
-			"PastBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
+			"FirstBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
 			"AddressStreet":"boulevard Pasteur","RPLS":"RPLS1234",
-			"ConventionID":null,"Count":2,
+			"ConventionTypeID":null,"Count":2,
 			"TransferDate":"2020-01-03T00:00:00Z","CommentID":null,
 			"TransferID":null,"ConventionDate":"2019-03-10T00:00:00Z",
 			"EliseRef":"D2020-XXXXX-00002","Area":23.08,"EndYear":2017,"Loan":235.67,
@@ -128,9 +130,9 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			StatusCode:   http.StatusInternalServerError}, // 6 : bad ID
 		{
 			Sent: []byte(`{"ReservationFee":{"ID":` + strconv.Itoa(ID) + `,"CurrentBeneficiaryID":2,
-			"PastBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
+			"FirstBeneficiaryID":3,"CityCode":75101,"AddressNumber":"25",
 			"AddressStreet":"boulevard Pasteur","RPLS":"RPLS1234",
-			"ConventionID":null,"Count":2,
+			"ConventionTypeID":null,"Count":2,
 			"TransferDate":"2020-01-03T00:00:00Z","CommentID":null,
 			"TransferID":null,"PMR":true,"ConventionDate":"2019-03-10T00:00:00Z",
 			"EliseRef":"D2020-XXXXX-00002","Area":23.08,"EndYear":2017,"Loan":235.67,
@@ -138,7 +140,7 @@ func testUpdateReservationFee(t *testing.T, c *TestContext, ID int) {
 			Token: c.Config.Users.ReservationFeeUser.Token,
 			RespContains: []string{`"ReservationFee"`, `"AddressNumber":"25"`,
 				`"AddressStreet":"boulevard Pasteur"`, `"RPLS":"RPLS1234"`,
-				`"ConventionID":null`, `"Count":2`,
+				`"ConventionTypeID":null`, `"Count":2`,
 				`"TransferDate":"2020-01-03T00:00:00Z"`, `"CommentID":null`,
 				`"TransferID":null`, `"ConventionDate":"2019-03-10T00:00:00Z"`,
 				`"EliseRef":"D2020-XXXXX-00002"`, `"Area":23.08`, `"EndYear":2017`,

@@ -583,24 +583,25 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 	`CREATE TABLE IF NOT EXISTS convention_type (
 		id SERIAL PRIMARY KEY,
 		name varchar(15) UNIQUE
-	)`, // 62 housing_convention
+	)`, // 63 convention_type
 	`CREATE TABLE IF NOT EXISTS housing_transfer (
 		id SERIAL PRIMARY KEY,
 		name varchar(50) UNIQUE
-	)`, // 63 housing_tranfer
+	)`, // 64 housing_tranfer
 	`CREATE TABLE IF NOT EXISTS housing_comment (
 		id SERIAL PRIMARY KEY,
 		name varchar(150) UNIQUE
-	)`, // 64 housing_comment
+	)`, // 65 housing_comment
 	`CREATE TABLE IF NOT EXISTS reservation_fee (
 		id SERIAL PRIMARY KEY,
 		current_beneficiary_id int NOT NULL REFERENCES beneficiary(id),
-		past_beneficiary_id int REFERENCES beneficiary(id),
+		first_beneficiary_id int REFERENCES beneficiary(id),
 		city_code int REFERENCES city(insee_code),
 		address_number varchar(20),
 		address_street varchar(100),
 		rpls varchar(15),
-		convention_id int REFERENCES housing_convention(id),
+		convention varchar(30),
+		convention_type_id int REFERENCES convention_type(id),
 		count int,
 		transfer_date date,
 		transfer_id int REFERENCES housing_transfer(id),
@@ -612,7 +613,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		end_year int,
 		loan double precision,
 		charges double precision
-	)`, // 65 reservation_fee
+	)`, // 66 reservation_fee
 	`CREATE TABLE IF NOT EXISTS temp_reservation_fee (
 		current_beneficiary varchar(80),
 		first_beneficiary varchar(80),
@@ -624,17 +625,16 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		rpls varchar(15),
 		convention_type varchar(15),
 		count int,
-		transfer_date date,
 		transfer varchar(50),
+		transfer_date date,
 		pmr boolean,
 		comment varchar(150),
 		convention_date date,
-		elise_ref varchar(30),
 		area double precision,
 		end_year int,
 		loan double precision,
 		charges double precision
-	)`, // 66 temp_reservation_fee
+	)`, // 67 temp_reservation_fee
 }
 
 // createTablesAndViews launches the queries against the database to create all
