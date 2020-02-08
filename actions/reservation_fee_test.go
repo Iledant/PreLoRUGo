@@ -21,7 +21,7 @@ func testReservationFee(t *testing.T, c *TestContext) {
 		testUpdateReservationFee(t, c, ID)
 		testDeleteReservationFee(t, c, ID)
 		testBatchReservationFees(t, c)
-		//testGetPaginatedReservationFees(t,cz)
+		testGetPaginatedReservationFees(t, c)
 	})
 }
 
@@ -209,5 +209,31 @@ func testBatchReservationFees(t *testing.T, c *TestContext) {
 	for _, r := range chkFactory(tcc, f, "BatchPayment") {
 		t.Error(r)
 	}
-	// GelAllTest checks if data are correctly analyzed
+	// GetPaginatedReservationFees checks if data have been correctly analyzed
+}
+
+// testGetPaginatedReservationFees checks if route is user protected and ReservationFees correctly sent back
+func testGetPaginatedReservationFees(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		*c.ReservationFeeCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.ReservationFeeUser.Token,
+			Sent:         []byte(`Page=q&Search=cld`),
+			RespContains: []string{`Page de réservation de logements, décodage Page :`},
+			StatusCode:   http.StatusBadRequest}, // 1 : bad param query
+		{
+			Token:         c.Config.Users.ReservationFeeUser.Token,
+			Sent:          []byte(`Page=2&Search=PARIS`),
+			RespContains:  []string{`"ReservationFee":[`, `"AddressStreet":"Avenue Gabriel Peri"`},
+			Count:         1,
+			CountItemName: `"ID"`,
+			StatusCode:    http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/reservation_fees").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "GetPaginatedReservationFees") {
+		t.Error(r)
+	}
 }

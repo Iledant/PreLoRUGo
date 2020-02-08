@@ -16,6 +16,7 @@ type ReservationFee struct {
 	FirstBeneficiaryID   NullInt64   `json:"FirstBeneficiaryID"`
 	FirstBeneficiary     NullString  `json:"FirstBeneficiary"`
 	CityCode             int64       `json:"CityCode"`
+	City                 string      `json:"City"`
 	AddressNumber        NullString  `json:"AddressNumber"`
 	AddressStreet        NullString  `json:"AddressStreet"`
 	RPLS                 NullString  `json:"RPLS"`
@@ -71,6 +72,14 @@ type ReservationFeeLine struct {
 // batch query
 type ReservationFeeBatch struct {
 	Lines []ReservationFeeLine `json:"ReservationFee"`
+}
+
+// PaginatedReservationFees embeddes an array of ReservationFees for json export
+// with paginated informations
+type PaginatedReservationFees struct {
+	ReservationFees []ReservationFee `json:"ReservationFee"`
+	Page            int64            `json:"Page"`
+	ItemsCount      int64            `json:"ItemsCount"`
 }
 
 // Valid checks if fields complies with database constraints
@@ -250,4 +259,65 @@ func (r *ReservationFeeBatch) Save(db *sql.DB) error {
 	}
 	tx.Commit()
 	return nil
+}
+
+// Get fetches all paginated reservation fees from database that match the
+// paginated query
+func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
+	var count int64
+	if err := db.QueryRow(`SELECT count(1) FROM reservation_fee rf
+	JOIN beneficiary b1 ON b1.id=rf.current_beneficiary_id
+	LEFT JOIN beneficiary b2 ON b2.id=rf.first_beneficiary_id
+	JOIN city c ON rf.city_code=c.insee_code
+	LEFT JOIN convention_type ct ON rf.convention_type_id=ct.id
+	LEFT JOIN housing_comment cmt ON cmt.id=rf.comment_id
+	LEFT JOIN housing_transfer ht ON ht.id=rf.transfer_id
+	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
+		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
+		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1)`,
+		"%"+q.Search+"%").Scan(&count); err != nil {
+		return fmt.Errorf("count query failed %v", err)
+	}
+	offset, newPage := GetPaginateParams(q.Page, count)
+
+	rows, err := db.Query(`SELECT rf.id,rf.current_beneficiary_id,b1.name,
+		rf.first_beneficiary_id,b2.name,rf.city_code,c.name,rf.address_number,
+		rf.address_street,rf.rpls,rf.convention,rf.convention_type_id,ct.name,
+		rf.count,rf.transfer_date,rf.comment_id,cmt.name,rf.transfer_id,ht.name,
+		rf.pmr,rf.convention_date,rf.elise_ref,rf.area,rf.end_year,rf.loan,rf.charges
+	FROM reservation_fee rf
+	JOIN beneficiary b1 ON b1.id=rf.current_beneficiary_id
+	LEFT JOIN beneficiary b2 ON b2.id=rf.first_beneficiary_id
+	JOIN city c ON rf.city_code=c.insee_code
+	LEFT JOIN convention_type ct ON rf.convention_type_id=ct.id
+	LEFT JOIN housing_comment cmt ON cmt.id=rf.comment_id
+	LEFT JOIN housing_transfer ht ON ht.id=rf.transfer_id
+	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
+		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
+		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1)
+	ORDER BY 1 LIMIT $2 OFFSET $3`, "%"+q.Search+"%", PageSize, offset)
+	if err != nil {
+		return err
+	}
+	var row ReservationFee
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.ID, &row.CurrentBeneficiaryID, &row.CurrentBeneficiary,
+			&row.FirstBeneficiaryID, &row.FirstBeneficiary, &row.CityCode, &row.City,
+			&row.AddressNumber, &row.AddressStreet, &row.RPLS, &row.Convention,
+			&row.ConventionTypeID, &row.ConventionType, &row.Count, &row.TransferDate,
+			&row.CommentID, &row.Comment, &row.TransferID, &row.Transfer, &row.PMR,
+			&row.ConventionDate, &row.EliseRef, &row.Area, &row.EndYear, &row.Loan,
+			&row.Charges); err != nil {
+			return err
+		}
+		p.ReservationFees = append(p.ReservationFees, row)
+	}
+	err = rows.Err()
+	if len(p.ReservationFees) == 0 {
+		p.ReservationFees = []ReservationFee{}
+	}
+	p.Page = newPage
+	p.ItemsCount = count
+	return err
 }

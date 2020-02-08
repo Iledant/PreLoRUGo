@@ -17,18 +17,21 @@ func CreateReservationFee(ctx iris.Context) {
 	var req reservationFeeReq
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Création de réservation de logement, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Création de réservation de logement, décodage : " +
+			err.Error()})
 		return
 	}
 	if err := req.ReservationFee.Valid(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Création de réservation de logement, paramètre : " + err.Error()})
+		ctx.JSON(jsonError{"Création de réservation de logement, paramètre : " +
+			err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := req.ReservationFee.Create(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Création de réservation de logement, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Création de réservation de logement, requête : " +
+			err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusCreated)
@@ -40,18 +43,21 @@ func UpdateReservationFee(ctx iris.Context) {
 	var req reservationFeeReq
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Modification de réservation de logement, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Modification de réservation de logement, décodage : " +
+			err.Error()})
 		return
 	}
 	if err := req.ReservationFee.Valid(); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Modification de réservation de logement, paramètre : " + err.Error()})
+		ctx.JSON(jsonError{"Modification de réservation de logement, paramètre : " +
+			err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := req.ReservationFee.Update(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Modification de réservation de logement, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Modification de réservation de logement, requête : " +
+			err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
@@ -63,14 +69,16 @@ func DeleteReservationFee(ctx iris.Context) {
 	ID, err := ctx.Params().GetInt64("ID")
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Suppression de réservation de logement, paramètre : " + err.Error()})
+		ctx.JSON(jsonError{"Suppression de réservation de logement, paramètre : " +
+			err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	b := models.ReservationFee{ID: ID}
 	if err := b.Delete(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Suppression de réservation de logement, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Suppression de réservation de logement, requête : " +
+			err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
@@ -82,15 +90,40 @@ func BatchReservationFee(ctx iris.Context) {
 	var req models.ReservationFeeBatch
 	if err := ctx.ReadJSON(&req); err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
-		ctx.JSON(jsonError{"Batch de réservation de logement, décodage : " + err.Error()})
+		ctx.JSON(jsonError{"Batch de réservation de logement, décodage : " +
+			err.Error()})
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
 	if err := req.Save(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Batch de réservation de logement, requête : " + err.Error()})
+		ctx.JSON(jsonError{"Batch de réservation de logement, requête : " +
+			err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Batch de réservation de logement importé"})
+}
+
+// GetPaginatedReservationFees handle the get request for reservations fees that
+//  match a given search pattern returning a ReservationFee array, page number
+//  and total count of items.
+func GetPaginatedReservationFees(ctx iris.Context) {
+	page, err := ctx.URLParamInt64("Page")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Page de réservation de logements, décodage Page : " + err.Error()})
+		return
+	}
+	search := ctx.URLParam("Search")
+	req := models.PaginatedQuery{Page: page, Search: search}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.PaginatedReservationFees
+	if err := resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page de réservation de logements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
 }
