@@ -76,3 +76,21 @@ func DeleteReservationFee(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(jsonMessage{"Réservation de logement supprimée"})
 }
+
+// BatchReservationFee handle the post request of a batch of reservation fees
+func BatchReservationFee(ctx iris.Context) {
+	var req models.ReservationFeeBatch
+	if err := ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Batch de réservation de logement, décodage : " + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := req.Save(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de réservation de logement, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Batch de réservation de logement importé"})
+}

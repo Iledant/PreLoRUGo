@@ -212,33 +212,34 @@ func (r *ReservationFeeBatch) Save(db *sql.DB) error {
 		return fmt.Errorf("statement flush exec %v", err)
 	}
 	queries := []string{
-		`INSERT INTO housing_typology 
-			SELECT DISTINCT typology FROM temp_reservation_fee
-			ON CONFLICT DO NOTHING`,
-		`INSERT INTO housing_transfer 
-			SELECT DISTINCT transfer FROM temp_reservation_fee
-			ON CONFLICT DO NOTHING`,
-		`INSERT INTO convention_type
-			SELECT DISTINCT convention_type FROM temp_reservation_fee
-			ON CONFLICT DO NOTHING`,
-		`INSERT INTO housing_comment
-			SELECT DISTINCT comment FROM temp_reservation_fee
-			ON CONFLICT DO NOTHING`,
-		`INSERT INTO reservation_fee (current_beneficiary_id, past_beneficiary_id,
+		`INSERT INTO housing_typology(name)
+			SELECT DISTINCT typology FROM temp_reservation_fee WHERE typology NOTNULL
+			ON CONFLICT DO NOTHING`, // 0
+		`INSERT INTO housing_transfer(name) 
+			SELECT DISTINCT transfer FROM temp_reservation_fee WHERE transfer NOTNULL
+			ON CONFLICT DO NOTHING`, // 1
+		`INSERT INTO convention_type(name)
+			SELECT DISTINCT convention_type FROM temp_reservation_fee 
+			WHERE convention_type NOTNULL
+			ON CONFLICT DO NOTHING`, // 2
+		`INSERT INTO housing_comment(name)
+			SELECT DISTINCT comment FROM temp_reservation_fee WHERE comment NOTNULL
+			ON CONFLICT DO NOTHING`, // 3
+		`INSERT INTO reservation_fee (current_beneficiary_id, first_beneficiary_id,
 				city_code,address_number,address_street,rpls,convention,convention_type_id,
 				count,transfer_date,transfer_id,pmr,comment_id,convention_date,elise_ref,
 				area,end_year,loan,charges)
-			SELECT b1.id,b2.id,c.code,rf.address_number,rf.address_street,rf.rpls,
+			SELECT b1.id,b2.id,c.insee_code,rf.address_number,rf.address_street,rf.rpls,
 				rf.convention,ct.id,rf.count,rf.transfer_date,ht.id,rf.pmr,hc.id,
-				rf.convention_date,NULL,rf.area,rf.end_year,rf.load,rf.charges
+				rf.convention_date,NULL,rf.area,rf.end_year,rf.loan,rf.charges
 			FROM temp_reservation_fee rf
 			JOIN beneficiary b1 ON b1.name=rf.current_beneficiary
-			LEFT OUTER JOIN beneficiary b2 ON b2.name=rf.first_bénéficiary
-			JOIN city c ON rf.city_code=c.insee_code
-			JOIN convention_type ct ON ct.name=rf.convention_type
-			JOIN housing_transfer ht ON ht.name=rf.transfer
-			LEFT OUTER JOIN housing_comment hc ON hc.name=rf.comment`,
-		`DELETE FROM temp_reservation_fee`,
+			LEFT JOIN beneficiary b2 ON b2.name=rf.first_beneficiary
+			JOIN city c ON rf.city=c.name
+			LEFT JOIN convention_type ct ON ct.name=rf.convention_type
+			LEFT JOIN housing_transfer ht ON ht.name=rf.transfer
+			LEFT JOIN housing_comment hc ON hc.name=rf.comment`,
+		`DELETE FROM temp_reservation_fee`, // 4
 	}
 	for i, q := range queries {
 		_, err = tx.Exec(q)

@@ -600,7 +600,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		address_number varchar(20),
 		address_street varchar(100),
 		rpls varchar(15),
-		convention varchar(30),
+		convention varchar(80),
 		convention_type_id int REFERENCES convention_type(id),
 		count int,
 		transfer_date date,
