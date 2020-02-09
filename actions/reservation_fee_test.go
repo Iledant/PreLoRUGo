@@ -22,6 +22,7 @@ func testReservationFee(t *testing.T, c *TestContext) {
 		testDeleteReservationFee(t, c, ID)
 		testBatchReservationFees(t, c)
 		testGetPaginatedReservationFees(t, c)
+		testExportReservationFees(t, c)
 	})
 }
 
@@ -197,10 +198,13 @@ func testBatchReservationFees(t *testing.T, c *TestContext) {
 			RespContains: []string{"Batch de réservation de logement, décodage : "},
 			StatusCode:   http.StatusBadRequest}, // 1 : validation error
 		{
-			Token:        c.Config.Users.ReservationFeeUser.Token,
-			Sent:         batchContent,
-			RespContains: []string{"Batch de réservation de logement importé"},
-			StatusCode:   http.StatusOK}, // 2 : ok
+			Token: c.Config.Users.ReservationFeeUser.Token,
+			Sent:  batchContent,
+			RespContains: []string{`"AddedItems":3`, `"MissingCities":[]`,
+				// cSpell: disable
+				`"MissingBeneficiaries":["OSICA"]`},
+			//cSpell: enable
+			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.POST("/api/reservation_fee/batch").WithBytes(tc.Sent).
@@ -210,6 +214,27 @@ func testBatchReservationFees(t *testing.T, c *TestContext) {
 		t.Error(r)
 	}
 	// GetPaginatedReservationFees checks if data have been correctly analyzed
+}
+
+// testExportReservationFees checks if route is user protected and ReservationFees correctly sent back
+func testExportReservationFees(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		*c.ReservationFeeCheckTestCase, // 0 : token empty
+		{
+			Token:         c.Config.Users.ReservationFeeUser.Token,
+			Sent:          []byte(`Search=PARIS`),
+			RespContains:  []string{`"ExportedReservationFee":[`, `"AddressStreet":"Avenue Gabriel Peri"`},
+			Count:         1,
+			CountItemName: `"City"`,
+			StatusCode:    http.StatusOK}, // 1 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/reservation_fees/export").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "ExportReservationFees") {
+		t.Error(r)
+	}
 }
 
 // testGetPaginatedReservationFees checks if route is user protected and ReservationFees correctly sent back

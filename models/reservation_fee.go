@@ -74,12 +74,51 @@ type ReservationFeeBatch struct {
 	Lines []ReservationFeeLine `json:"ReservationFee"`
 }
 
+// ReservationFeeBatchResults embeddes the datas of importing a batch of reservation
+// fees
+type ReservationFeeBatchResults struct {
+	BatchSize            int64    `json:"BatchSize"`
+	AddedItems           int64    `json:"AddedItems"`
+	MissingCities        []string `json:"MissingCities"`
+	MissingBeneficiaries []string `json:"MissingBeneficiaries"`
+}
+
 // PaginatedReservationFees embeddes an array of ReservationFees for json export
 // with paginated informations
 type PaginatedReservationFees struct {
 	ReservationFees []ReservationFee `json:"ReservationFee"`
 	Page            int64            `json:"Page"`
 	ItemsCount      int64            `json:"ItemsCount"`
+}
+
+// ExportedReservationFee model
+type ExportedReservationFee struct {
+	CurrentBeneficiary string      `json:"CurrentBeneficiary"`
+	FirstBeneficiary   NullString  `json:"FirstBeneficiary"`
+	CityCode           int64       `json:"CityCode"`
+	City               string      `json:"City"`
+	AddressNumber      NullString  `json:"AddressNumber"`
+	AddressStreet      NullString  `json:"AddressStreet"`
+	RPLS               NullString  `json:"RPLS"`
+	Convention         NullString  `json:"Convention"`
+	ConventionType     NullString  `json:"ConventionType"`
+	Count              int64       `json:"Count"`
+	TransferDate       NullTime    `json:"TransferDate"`
+	Comment            NullString  `json:"Comment"`
+	Transfer           NullString  `json:"Transfer"`
+	PMR                bool        `json:"PMR"`
+	ConventionDate     NullTime    `json:"ConventionDate"`
+	EliseRef           NullString  `json:"EliseRef"`
+	Area               NullFloat64 `json:"Area"`
+	EndYear            NullInt64   `json:"EndYear"`
+	Loan               NullFloat64 `json:"Loan"`
+	Charges            NullFloat64 `json:"Charges"`
+}
+
+// ExportedReservationFees embeddes an array of ExportedReservationFee for json
+// export and dedicated query
+type ExportedReservationFees struct {
+	Lines []ExportedReservationFee `json:"ExportedReservationFee"`
 }
 
 // Valid checks if fields complies with database constraints
@@ -174,25 +213,25 @@ func (r *ReservationFee) Delete(db *sql.DB) error {
 
 // Save import a batch of reservation fee, updating the housing transfer, housing
 // convention, housing typology, housing comment and convention type tables
-func (r *ReservationFeeBatch) Save(db *sql.DB) error {
+func (r *ReservationFeeBatch) Save(db *sql.DB) (*ReservationFeeBatchResults, error) {
 	for i, l := range r.Lines {
 		if l.CurrentBeneficiary == "" {
-			return fmt.Errorf("line %d, CurrentBeneficiary empty", i+1)
+			return nil, fmt.Errorf("line %d, CurrentBeneficiary empty", i+1)
 		}
 		if l.City == "" {
-			return fmt.Errorf("line %d, City empty", i+1)
+			return nil, fmt.Errorf("line %d, City empty", i+1)
 		}
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_reservation_fee", "current_beneficiary",
 		"first_beneficiary", "city", "address_number", "address_street", "convention",
 		"typology", "rpls", "convention_type", "count", "transfer", "transfer_date",
 		"pmr", "comment", "convention_date", "area", "end_year", "loan", "charges"))
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("statement prepare %v", err)
 	}
 	defer stmt.Close()
 	var (
@@ -213,12 +252,12 @@ func (r *ReservationFeeBatch) Save(db *sql.DB) error {
 			r.ConventionType, r.Count, r.Transfer, transferDate, r.PMR, r.Comment,
 			conventionDate, r.Area, r.EndYear, r.Loan, r.Charges); err != nil {
 			tx.Rollback()
-			return err
+			return nil, fmt.Errorf("statement exec %v", err)
 		}
 	}
 	if _, err = stmt.Exec(); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("statement flush exec %v", err)
+		return nil, fmt.Errorf("statement flush exec %v", err)
 	}
 	queries := []string{
 		`INSERT INTO housing_typology(name)
@@ -234,31 +273,90 @@ func (r *ReservationFeeBatch) Save(db *sql.DB) error {
 		`INSERT INTO housing_comment(name)
 			SELECT DISTINCT comment FROM temp_reservation_fee WHERE comment NOTNULL
 			ON CONFLICT DO NOTHING`, // 3
-		`INSERT INTO reservation_fee (current_beneficiary_id, first_beneficiary_id,
-				city_code,address_number,address_street,rpls,convention,convention_type_id,
-				count,transfer_date,transfer_id,pmr,comment_id,convention_date,elise_ref,
-				area,end_year,loan,charges)
-			SELECT b1.id,b2.id,c.insee_code,rf.address_number,rf.address_street,rf.rpls,
-				rf.convention,ct.id,rf.count,rf.transfer_date,ht.id,rf.pmr,hc.id,
-				rf.convention_date,NULL,rf.area,rf.end_year,rf.loan,rf.charges
-			FROM temp_reservation_fee rf
-			JOIN beneficiary b1 ON b1.name=rf.current_beneficiary
-			LEFT JOIN beneficiary b2 ON b2.name=rf.first_beneficiary
-			JOIN city c ON rf.city=c.name
-			LEFT JOIN convention_type ct ON ct.name=rf.convention_type
-			LEFT JOIN housing_transfer ht ON ht.name=rf.transfer
-			LEFT JOIN housing_comment hc ON hc.name=rf.comment`,
-		`DELETE FROM temp_reservation_fee`, // 4
 	}
 	for i, q := range queries {
 		_, err = tx.Exec(q)
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("requête %d : %s", i, err.Error())
+			return nil, fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
+	insertQry :=
+		`INSERT INTO reservation_fee (current_beneficiary_id, first_beneficiary_id,
+			city_code,address_number,address_street,rpls,convention,convention_type_id,
+			count,transfer_date,transfer_id,pmr,comment_id,convention_date,elise_ref,
+			area,end_year,loan,charges)
+		SELECT b1.id,b2.id,c.insee_code,rf.address_number,rf.address_street,rf.rpls,
+			rf.convention,ct.id,rf.count,rf.transfer_date,ht.id,rf.pmr,hc.id,
+			rf.convention_date,NULL,rf.area,rf.end_year,rf.loan,rf.charges
+		FROM temp_reservation_fee rf
+		JOIN beneficiary b1 ON b1.name=rf.current_beneficiary
+		LEFT JOIN beneficiary b2 ON b2.name=rf.first_beneficiary
+		JOIN city c ON rf.city=c.name
+		LEFT JOIN convention_type ct ON ct.name=rf.convention_type
+		LEFT JOIN housing_transfer ht ON ht.name=rf.transfer
+		LEFT JOIN housing_comment hc ON hc.name=rf.comment`
+	res, err := tx.Exec(insertQry)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("insert %v", err)
+	}
+	var results = ReservationFeeBatchResults{
+		MissingCities:        []string{},
+		MissingBeneficiaries: []string{}}
+	results.BatchSize = int64(len(r.Lines))
+	results.AddedItems, err = res.RowsAffected()
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("count %v", err)
+	}
+	rows, err := tx.Query(`SELECT DISTINCT city FROM temp_reservation_fee 
+		WHERE city NOT IN (SELECT name FROM city)`)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("select city %v", err)
+	}
+	var city string
+	for rows.Next() {
+		if err = rows.Scan(&city); err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("city scan %v", err)
+		}
+		results.MissingCities = append(results.MissingCities, city)
+	}
+	rows, err = tx.Query(`SELECT DISTINCT current_beneficiary FROM temp_reservation_fee
+		WHERE current_beneficiary NOT IN (SELECT name FROM beneficiary)`)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("select current beneficiary %v", err)
+	}
+	var beneficiary string
+	for rows.Next() {
+		if err = rows.Scan(&beneficiary); err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("current beneficiary scan %v", err)
+		}
+		results.MissingBeneficiaries = append(results.MissingBeneficiaries, beneficiary)
+	}
+	rows, err = tx.Query(`SELECT DISTINCT first_beneficiary FROM temp_reservation_fee
+		WHERE first_beneficiary NOT IN (SELECT name FROM beneficiary)`)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("select first beneficiary %v", err)
+	}
+	for rows.Next() {
+		if err = rows.Scan(&beneficiary); err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("first beneficiary scan %v", err)
+		}
+		results.MissingBeneficiaries = append(results.MissingBeneficiaries, beneficiary)
+	}
+	if _, err = tx.Exec(`DELETE FROM temp_reservation_fee`); err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("delete %v", err)
+	}
 	tx.Commit()
-	return nil
+	return &results, nil
 }
 
 // Get fetches all paginated reservation fees from database that match the
@@ -319,5 +417,46 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	}
 	p.Page = newPage
 	p.ItemsCount = count
+	return err
+}
+
+// Get fetches all exported reservation fees from database that match the
+// paginated query
+func (p *ExportedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
+	rows, err := db.Query(`SELECT b1.name,b2.name,rf.city_code,c.name,
+		rf.address_number,rf.address_street,rf.rpls,rf.convention,ct.name,
+		rf.count,rf.transfer_date,cmt.name,ht.name,rf.pmr,rf.convention_date,
+		rf.elise_ref,rf.area,rf.end_year,rf.loan,rf.charges
+	FROM reservation_fee rf
+	JOIN beneficiary b1 ON b1.id=rf.current_beneficiary_id
+	LEFT JOIN beneficiary b2 ON b2.id=rf.first_beneficiary_id
+	JOIN city c ON rf.city_code=c.insee_code
+	LEFT JOIN convention_type ct ON rf.convention_type_id=ct.id
+	LEFT JOIN housing_comment cmt ON cmt.id=rf.comment_id
+	LEFT JOIN housing_transfer ht ON ht.id=rf.transfer_id
+	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
+		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
+		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1)`,
+		"%"+q.Search+"%")
+	if err != nil {
+		return err
+	}
+	var row ExportedReservationFee
+	defer rows.Close()
+	for rows.Next() {
+		if err = rows.Scan(&row.CurrentBeneficiary, &row.FirstBeneficiary,
+			&row.CityCode, &row.City, &row.AddressNumber, &row.AddressStreet,
+			&row.RPLS, &row.Convention, &row.ConventionType, &row.Count,
+			&row.TransferDate, &row.Comment, &row.Transfer, &row.PMR,
+			&row.ConventionDate, &row.EliseRef, &row.Area, &row.EndYear, &row.Loan,
+			&row.Charges); err != nil {
+			return err
+		}
+		p.Lines = append(p.Lines, row)
+	}
+	err = rows.Err()
+	if len(p.Lines) == 0 {
+		p.Lines = []ExportedReservationFee{}
+	}
 	return err
 }

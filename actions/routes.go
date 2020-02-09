@@ -193,6 +193,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	reservationUserParty := api.Party("", RightsMiddleWare(&reservationHandler))
 	reservationUserParty.Post("/reservation_fee", CreateReservationFee)
 	reservationUserParty.Get("/reservation_fees", GetPaginatedReservationFees)
+	reservationUserParty.Get("/reservation_fees/export", ExportReservationFees)
 	reservationUserParty.Post("/reservation_fee/batch", BatchReservationFee)
 	reservationUserParty.Put("/reservation_fee", UpdateReservationFee)
 	reservationUserParty.Delete("/reservation_fee/{ID}", DeleteReservationFee)

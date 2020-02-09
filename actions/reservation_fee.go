@@ -95,14 +95,15 @@ func BatchReservationFee(ctx iris.Context) {
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	if err := req.Save(db); err != nil {
+	resp, err := req.Save(db)
+	if err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Batch de réservation de logement, requête : " +
 			err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(jsonMessage{"Batch de réservation de logement importé"})
+	ctx.JSON(resp)
 }
 
 // GetPaginatedReservationFees handle the get request for reservations fees that
@@ -122,6 +123,22 @@ func GetPaginatedReservationFees(ctx iris.Context) {
 	if err := resp.Get(db, &req); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Page de réservation de logements, requête : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
+// ExportReservationFees handles the get request to fetch all reservation fees
+// that matches the search pattern
+func ExportReservationFees(ctx iris.Context) {
+	search := ctx.URLParam("Search")
+	req := models.PaginatedQuery{Search: search}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp models.ExportedReservationFees
+	if err := resp.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Export de réservation de logements, requête : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
