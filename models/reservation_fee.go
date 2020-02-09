@@ -65,7 +65,7 @@ type ReservationFeeLine struct {
 	Area               NullFloat64 `json:"Area"`
 	EndYear            NullInt64   `json:"EndYear"`
 	Loan               NullFloat64 `json:"Loan"`
-	Charges            NullInt64   `json:"Charges"`
+	Charges            NullFloat64 `json:"Charges"`
 }
 
 // ReservationFeeBatch embeddes an array of ReservationFeeLines for the import

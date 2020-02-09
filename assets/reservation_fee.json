@@ -54,14 +54,14 @@
       "ConventionType": "PLI",
       "Count": 1,
       "Transfer": "Reprise bailleur",
-      "TransferDate": null,
+      "TransferDate": 42720,
       "PMR": false,
       "Comment": " locataire actuel entré en 2000, avant la date de la convention",
-      "ConventionDate": null,
-      "Area": null,
-      "EndYear": null,
-      "Loan": null,
-      "Charges": null
+      "ConventionDate": 42410,
+      "Area": 40.56,
+      "EndYear": 2017,
+      "Loan": 320.15,
+      "Charges": 145.16
     }
   ]
 }
