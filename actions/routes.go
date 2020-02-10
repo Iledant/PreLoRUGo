@@ -321,4 +321,6 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/housing_transfers", GetHousingTransfers)
 
 	userParty.Get("/convention_types", GetConventionTypes)
+
+	userParty.Get("/reservation_fees/settings", GetReservationFeeSettings)
 }

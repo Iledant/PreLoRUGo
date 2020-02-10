@@ -144,3 +144,39 @@ func ExportReservationFees(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
+
+type reservationFeeSettingsResp struct {
+	models.HousingComments
+	models.HousingTransfers
+	models.HousingTypologies
+	models.ConventionTypes
+}
+
+// GetReservationFeeSettings handles the get request to fetch all datas for the
+// reservation fee settings page
+func GetReservationFeeSettings(ctx iris.Context) {
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp reservationFeeSettingsResp
+	if err := resp.HousingComments.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration des réservations, requête commentaires : " + err.Error()})
+		return
+	}
+	if err := resp.HousingTransfers.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration des réservations, requête cessions : " + err.Error()})
+		return
+	}
+	if err := resp.HousingTypologies.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration des réservations, requête typologies : " + err.Error()})
+		return
+	}
+	if err := resp.ConventionTypes.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Administration des réservations, requête types de conventions : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}

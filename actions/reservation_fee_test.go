@@ -23,6 +23,7 @@ func testReservationFee(t *testing.T, c *TestContext) {
 		testBatchReservationFees(t, c)
 		testGetPaginatedReservationFees(t, c)
 		testExportReservationFees(t, c)
+		testGetReservationFeeSettings(t, c)
 	})
 }
 
@@ -259,6 +260,25 @@ func testGetPaginatedReservationFees(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	for _, r := range chkFactory(tcc, f, "GetPaginatedReservationFees") {
+		t.Error(r)
+	}
+}
+
+// testGetGetReservationFeeSettings checks if route is user protected and
+// datas correctly sent back
+func testGetReservationFeeSettings(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		*c.UserCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.User.Token,
+			RespContains: []string{`"HousingComment":[`, `"HousingTransfer":[`, `"HousingTypology":[`, `"ConventionType":[`},
+			StatusCode:   http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/reservation_fees/settings").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "GetReservationFeeSettings") {
 		t.Error(r)
 	}
 }
