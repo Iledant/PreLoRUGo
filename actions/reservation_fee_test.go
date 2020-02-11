@@ -20,6 +20,7 @@ func testReservationFee(t *testing.T, c *TestContext) {
 		}
 		testUpdateReservationFee(t, c, ID)
 		testDeleteReservationFee(t, c, ID)
+		testTestBatchReservationFees(t, c)
 		testBatchReservationFees(t, c)
 		testGetPaginatedReservationFees(t, c)
 		testExportReservationFees(t, c)
@@ -211,7 +212,40 @@ func testBatchReservationFees(t *testing.T, c *TestContext) {
 		return c.E.POST("/api/reservation_fee/batch").WithBytes(tc.Sent).
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
-	for _, r := range chkFactory(tcc, f, "BatchPayment") {
+	for _, r := range chkFactory(tcc, f, "BatchReservationFee") {
+		t.Error(r)
+	}
+	// GetPaginatedReservationFees checks if data have been correctly analyzed
+}
+
+// testTestBatchReservationFees check route is limited to admin and batch import succeeds
+func testTestBatchReservationFees(t *testing.T, c *TestContext) {
+	batchContent, err := ioutil.ReadFile("../assets/reservation_fee.json")
+	if err != nil {
+		t.Errorf("Impossible de lire le ficher de batch")
+		return
+	}
+	tcc := []TestCase{
+		*c.ReservationFeeCheckTestCase, // 0 : user unauthorized
+		{
+			Token:        c.Config.Users.ReservationFeeUser.Token,
+			Sent:         []byte(`{"ReservationFee":[}`),
+			RespContains: []string{"Test batch de réservation de logement, décodage : "},
+			StatusCode:   http.StatusBadRequest}, // 1 : validation error
+		{
+			Token: c.Config.Users.ReservationFeeUser.Token,
+			Sent:  batchContent,
+			RespContains: []string{`"AddedItems":0`, `"MissingCities":[]`,
+				// cSpell: disable
+				`"MissingBeneficiaries":["OSICA"]`},
+			//cSpell: enable
+			StatusCode: http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/reservation_fee/batch/test").WithBytes(tc.Sent).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "TestBatchReservationFee") {
 		t.Error(r)
 	}
 	// GetPaginatedReservationFees checks if data have been correctly analyzed

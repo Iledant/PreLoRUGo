@@ -213,7 +213,7 @@ func (r *ReservationFee) Delete(db *sql.DB) error {
 
 // Save import a batch of reservation fee, updating the housing transfer, housing
 // convention, housing typology, housing comment and convention type tables
-func (r *ReservationFeeBatch) Save(db *sql.DB) (*ReservationFeeBatchResults, error) {
+func (r *ReservationFeeBatch) Save(test bool, db *sql.DB) (*ReservationFeeBatchResults, error) {
 	for i, l := range r.Lines {
 		if l.CurrentBeneficiary == "" {
 			return nil, fmt.Errorf("line %d, CurrentBeneficiary empty", i+1)
@@ -281,8 +281,13 @@ func (r *ReservationFeeBatch) Save(db *sql.DB) (*ReservationFeeBatchResults, err
 			return nil, fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	insertQry :=
-		`INSERT INTO reservation_fee (current_beneficiary_id, first_beneficiary_id,
+	var results = ReservationFeeBatchResults{
+		MissingCities:        []string{},
+		MissingBeneficiaries: []string{}}
+	results.BatchSize = int64(len(r.Lines))
+	if !test {
+		insertQry :=
+			`INSERT INTO reservation_fee (current_beneficiary_id, first_beneficiary_id,
 			city_code,address_number,address_street,rpls,convention,convention_type_id,
 			count,transfer_date,transfer_id,pmr,comment_id,convention_date,elise_ref,
 			area,end_year,loan,charges)
@@ -296,16 +301,13 @@ func (r *ReservationFeeBatch) Save(db *sql.DB) (*ReservationFeeBatchResults, err
 		LEFT JOIN convention_type ct ON ct.name=rf.convention_type
 		LEFT JOIN housing_transfer ht ON ht.name=rf.transfer
 		LEFT JOIN housing_comment hc ON hc.name=rf.comment`
-	res, err := tx.Exec(insertQry)
-	if err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("insert %v", err)
+		res, err := tx.Exec(insertQry)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("insert %v", err)
+		}
+		results.AddedItems, err = res.RowsAffected()
 	}
-	var results = ReservationFeeBatchResults{
-		MissingCities:        []string{},
-		MissingBeneficiaries: []string{}}
-	results.BatchSize = int64(len(r.Lines))
-	results.AddedItems, err = res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("count %v", err)

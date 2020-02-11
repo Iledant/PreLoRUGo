@@ -95,10 +95,31 @@ func BatchReservationFee(ctx iris.Context) {
 		return
 	}
 	db := ctx.Values().Get("db").(*sql.DB)
-	resp, err := req.Save(db)
+	resp, err := req.Save(false, db)
 	if err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Batch de réservation de logement, requête : " +
+			err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
+// TestBatchReservationFee handle the post request of a batch of reservation fees
+func TestBatchReservationFee(ctx iris.Context) {
+	var req models.ReservationFeeBatch
+	if err := ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Test batch de réservation de logement, décodage : " +
+			err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	resp, err := req.Save(true, db)
+	if err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Test batch de réservation de logement, requête : " +
 			err.Error()})
 		return
 	}
