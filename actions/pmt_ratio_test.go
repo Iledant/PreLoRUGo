@@ -87,12 +87,8 @@ func testGetPmtRatiosYears(t *testing.T, c *TestContext) {
 		*c.UserCheckTestCase, // 0 : token empty
 		{
 			Token:        c.Config.Users.User.Token,
-			RespContains: []string{"Droits administrateur requis"},
-			StatusCode:   http.StatusUnauthorized}, // 1 : bad year parameter format
-		{
-			Token:        c.Config.Users.Admin.Token,
 			RespContains: []string{`"PmtRatiosYear":[2009]`},
-			StatusCode:   http.StatusOK}, // 2 : ok
+			StatusCode:   http.StatusOK}, // 1 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/ratios/years").

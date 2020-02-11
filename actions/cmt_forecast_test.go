@@ -20,12 +20,7 @@ func testGetCmtForecasts(t *testing.T, c *TestContext) {
 	tcc := []TestCase{
 		*c.UserCheckTestCase, // 0 : token empty
 		{
-			Token:        c.Config.Users.User.Token,
-			RespContains: []string{`Droits administrateur requis`},
-			Count:        1,
-			StatusCode:   http.StatusUnauthorized}, // 1 : bad year parameter format
-		{
-			Token:         c.Config.Users.Admin.Token,
+			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`{"CmtForecast":[]}`},
 			Count:         0,
 			CountItemName: `"Index"`,
