@@ -50,7 +50,6 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Post("/commitments", BatchCommitments)
 	adminParty.Post("/commitments/link", LinkCommitment)
 	adminParty.Post("/commitments/unlink", UnlinkCommitment)
-	adminParty.Get("/commitments/forecasts", GetCmtForecasts)
 
 	adminParty.Post("/payments", BatchPayments)
 	adminParty.Get("/payments/forecasts", GetPmtForecasts)
@@ -86,7 +85,6 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Get("/settings", GetSettings)
 
 	adminParty.Post("/ratios", BatchPmtRatios)
-	adminParty.Get("/ratios/years", GetPmtRatiosYears)
 
 	adminParty.Get("/pre_prog", GetPreProgs)
 
@@ -220,6 +218,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/commitments/unlinked", GetUnlinkedCommitments)
 	userParty.Get("/commitments/export", ExportCommitments)
 
+	userParty.Get("/commitments/forecasts", GetCmtForecasts)
+
 	userParty.Get("/beneficiaries", GetBeneficiaries)
 	userParty.Get("/beneficiaries/paginated", GetPaginatedBeneficiaries)
 	userParty.Get("/beneficiary/{ID}/datas", GetPaginatedBeneficiaryDatas)
@@ -265,6 +265,7 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/home", GetHome)
 
 	userParty.Get("/ratios", GetPmtRatios)
+	userParty.Get("/ratios/years", GetPmtRatiosYears)
 
 	userParty.Get("/rp_event_types", GetRPEventTypes)
 	userParty.Get("/rp_event_type/{ID}", GetRPEventType)
