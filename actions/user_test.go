@@ -122,10 +122,10 @@ func testUpdateUser(t *testing.T, c *TestContext, ID int) {
 			RespContains: []string{`"Name":"essai","Email":"toto@iledefrance.fr","Rights":1`},
 			StatusCode:   http.StatusOK}, // 2 : name and email unchanged
 		{
-			Sent:         []byte(`{"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":3}`),
+			Sent:         []byte(`{"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":5}`),
 			Token:        c.Config.Users.Admin.Token,
 			ID:           ID,
-			RespContains: []string{`"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":3`},
+			RespContains: []string{`"Name":"essai2","Email":"toto2@iledefrance.fr","Rights":5`},
 			StatusCode:   http.StatusOK}, // 3 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {

@@ -85,8 +85,7 @@ func Logout(ctx iris.Context) {
 func GetUsers(ctx iris.Context) {
 	var users models.Users
 	db := ctx.Values().Get("db").(*sql.DB)
-	superAdminEmail := ctx.Values().Get("superAdminEmail").(string)
-	if err := users.GetAll(db, superAdminEmail); err != nil {
+	if err := users.GetAll(db); err != nil {
 		ctx.JSON(jsonError{"Liste des utilisateurs : " + err.Error()})
 		ctx.StatusCode(http.StatusInternalServerError)
 		return

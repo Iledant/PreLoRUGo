@@ -98,10 +98,10 @@ func (u *User) ValidatePwd(pwd string) error {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(pwd))
 }
 
-// GetAll fetches all users from database.
-func (users *Users) GetAll(db *sql.DB, superAdminMail string) (err error) {
+// GetAll fetches all users from database except super admins.
+func (users *Users) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id, name, email, rights FROM users 
-	WHERE email!=$1`, superAdminMail)
+	WHERE rights & $1 = 0`, SuperAdminBit)
 	if err != nil {
 		return err
 	}
