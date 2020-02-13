@@ -130,6 +130,10 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Put("/convention_type", UpdateConventionType)
 	adminParty.Delete("/convention_type/{ID}", DeleteConventionType)
 
+	adminParty.Post("/beneficiary", CreateBeneficiary)
+	adminParty.Put("/beneficiary", UpdateBeneficiary)
+	adminParty.Delete("/beneficiary/{ID}", DeleteBeneficiary)
+
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)

@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -80,4 +81,51 @@ func (p *PaginatedBeneficiaries) Get(db *sql.DB, q *PaginatedQuery) error {
 	p.Page = newPage
 	p.ItemsCount = count
 	return err
+}
+
+// Validate checks if the fields matches the database constraints
+func (b *Beneficiary) Validate() error {
+	if b.Name == "" {
+		return errors.New("name vide")
+	}
+	return nil
+}
+
+// Create insert a new beneficiary into the database
+func (b *Beneficiary) Create(db *sql.DB) error {
+	return db.QueryRow(`INSERT INTO beneficiary(code,name) VALUES($1,$2)
+	RETURNING ID`, b.Code, b.Name).Scan(&b.ID)
+}
+
+// Update modifies a beneficiary in the database
+func (b *Beneficiary) Update(db *sql.DB) error {
+	res, err := db.Exec(`UPDATE beneficiary SET code=$1,name=$2 WHERE id=$3`,
+		b.Code, b.Name, b.ID)
+	if err != nil {
+		return fmt.Errorf("update %v", err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rowsaffected %v", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("bénéficiaire introuvable")
+	}
+	return nil
+}
+
+// Delete removes a beneficiary from database
+func (b *Beneficiary) Delete(db *sql.DB) error {
+	res, err := db.Exec(`DELETE FROM beneficiary WHERE id=$1`, b.ID)
+	if err != nil {
+		return fmt.Errorf("delete %v", err)
+	}
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("rowsaffected %v", err)
+	}
+	if count != 1 {
+		return fmt.Errorf("bénéficiaire introuvable")
+	}
+	return nil
 }

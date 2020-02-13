@@ -58,6 +58,8 @@ var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar
 	`ALTER TABLE copro
 			ALTER COLUMN address DROP NOT NULL,
 			ALTER COLUMN zip_code DROP NOT NULL;`, // 18
+	`ALTER TABLE beneficiary
+		ADD UNIQUE (code)`, // 19
 }
 
 // handleMigrations check if new migrations have been created and launches them

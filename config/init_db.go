@@ -201,7 +201,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		);`, // 14 : temp_housing
 	`CREATE TABLE IF NOT EXISTS beneficiary (
 	    id SERIAL PRIMARY KEY,
-	    code int NOT NULL,
+	    code int NOT NULL UNIQUE,
 	    name varchar(120) NOT NULL
 		);`, // 15 : beneficiary
 	`CREATE TABLE IF NOT EXISTS commitment (
