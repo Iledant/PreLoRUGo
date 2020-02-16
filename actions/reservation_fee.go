@@ -150,6 +150,69 @@ func GetPaginatedReservationFees(ctx iris.Context) {
 	ctx.JSON(resp)
 }
 
+type initialPaginatedReservationFeesResp struct {
+	models.PaginatedReservationFees
+	models.Cities
+	models.Beneficiaries
+	models.HousingTypologies
+	models.HousingComments
+	models.HousingTransfers
+	models.ConventionTypes
+}
+
+// GetInitialPaginatedReservationFees handle the get request for reservations fees that
+//  match a given search pattern returning a ReservationFee array, page number
+//  and total count of items with all others datas needed for the frontend page.
+func GetInitialPaginatedReservationFees(ctx iris.Context) {
+	page, err := ctx.URLParamInt64("Page")
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, décodage Page : " + err.Error()})
+		return
+	}
+	search := ctx.URLParam("Search")
+	req := models.PaginatedQuery{Page: page, Search: search}
+	db := ctx.Values().Get("db").(*sql.DB)
+	var resp initialPaginatedReservationFeesResp
+	if err := resp.PaginatedReservationFees.Get(db, &req); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête fees : " + err.Error()})
+		return
+	}
+	if err := resp.Cities.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête cities : " + err.Error()})
+		return
+	}
+	if err := resp.Beneficiaries.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête beneficiaries : " + err.Error()})
+		return
+	}
+	if err := resp.HousingTypologies.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête typologies : " + err.Error()})
+		return
+	}
+	if err := resp.HousingComments.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête comments : " + err.Error()})
+		return
+	}
+	if err := resp.HousingTransfers.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête transfers : " + err.Error()})
+		return
+	}
+	if err := resp.ConventionTypes.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête conventions types : " + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(resp)
+}
+
 // ExportReservationFees handles the get request to fetch all reservation fees
 // that matches the search pattern
 func ExportReservationFees(ctx iris.Context) {

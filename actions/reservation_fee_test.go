@@ -23,6 +23,7 @@ func testReservationFee(t *testing.T, c *TestContext) {
 		testTestBatchReservationFees(t, c)
 		testBatchReservationFees(t, c)
 		testGetPaginatedReservationFees(t, c)
+		testGetInitialPaginatedReservationFees(t, c)
 		testExportReservationFees(t, c)
 		testGetReservationFeeSettings(t, c)
 	})
@@ -294,6 +295,34 @@ func testGetPaginatedReservationFees(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	for _, r := range chkFactory(tcc, f, "GetPaginatedReservationFees") {
+		t.Error(r)
+	}
+}
+
+// testGetInitialPaginatedReservationFees checks if route is user protected and ReservationFees correctly sent back
+func testGetInitialPaginatedReservationFees(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		*c.ReservationFeeCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.ReservationFeeUser.Token,
+			Sent:         []byte(`Page=q&Search=cld`),
+			RespContains: []string{`Page initiale de réservation de logements, décodage Page :`},
+			StatusCode:   http.StatusBadRequest}, // 1 : bad param query
+		{
+			Token: c.Config.Users.ReservationFeeUser.Token,
+			Sent:  []byte(`Page=2&Search=PARIS`),
+			RespContains: []string{`"ReservationFee":[`, `"AddressStreet":"Avenue Gabriel Peri"`,
+				`"City":[`, `"Beneficiary":[`, `"HousingTypology":[`, `"HousingComment":[`,
+				`"HousingTransfer":[`, `"ConventionType":[`},
+			Count:         1,
+			CountItemName: `"AddressStreet"`,
+			StatusCode:    http.StatusOK}, // 2 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/reservation_fees/initial").WithQueryString(string(tc.Sent)).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "GetInitialPaginatedReservationFees") {
 		t.Error(r)
 	}
 }
