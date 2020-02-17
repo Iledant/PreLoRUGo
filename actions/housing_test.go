@@ -110,7 +110,7 @@ func testUpdateHousing(t *testing.T, c *TestContext, ID int) {
 			Token: c.Config.Users.Admin.Token,
 			RespContains: []string{`"Housing":{"ID":` + strconv.Itoa(ID) +
 				`,"Reference":"Essai2","Address":null,"ZipCode":null,"CityName":null,` +
-				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}`},
+				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false`},
 			StatusCode: http.StatusOK}, // 4 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -137,7 +137,7 @@ func testGetHousing(t *testing.T, c *TestContext, ID int) {
 			ID:    ID,
 			RespContains: []string{`"Housing":{"ID":` + strconv.Itoa(ID) +
 				`,"Reference":"Essai2","Address":null,"ZipCode":null,"CityName":null,` +
-				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}`},
+				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
 	f := func(tc TestCase) *httpexpect.Response {
@@ -164,7 +164,7 @@ func testGetHousingDatas(t *testing.T, c *TestContext, ID int) {
 			ID:    ID,
 			RespContains: []string{`"Housing":{"ID":` + strconv.Itoa(ID) +
 				`,"Reference":"Essai2","Address":null,"ZipCode":null,"CityName":null,` +
-				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false}`,
+				`"PLAI":2000000,"PLUS":2000000,"PLS":2000000,"ANRU":false`,
 				`"Commitment":[`, `"Payment":[`},
 			StatusCode: http.StatusOK}, // 2 : ok
 	}
@@ -186,7 +186,7 @@ func testGetHousings(t *testing.T, c *TestContext) {
 			Token: c.Config.Users.User.Token,
 			RespContains: []string{`{"Housing":[{"ID":1,"Reference":"Essai2",` +
 				`"Address":null,"ZipCode":null,"CityName":null,"PLAI":2000000,` +
-				`"PLUS":2000000,"PLS":2000000,"ANRU":false}]}`},
+				`"PLUS":2000000,"PLS":2000000,"ANRU":false`},
 			Count:         1,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok

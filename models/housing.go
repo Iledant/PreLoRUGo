@@ -11,15 +11,18 @@ import (
 
 // Housing model
 type Housing struct {
-	ID        int64      `json:"ID"`
-	Reference string     `json:"Reference"`
-	Address   NullString `json:"Address"`
-	ZipCode   NullInt64  `json:"ZipCode"`
-	CityName  NullString `json:"CityName"`
-	PLAI      int64      `json:"PLAI"`
-	PLUS      int64      `json:"PLUS"`
-	PLS       int64      `json:"PLS"`
-	ANRU      bool       `json:"ANRU"`
+	ID                   int64      `json:"ID"`
+	Reference            string     `json:"Reference"`
+	Address              NullString `json:"Address"`
+	ZipCode              NullInt64  `json:"ZipCode"`
+	CityName             NullString `json:"CityName"`
+	PLAI                 int64      `json:"PLAI"`
+	PLUS                 int64      `json:"PLUS"`
+	PLS                  int64      `json:"PLS"`
+	ANRU                 bool       `json:"ANRU"`
+	HousingTypeID        NullInt64  `json:"HousingTypeID"`
+	HousingTypeShortName NullString `json:"HousingTypeShortName"`
+	HousingTypeLongName  NullString `json:"HousingTypeLongName"`
 }
 
 // Housings embeddes an array of Housing for json export
@@ -61,31 +64,45 @@ func (h *Housing) Validate() error {
 // Get fetches a housing from database using the ID field
 func (h *Housing) Get(db *sql.DB) error {
 	return db.QueryRow(`SELECT h.id,h.reference,h.address,h.zip_code,c.name,
-	h.plai,h.plus,h.pls,h.anru FROM housing h
-	LEFT JOIN city c ON h.zip_code=c.insee_code WHERE id=$1`, h.ID).Scan(&h.ID,
-		&h.Reference, &h.Address, &h.ZipCode, &h.CityName, &h.PLAI, &h.PLUS, &h.PLS,
-		&h.ANRU)
+	h.plai,h.plus,h.pls,h.anru,h.housing_type_id,ht.short_name,ht.long_name
+	FROM housing h
+	LEFT JOIN city c ON h.zip_code=c.insee_code 
+	LEFT JOIN housing_type ht ON h.housing_type_id=ht.id
+	WHERE h.id=$1`, h.ID).Scan(&h.ID, &h.Reference, &h.Address, &h.ZipCode,
+		&h.CityName, &h.PLAI, &h.PLUS, &h.PLS, &h.ANRU, &h.HousingTypeID,
+		&h.HousingTypeShortName, &h.HousingTypeLongName)
 }
 
 // Create insert a new Housing into database
 func (h *Housing) Create(db *sql.DB) (err error) {
 	err = db.QueryRow(`INSERT INTO housing 
-	(reference,address,zip_code,plai,plus,pls,anru)
-	 VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`, &h.Reference, &h.Address,
-		&h.ZipCode, &h.PLAI, &h.PLUS, &h.PLS, &h.ANRU).Scan(&h.ID)
+	(reference,address,zip_code,plai,plus,pls,anru,housing_type_id)
+	 VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, &h.Reference, &h.Address,
+		&h.ZipCode, &h.PLAI, &h.PLUS, &h.PLS, &h.ANRU, &h.HousingTypeID).Scan(&h.ID)
 	if err != nil {
 		return err
 	}
 	err = db.QueryRow(`SELECT name FROM city WHERE insee_code=$1`, h.ZipCode).
 		Scan(&h.CityName)
+	if err != nil {
+		return fmt.Errorf("city scan %v", err)
+	}
+	err = db.QueryRow(`SELECT short_name,long_name FROM housing_type
+		WHERE id=$1`, h.HousingTypeID).
+		Scan(&h.CityName)
+	if err == sql.ErrNoRows {
+		h.HousingTypeShortName.Valid = false
+		h.HousingTypeLongName.Valid = false
+		err = nil
+	}
 	return err
 }
 
 // Update modifies a housing in database
 func (h *Housing) Update(db *sql.DB) (err error) {
 	res, err := db.Exec(`UPDATE housing SET reference=$1,address=$2,zip_code=$3,
-	plai=$4,plus=$5,pls=$6,anru=$7 WHERE id=$8`, h.Reference, h.Address,
-		h.ZipCode, h.PLAI, h.PLUS, h.PLS, h.ANRU, h.ID)
+	plai=$4,plus=$5,pls=$6,anru=$7,housing_type_id=$8 WHERE id=$9`, h.Reference,
+		h.Address, h.ZipCode, h.PLAI, h.PLUS, h.PLS, h.ANRU, h.HousingTypeID, h.ID)
 	if err != nil {
 		return err
 	}
@@ -102,14 +119,24 @@ func (h *Housing) Update(db *sql.DB) (err error) {
 		h.CityName.Valid = false
 		err = nil
 	}
+	err = db.QueryRow(`SELECT short_name,long_name FROM housing_type
+		WHERE id=$1`, h.HousingTypeID).
+		Scan(&h.HousingTypeShortName, &h.HousingTypeLongName)
+	if err == sql.ErrNoRows {
+		h.HousingTypeShortName.Valid = false
+		h.HousingTypeLongName.Valid = false
+		err = nil
+	}
 	return err
 }
 
 // GetAll fetches all Housings from database
 func (h *Housings) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT h.id,h.reference,h.address,h.zip_code,c.name,
-	h.plai,h.plus,h.pls,h.anru FROM housing h
-	LEFT JOIN city c ON h.zip_code=c.insee_code`)
+	h.plai,h.plus,h.pls,h.anru,h.housing_type_id,ht.short_name,ht.long_name 
+	FROM housing h
+	LEFT JOIN city c ON h.zip_code=c.insee_code
+	LEFT JOIN housing_type ht ON h.housing_type_id=ht.id`)
 	if err != nil {
 		return err
 	}
@@ -117,7 +144,8 @@ func (h *Housings) GetAll(db *sql.DB) (err error) {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
-			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
+			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU,
+			&row.HousingTypeID, &row.HousingTypeShortName, &row.HousingTypeLongName); err != nil {
 			return err
 		}
 		h.Housings = append(h.Housings, row)

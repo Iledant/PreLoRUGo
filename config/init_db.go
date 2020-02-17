@@ -178,6 +178,11 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			population int,
 			composite_index int
 		);`, // 12 : temp_renew_project
+	`CREATE TABLE IF NOT EXISTS housing_type (
+			id SERIAL PRIMARY KEY,
+			short_name varchar(10) NOT NULL UNIQUE,
+			long_name varchar(100)
+		)`, // 13 housing_type
 	`CREATE TABLE IF NOT EXISTS housing (
 	    id SERIAL PRIMARY KEY,
 	    reference varchar(100) NOT NULL,
@@ -187,9 +192,12 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 	    plus int NOT NULL,
 	    pls int NOT NULL,
 			anru boolean NOT NULL,
+			housing_type_id int,
 			FOREIGN KEY (zip_code) REFERENCES city (insee_code) MATCH SIMPLE
+			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
+			FOREIGN KEY (housing_type_id) REFERENCES housing_type(id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-		);`, // 13 : housing
+		);`, // 14 : housing
 	`CREATE TABLE IF NOT EXISTS temp_housing (
 	    reference varchar(100) NOT NULL,
 	    address varchar(150),
@@ -198,12 +206,12 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 	    plus int NOT NULL,
 	    pls int NOT NULL,
 	    anru boolean NOT NULL
-		);`, // 14 : temp_housing
+		);`, // 15 : temp_housing
 	`CREATE TABLE IF NOT EXISTS beneficiary (
 	    id SERIAL PRIMARY KEY,
 	    code int NOT NULL UNIQUE,
 	    name varchar(120) NOT NULL
-		);`, // 15 : beneficiary
+		);`, // 16 : beneficiary
 	`CREATE TABLE IF NOT EXISTS commitment (
 	    id SERIAL PRIMARY KEY,
 	    year int NOT NULL,
@@ -232,7 +240,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 			FOREIGN KEY (action_id) REFERENCES budget_action(id) 
 			MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-		);`, // 16 : commitment
+		);`, // 17 : commitment
 	`CREATE TABLE IF NOT EXISTS temp_commitment (
 	    year int NOT NULL,
 	    code varchar(5) NOT NULL,
@@ -250,7 +258,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			sector varchar(5) NOT NULL,
 			action_code bigint,
 			action_name varchar(150)
-		);`, // 17 : temp_commitment
+		);`, // 18 : temp_commitment
 	`CREATE TABLE IF NOT EXISTS payment (
 	    id SERIAL PRIMARY KEY,
 	    commitment_id int,
@@ -265,7 +273,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			value bigint NOT NULL,
 			FOREIGN KEY (commitment_id) REFERENCES commitment (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-		);`, // 18 : payment
+		);`, // 19 : payment
 	`CREATE TABLE IF NOT EXISTS temp_payment (
 	    commitment_year int NOT NULL,
 	    commitment_code varchar(5) NOT NULL,
@@ -276,12 +284,12 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			modification_date date NOT NULL,
 			number int NOT NULL,
 	    value bigint NOT NULL
-		);`, // 19 : temp_payment
+		);`, // 20 : temp_payment
 	`CREATE TABLE IF NOT EXISTS commission (
 	    id SERIAL PRIMARY KEY,
 	    name varchar(140) NOT NULL,
 	    date date
-		);`, // 20 : commission
+		);`, // 21 : commission
 	`CREATE TABLE IF NOT EXISTS renew_project_forecast (
 	    id SERIAL PRIMARY KEY,
 	    commission_id int NOT NULL,
@@ -294,7 +302,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 			FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-		);`, // 21 : renew_project_forecast
+		);`, // 22 : renew_project_forecast
 	`CREATE TABLE IF NOT EXISTS temp_renew_project_forecast (
 			id int NOT NULL,
 			commission_id int NOT NULL,
@@ -303,7 +311,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 	    comment text,
 			renew_project_id int NOT NULL,
 			action_code bigint NOT NULL
-		);`, // 22 : temp_renew_project_forecast
+		);`, // 23 : temp_renew_project_forecast
 	`CREATE TABLE IF NOT EXISTS copro_forecast (
 	    id SERIAL PRIMARY KEY,
 	    commission_id int NOT NULL,
@@ -316,7 +324,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 			FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-		);`, // 23 : copro_forecast
+		);`, // 24 : copro_forecast
 	`CREATE TABLE IF NOT EXISTS temp_copro_forecast (
 			id int NOT NULL,
 			commission_id int NOT NULL,
@@ -325,7 +333,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 	    comment text,
 			copro_id int NOT NULL,
 			action_code bigint NOT NULL
-		);`, // 24 : temp_copro_forecast
+		);`, // 25 : temp_copro_forecast
 	`CREATE OR REPLACE VIEW cumulated_commitment AS
 		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,
 		  q.value,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id, c.copro_id,
@@ -333,7 +341,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		FROM commitment c
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
-		ON c.id = q.id;`, // 25 : cumulated_commitment view
+		ON c.id = q.id;`, // 26 : cumulated_commitment view
 	`CREATE OR REPLACE VIEW cumulated_sold_commitment AS
 		SELECT c.id,c.year,c.code,c.number,c.creation_date,c.name,
 			q.value, c.sold_out,c.beneficiary_id, c.iris_code,c.action_id,c.housing_id,
@@ -341,7 +349,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		FROM commitment c
 		JOIN (SELECT year,code,number,sum(value) as value,min(creation_date),
 			min(id) as id FROM commitment GROUP BY 1,2,3 ORDER BY 1,2,3) q
-		ON c.id = q.id;`, // 26 : cumulated_sold_commitment view
+		ON c.id = q.id;`, // 27 : cumulated_sold_commitment view
 	`CREATE TABLE IF NOT EXISTS ratio (
 			id SERIAL PRIMARY KEY,
 			year int NOT NULL,
@@ -350,7 +358,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			ratio double precision NOT NULL,
 			FOREIGN KEY (sector_id) REFERENCES budget_sector (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-			);`, // 27 : ratio
+			);`, // 28 : ratio
 	`CREATE TABLE IF NOT EXISTS housing_forecast (
 				id SERIAL PRIMARY KEY,
 				commission_id int NOT NULL,
@@ -361,32 +369,32 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 				ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 				FOREIGN KEY (commission_id) REFERENCES commission (id) MATCH SIMPLE
 				ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-			);`, // 28 : renew_project_forecast
+			);`, // 29 : renew_project_forecast
 	`CREATE TABLE IF NOT EXISTS temp_housing_forecast (
 				id int NOT NULL,
 				commission_id int NOT NULL,
 				value bigint NOT NULL,
 				comment text,
 				action_id int NOT NULL
-			);`, // 29 : temp_renew_project_forecast
+			);`, // 30 : temp_renew_project_forecast
 	`CREATE TABLE IF NOT EXISTS housing_commitment (
 			iris_code varchar(20),
 	    reference varchar(100)
-			);`, // 30 housing_commitment
+			);`, // 31 housing_commitment
 	`CREATE TABLE IF NOT EXISTS copro_commitment (
 			iris_code varchar(20),
 	    reference varchar(100)
-			);`, // 31 copro_commitment
+			);`, // 32 copro_commitment
 	`CREATE TABLE IF NOT EXISTS migration (
 		id SERIAL PRIMARY KEY,
 		created timestamp NOT NULL,
 		index int NOT NULL,
 		query text
-	);`, // 32 migration
+	);`, // 33 migration
 	`CREATE TABLE IF NOT EXISTS rp_event_type (
 		id SERIAL PRIMARY KEY,
 		name varchar(100) NOT NULL
-	);`, // 33 rp_event_type
+	);`, // 34 rp_event_type
 	`CREATE TABLE IF NOT EXISTS rp_event (
 		id SERIAL PRIMARY KEY,
 		renew_project_id int NOT NULL,
@@ -397,7 +405,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 		FOREIGN KEY (rp_event_type_id) REFERENCES rp_event_type (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-	);`, // 34 rp_event
+	);`, // 35 rp_event
 	`CREATE TABLE IF NOT EXISTS rp_cmt_city_join (
 		id SERIAL PRIMARY KEY,
 		commitment_id int NOT NULL UNIQUE,
@@ -406,7 +414,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 		FOREIGN KEY (city_code) REFERENCES city (insee_code) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-	);`, // 35 rp_cmt_city_join
+	);`, // 36 rp_cmt_city_join
 	`CREATE TABLE IF NOT EXISTS pre_prog (
 		id SERIAL PRIMARY KEY,
 		year int NOT NULL,
@@ -421,7 +429,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 		FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-	);`, // 36 pre_prog
+	);`, // 37 pre_prog
 	`CREATE TABLE IF NOT EXISTS temp_pre_prog (
 		commission_id int NOT NULL,
 		year int NOT NULL,
@@ -431,7 +439,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		project varchar(150),
 		comment text,
 		action_id int
-	);`, // 37 temp_pre_prog
+	);`, // 38 temp_pre_prog
 	`CREATE TABLE IF NOT EXISTS prog (
 		id SERIAL PRIMARY KEY,
 		year int NOT NULL,
@@ -445,7 +453,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE,
 		FOREIGN KEY (action_id) REFERENCES budget_action (id) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-	);`, // 38 prog
+	);`, // 39 prog
 	`CREATE TABLE IF NOT EXISTS temp_prog (
 		commission_id int NOT NULL,
 		year int NOT NULL,
@@ -454,7 +462,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		kind_id int,
 		comment text,
 		action_id int
-	);`, // 39 temp_prog
+	);`, // 40 temp_prog
 	`CREATE TABLE IF NOT EXISTS rpls(
 		id SERIAL PRIMARY KEY,
 		insee_code int NOT NULL,
@@ -462,16 +470,16 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		ratio double precision NOT NULL,
 		FOREIGN KEY (insee_code) REFERENCES city (insee_code) MATCH SIMPLE
 		ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
-	);`, // 40 rpls		`
+	);`, // 41 rpls		`
 	`CREATE TABLE IF NOT EXISTS temp_rpls(
 		insee_code int NOT NULL,
 		year int NOT NULL,
 		ratio double precision NOT NULL
-	);`, // 41 temp_rpls
+	);`, // 42 temp_rpls
 	`CREATE TABLE IF NOT EXISTS import_logs(
 		kind int UNIQUE,
 		date date
-	);`, // 42 import_logs
+	);`, // 43 import_logs
 	`CREATE TABLE IF NOT EXISTS temp_housing_summary(
 		reference_code varchar(150),
 		address varchar(150),
@@ -481,31 +489,31 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		plus int,
 		anru boolean,
 		insee_code int REFERENCES city(insee_code)
-	);`, // 43 temp_housing_summary
+	);`, // 44 temp_housing_summary
 	`CREATE TABLE IF NOT EXISTS housing_summary(
 		id SERIAL PRIMARY KEY,
 		year int NOT NULL,
 		housing_ref varchar(100) NOT NULL,
 		import_ref varchar(150) NOT NULL,
 		iris_code varchar(20) NOT NULL
-	);`, // 44 housing_summary
+	);`, // 45 housing_summary
 	`CREATE TABLE IF NOT EXISTS copro_event_type (
 		id SERIAL PRIMARY KEY,
 		name varchar(100) NOT NULL
-	);`, // 45 copro_event_type
+	);`, // 46 copro_event_type
 	`CREATE TABLE IF NOT EXISTS copro_event (
 		id SERIAL PRIMARY KEY,
 		copro_id int NOT NULL REFERENCES copro(id),
 		copro_event_type_id int NOT NULL REFERENCES copro_event_type(id),
 		date date NOT NULL,
 		comment text
-	);`, // 46 copro_event
+	);`, // 47 copro_event
 	`CREATE TABLE IF NOT EXISTS copro_doc (
 		id SERIAL PRIMARY KEY,
 		copro_id int NOT NULL references copro(id),
 		name varchar(150) NOT NULL,
 		link varchar(250) NOT NULL
-	);`, // 47 copro_doc
+	);`, // 48 copro_doc
 	`CREATE TABLE IF NOT EXISTS payment_credit (
 		id SERIAL PRIMARY KEY,
 		chapter int NOT NULL,
@@ -516,7 +524,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		modified bigint NOT NULL,
 		movement bigint NOT NULL,
 		year int NOT NULL
-	);`, // 48 payment_credit
+	);`, // 49 payment_credit
 	`CREATE TABLE IF NOT EXISTS payment_credit_journal (
 		id SERIAL PRIMARY KEY,
 		chapter int NOT NULL,
@@ -525,11 +533,11 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		modification_date date NOT NULL,
 		name varchar(150) NOT NULL,
 		value bigint NOT NULL
-	);`, // 49 payment_credit_journal
+	);`, // 50 payment_credit_journal
 	`CREATE TABLE IF NOT EXISTS home_message (
 		title varchar(255),
 		body text
-	);`, // 50 home_message
+	);`, // 51 home_message
 	`CREATE TABLE IF NOT EXISTS placement (
 		id SERIAL PRIMARY KEY,
 		iris_code varchar(20) NOT NULL UNIQUE,
@@ -537,61 +545,61 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		contract_year int,
 		comment varchar(150),
 		commitment_id int REFERENCES commitment(id)
-	);`, // 51 placement
+	);`, // 52 placement
 	`CREATE TABLE IF NOT EXISTS temp_placement (
 		iris_code varchar(20) NOT NULL,
 		count int,
 		contract_year int
-	);`, // 52 temp_placement
+	);`, // 53 temp_placement
 	`CREATE TABLE IF NOT EXISTS beneficiary_group (
 		id SERIAL PRIMARY KEY,
 		name varchar(150) NOT NULL UNIQUE
-	)`, // 53 beneficiary_group
+	)`, // 54 beneficiary_group
 	`CREATE TABLE IF NOT EXISTS beneficiary_belong (
 		id SERIAL PRIMARY KEY,
 		beneficiary_id int REFERENCES beneficiary(id) ON DELETE CASCADE,
 		group_id int REFERENCES beneficiary_group(id) ON DELETE CASCADE
-	)`, // 54 beneficiary_belong
+	)`, // 55 beneficiary_belong
 	`CREATE OR REPLACE FUNCTION log_cmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (1, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 55
-	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 56
+	$log_cmt$ LANGUAGE plpgsql;`, // 56
+	`DROP TRIGGER IF EXISTS cmt_stamp ON commitment;`, // 57
 	`CREATE TRIGGER cmt_stamp AFTER INSERT OR UPDATE ON commitment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 57
+	FOR EACH STATEMENT EXECUTE FUNCTION log_cmt();`, // 58
 	`CREATE OR REPLACE FUNCTION log_pmt() RETURNS TRIGGER AS $log_cmt$
 		BEGIN
 			INSERT INTO import_logs (kind, date) VALUES (2, CURRENT_DATE)
 			ON CONFLICT (kind) DO UPDATE SET date = CURRENT_DATE;
 			RETURN NULL;
 		END;
-	$log_cmt$ LANGUAGE plpgsql;`, // 58
-	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 59
+	$log_cmt$ LANGUAGE plpgsql;`, // 59
+	`DROP TRIGGER IF EXISTS pmt_stamp ON payment;`, // 60
 	`CREATE TRIGGER pmt_stamp AFTER INSERT OR UPDATE ON payment
-	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 60
+	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 61
 	`CREATE TABLE IF NOT EXISTS housing_typology (
 		id SERIAL PRIMARY KEY,
 		name varchar(30)
-	)`, // 61 housing_typology
+	)`, // 62 housing_typology
 	`CREATE TABLE IF NOT EXISTS housing_convention (
 		id SERIAL PRIMARY KEY,
 		name varchar(30) UNIQUE
-	)`, // 62 housing_convention
+	)`, // 63 housing_convention
 	`CREATE TABLE IF NOT EXISTS convention_type (
 		id SERIAL PRIMARY KEY,
 		name varchar(15) UNIQUE
-	)`, // 63 convention_type
+	)`, // 64 convention_type
 	`CREATE TABLE IF NOT EXISTS housing_transfer (
 		id SERIAL PRIMARY KEY,
 		name varchar(50) UNIQUE
-	)`, // 64 housing_tranfer
+	)`, // 65 housing_tranfer
 	`CREATE TABLE IF NOT EXISTS housing_comment (
 		id SERIAL PRIMARY KEY,
 		name varchar(150) UNIQUE
-	)`, // 65 housing_comment
+	)`, // 66 housing_comment
 	`CREATE TABLE IF NOT EXISTS reservation_fee (
 		id SERIAL PRIMARY KEY,
 		current_beneficiary_id int NOT NULL REFERENCES beneficiary(id),
@@ -613,7 +621,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		end_year int,
 		loan double precision,
 		charges double precision
-	)`, // 66 reservation_fee
+	)`, // 67 reservation_fee
 	`CREATE TABLE IF NOT EXISTS temp_reservation_fee (
 		current_beneficiary varchar(80),
 		first_beneficiary varchar(80),
@@ -634,12 +642,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		end_year int,
 		loan double precision,
 		charges double precision
-	)`, // 67 temp_reservation_fee
-	`CREATE TABLE IF NOT EXISTS housing_type (
-		id SERIAL PRIMARY KEY,
-		short_name varchar(10) NOT NULL UNIQUE,
-		long_name varchar(100)
-	)`, // 68 housing_type
+	)`, // 68 temp_reservation_fee
 }
 
 // createTablesAndViews launches the queries against the database to create all
