@@ -635,6 +635,11 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		loan double precision,
 		charges double precision
 	)`, // 67 temp_reservation_fee
+	`CREATE TABLE IF NOT EXISTS housing_type (
+		id SERIAL PRIMARY KEY,
+		short_name varchar(10) NOT NULL UNIQUE,
+		long_name varchar(100)
+	)`, // 68 housing_type
 }
 
 // createTablesAndViews launches the queries against the database to create all
@@ -710,13 +715,13 @@ func InitDatabase(cfg *PreLoRuGoConf, app *iris.Application, dropTables bool, mi
 			return nil, err
 		}
 	}
+	if err = createTablesAndViews(db); err != nil {
+		return nil, err
+	}
 	if migrate {
 		if err = handleMigrations(db); err != nil {
 			return nil, fmt.Errorf("Migrations %v", err)
 		}
-	}
-	if err = createTablesAndViews(db); err != nil {
-		return nil, err
 	}
 	if err = createSuperAdmin(db, cfg, app); err != nil {
 		return nil, err
