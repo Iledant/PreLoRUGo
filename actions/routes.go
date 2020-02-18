@@ -138,6 +138,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Put("/housing_type", UpdateHousingType)
 	adminParty.Delete("/housing_type/{ID}", DeleteHousingType)
 
+	adminParty.Post("/iris_housing_type", BatchIRISHousingType)
+
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)

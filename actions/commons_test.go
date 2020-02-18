@@ -46,6 +46,7 @@ type TestContext struct {
 	HousingCommentID            int
 	HousingTransferID           int
 	ConventionTypeID            int
+	HousingTypeID               int
 	AdminCheckTestCase          *TestCase
 	UserCheckTestCase           *TestCase
 	CoproCheckTestCase          *TestCase
@@ -70,6 +71,7 @@ func TestAll(t *testing.T) {
 	testCopro(t, cfg)
 	testBudgetAction(t, cfg)
 	testRenewProject(t, cfg)
+	testHousingType(t, cfg)
 	testHousing(t, cfg)
 	testCommitment(t, cfg)
 	testBeneficiary(t, cfg)
@@ -117,7 +119,6 @@ func TestAll(t *testing.T) {
 	testHousingTransfer(t, cfg)
 	testConventionType(t, cfg)
 	testReservationFee(t, cfg)
-	testHousingType(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

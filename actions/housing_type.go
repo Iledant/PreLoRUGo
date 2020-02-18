@@ -89,3 +89,22 @@ func GetHousingTypes(ctx iris.Context) {
 	ctx.StatusCode(http.StatusOK)
 	ctx.JSON(resp)
 }
+
+// BatchIRISHousingType handles the post request to import a batch of link
+// between iris_code and housing types in order to update housing table
+func BatchIRISHousingType(ctx iris.Context) {
+	var req models.IRISHousingTypes
+	if err := ctx.ReadJSON(&req); err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.JSON(jsonError{"Batch de lien IRIS / type de logement, requête :" + err.Error()})
+		return
+	}
+	db := ctx.Values().Get("db").(*sql.DB)
+	if err := req.Save(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Batch de lien IRIS / type de logement, requête :" + err.Error()})
+		return
+	}
+	ctx.StatusCode(http.StatusOK)
+	ctx.JSON(jsonMessage{"Batch de lien IRIS / type de logement importé"})
+}

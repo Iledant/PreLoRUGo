@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 // HousingType is used for normalizing housing type
@@ -88,5 +90,70 @@ func (r *HousingType) Delete(db *sql.DB) (err error) {
 	if count != 1 {
 		return errors.New("Type introuvable")
 	}
+	return nil
+}
+
+// IRISHousingType model used to decode one line of batch
+type IRISHousingType struct {
+	IRISCode             string `json:"IRISCode"`
+	HousingTypeShortName string `json:"HousingTypeShortName"`
+}
+
+// IRISHousingTypes embeddes an array of IRISHousingType for dedicated query
+type IRISHousingTypes struct {
+	Lines []IRISHousingType `json:"IRISHousingType"`
+}
+
+// Save import a batch of IRISHousingTypes, update the HousingType database and
+// update all Housings with the housing types
+func (i *IRISHousingTypes) Save(db *sql.DB) error {
+	for j, ii := range i.Lines {
+		if ii.IRISCode == "" {
+			return fmt.Errorf("line %d IrisCode vide", j+1)
+		}
+		if ii.HousingTypeShortName == "" {
+			return fmt.Errorf("ligne %d HousingTypeShortName vide", j+1)
+		}
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("tx begin %v", err)
+	}
+	stmt, err := tx.Prepare(pq.CopyIn("temp_iris_housing_type", "iris_code",
+		"housing_type_short_name"))
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	for _, ii := range i.Lines {
+		if _, err = stmt.Exec(ii.IRISCode, ii.HousingTypeShortName); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("stmt exec %v", err)
+		}
+	}
+	if _, err = stmt.Exec(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("statement flush exec %v", err)
+	}
+	queries := []string{
+		`INSERT INTO housing_type(short_name,long_name)
+			SELECT DISTINCT t.housing_type_short_name,NULL FROM temp_iris_housing_type t
+			WHERE t.housing_type_short_name NOT IN 
+				(SELECT short_name FROM housing_type)`,
+		`UPDATE housing SET housing_type_id=q.id
+			FROM (SELECT ht.id,hs.housing_ref
+			FROM temp_iris_housing_type t
+			JOIN housing_type ht ON t.housing_type_short_name=ht.short_name
+			JOIN housing_summary hs ON t.iris_code=hs.iris_code) q
+			WHERE housing.reference=q.housing_ref`,
+	}
+	for j, q := range queries {
+		_, err = tx.Exec(q)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("requête %d: %v", j+1, err)
+		}
+	}
+	tx.Commit()
 	return nil
 }

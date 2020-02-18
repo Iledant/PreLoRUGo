@@ -52,6 +52,16 @@ func testCreateHousingType(t *testing.T, c *TestContext) (ID int) {
 	for _, r := range chkFactory(tcc, f, "CreateHousingType", &ID) {
 		t.Error(r)
 	}
+	tcc = []TestCase{
+		{
+			Sent:       []byte(`{"HousingType":{"ShortName":"LF","LongName":"Logement familial"}}`),
+			Token:      c.Config.Users.Admin.Token,
+			IDName:     `"ID"`,
+			StatusCode: http.StatusCreated}, // 0 : create housing type
+	}
+	for _, r := range chkFactory(tcc, f, "CreateHousingTypeID", &c.HousingTypeID) {
+		t.Error(r)
+	}
 	return ID
 }
 
@@ -98,7 +108,7 @@ func testGetHousingTypes(t *testing.T, c *TestContext) {
 		{
 			Token:         c.Config.Users.User.Token,
 			RespContains:  []string{`"HousingType":[`, `"ShortName"`, `"LongName"`},
-			Count:         1,
+			Count:         2,
 			CountItemName: `"ID"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
 	}

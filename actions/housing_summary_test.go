@@ -2,6 +2,7 @@ package actions
 
 import (
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/iris-contrib/httpexpect"
@@ -11,6 +12,7 @@ import (
 func testHousingSummary(t *testing.T, c *TestContext) {
 	t.Run("HousingSummary", func(t *testing.T) {
 		testBatchHousingSummary(t, c)
+		testBatchIRISHousingType(t, c)
 	})
 }
 
@@ -84,6 +86,59 @@ func testBatchHousingSummary(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	for _, r := range chkFactory(tcc, f, "BatchHousingSummary") {
+		t.Error(r)
+	}
+}
+
+// testBatchIRISHousingType check route is admin protected and batch
+// import succeeds
+func testBatchIRISHousingType(t *testing.T, c *TestContext) {
+	tcc := []TestCase{
+		*c.AdminCheckTestCase, // 0 : token empty
+		{
+			Token:        c.Config.Users.Admin.Token,
+			Sent:         []byte(`{"IRISHousingType":[{"IRISCode":"","HousingTypeShortName":"LF"}`),
+			StatusCode:   http.StatusBadRequest,
+			RespContains: []string{`Batch de lien IRIS / type de logement, requête :`},
+		}, // 1 : bad payload
+		{
+			Token:        c.Config.Users.Admin.Token,
+			Sent:         []byte(`{"IRISHousingType":[{"IRISCode":"","HousingTypeShortName":"LF"}]}`),
+			StatusCode:   http.StatusInternalServerError,
+			RespContains: []string{`Batch de lien IRIS / type de logement, requête :`},
+		}, // 2 : IRISCode empty
+		{
+			Token:        c.Config.Users.Admin.Token,
+			Sent:         []byte(`{"IRISHousingType":[{"IRISCode":"EX000001","HousingTypeShortName":""}]}`),
+			StatusCode:   http.StatusInternalServerError,
+			RespContains: []string{`Batch de lien IRIS / type de logement, requête :`},
+		}, // 3 : HousingTypeShortName empty
+		{
+			Token:        c.Config.Users.Admin.Token,
+			Sent:         []byte(`{"IRISHousingType":[{"IRISCode":"EX000001","HousingTypeShortName":"LF"}]}`),
+			StatusCode:   http.StatusOK,
+			RespContains: []string{`Batch de lien IRIS / type de logement importé`},
+		}, // 4 : ok
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.POST("/api/iris_housing_type").WithBytes(tc.Sent).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "BatchIRISHousingType") {
+		t.Error(r)
+	}
+	tcc = []TestCase{
+		{
+			Token:        c.Config.Users.User.Token,
+			StatusCode:   http.StatusOK,
+			RespContains: []string{`"HousingTypeID":` + strconv.Itoa(c.HousingTypeID)},
+		}, // 1 : bad payload
+	}
+	f = func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/housings").WithBytes(tc.Sent).
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(tcc, f, "BatchIRISHousingTypeCheck") {
 		t.Error(r)
 	}
 }

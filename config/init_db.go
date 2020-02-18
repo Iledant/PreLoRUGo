@@ -643,6 +643,10 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		loan double precision,
 		charges double precision
 	)`, // 68 temp_reservation_fee
+	`CREATE TABLE IF NOT EXISTS temp_iris_housing_type(
+		iris_code varchar(20),
+		housing_type_short_name varchar(10)
+	)`, // 69 temp_iris_housing_type
 }
 
 // createTablesAndViews launches the queries against the database to create all
