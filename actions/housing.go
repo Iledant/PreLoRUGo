@@ -100,6 +100,7 @@ type HousingsDatasResp struct {
 	models.Commissions
 	models.HousingForecasts
 	models.FcPreProgs
+	models.HousingTypes
 }
 
 // GetHousingsDatas handles the get request to fetch all datas for the frontend page
@@ -125,6 +126,11 @@ func GetHousingsDatas(ctx iris.Context) {
 	if err := resp.HousingForecasts.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Données logement, requête housings forecasts : " + err.Error()})
+		return
+	}
+	if err := resp.HousingTypes.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Données logement, requête housings types : " + err.Error()})
 		return
 	}
 	var req models.PaginatedQuery
