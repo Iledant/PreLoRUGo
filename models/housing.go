@@ -87,9 +87,8 @@ func (h *Housing) Create(db *sql.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("city scan %v", err)
 	}
-	err = db.QueryRow(`SELECT short_name,long_name FROM housing_type
-		WHERE id=$1`, h.HousingTypeID).
-		Scan(&h.CityName)
+	err = db.QueryRow(`SELECT short_name,long_name FROM housing_type WHERE id=$1`,
+		h.HousingTypeID).Scan(&h.HousingTypeShortName, &h.HousingTypeLongName)
 	if err == sql.ErrNoRows {
 		h.HousingTypeShortName.Valid = false
 		h.HousingTypeLongName.Valid = false
@@ -233,8 +232,10 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 	offset, newPage := GetPaginateParams(q.Page, count)
 
 	rows, err := db.Query(`SELECT h.id,h.reference,h.address,h.zip_code,c.name,
-	h.plai,h.plus,h.pls,h.anru FROM housing h
+	h.plai,h.plus,h.pls,h.anru,h.housing_type_id,ht.short_name,ht.long_name 
+	FROM housing h
 	LEFT JOIN city c ON h.zip_code=c.insee_code
+	LEFT JOIN housing_type ht ON h.housing_type_id=ht.id
 	WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1
 	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
 		"%"+q.Search+"%", offset)
@@ -245,7 +246,8 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
-			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU); err != nil {
+			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU,
+			&row.HousingTypeID, &row.HousingTypeShortName, &row.HousingTypeLongName); err != nil {
 			return err
 		}
 		p.Housings = append(p.Housings, row)
