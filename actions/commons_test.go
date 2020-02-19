@@ -119,6 +119,7 @@ func TestAll(t *testing.T) {
 	testHousingTransfer(t, cfg)
 	testConventionType(t, cfg)
 	testReservationFee(t, cfg)
+	testGetDifActionPaymentPrevisions(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
