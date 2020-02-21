@@ -22,7 +22,7 @@ func testGetDifActionPaymentPrevisions(t *testing.T, c *TestContext) {
 		{
 			Token:        c.Config.Users.User.Token,
 			StatusCode:   http.StatusOK,
-			RespContains: []string{`"DifActionPmtPrevision ":[`}},
+			RespContains: []string{`"DifActionPmtPrevision":[`}},
 	}
 	f := func(tc TestCase) *httpexpect.Response {
 		return c.E.GET("/api/dif_action_pmt_prev").
