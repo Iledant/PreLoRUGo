@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -23,7 +24,6 @@ type ReservationFee struct {
 	Convention           NullString  `json:"Convention"`
 	ConventionTypeID     NullInt64   `json:"ConventionTypeID"`
 	ConventionType       NullString  `json:"ConventionType"`
-	Count                int64       `json:"Count"`
 	TransferDate         NullTime    `json:"TransferDate"`
 	CommentID            NullInt64   `json:"CommentID"`
 	Comment              NullString  `json:"Comment"`
@@ -36,6 +36,8 @@ type ReservationFee struct {
 	EndYear              NullInt64   `json:"EndYear"`
 	Loan                 NullFloat64 `json:"Loan"`
 	Charges              NullFloat64 `json:"Charges"`
+	TypologyID           NullInt64   `json:"TypologyID"`
+	Typology             NullString  `json:"Typology"`
 }
 
 // ReservationFees embeddes an array of ReservationFee for json export and dedicated
@@ -56,7 +58,6 @@ type ReservationFeeLine struct {
 	Typology           NullString  `json:"Typology"`
 	RPLS               NullString  `json:"RPLS"`
 	ConventionType     NullString  `json:"ConventionType"`
-	Count              int         `json:"Count"`
 	Transfer           NullString  `json:"Transfer"`
 	TransferDate       NullInt64   `json:"TransferDate"`
 	PMR                bool        `json:"PMR"`
@@ -102,7 +103,6 @@ type ExportedReservationFee struct {
 	RPLS               NullString  `json:"RPLS"`
 	Convention         NullString  `json:"Convention"`
 	ConventionType     NullString  `json:"ConventionType"`
-	Count              int64       `json:"Count"`
 	TransferDate       NullTime    `json:"TransferDate"`
 	Comment            NullString  `json:"Comment"`
 	Transfer           NullString  `json:"Transfer"`
@@ -113,6 +113,7 @@ type ExportedReservationFee struct {
 	EndYear            NullInt64   `json:"EndYear"`
 	Loan               NullFloat64 `json:"Loan"`
 	Charges            NullFloat64 `json:"Charges"`
+	Typology           NullString  `json:"Typology"`
 }
 
 // ExportedReservationFees embeddes an array of ExportedReservationFee for json
@@ -129,37 +130,35 @@ func (r *ReservationFee) Valid() error {
 	if r.CityCode == 0 {
 		return fmt.Errorf("CityCode null")
 	}
-	if r.Count == 0 {
-		return fmt.Errorf("Count null")
-	}
 	return nil
 }
 
 // getOuterFields fetches fields that belong to other tables that reservation_fee
 // in order to have a common part between create and update functions
 func (r *ReservationFee) getOuterFields(db *sql.DB) error {
-	return db.QueryRow(`SELECT b1.name,b2.name,hc.name,ht.name,ho.name
+	return db.QueryRow(`SELECT b1.name,b2.name,hc.name,ht.name,ho.name,ty.name
 	FROM reservation_fee rf 
 	JOIN beneficiary b1 ON rf.current_beneficiary_id=b1.id
 	LEFT OUTER JOIN beneficiary b2 ON first_beneficiary_id=b2.id
 	LEFT OUTER JOIN housing_convention hc ON hc.id=rf.convention_type_id
 	LEFT OUTER JOIN housing_transfer ht ON ht.id=rf.transfer_id
 	LEFT OUTER JOIN housing_comment ho ON ho.id=rf.comment_id
+	LEFT OUTER JOIN housing_typology ty ON ty.id=rf.typology_id
 	WHERE rf.id=$1`, r.ID).Scan(&r.CurrentBeneficiary, &r.FirstBeneficiary,
-		&r.ConventionType, &r.Transfer, &r.Comment)
+		&r.ConventionType, &r.Transfer, &r.Comment, &r.Typology)
 }
 
 // Create insert a new ReservationFee into database
 func (r *ReservationFee) Create(db *sql.DB) error {
 	if err := db.QueryRow(`INSERT into reservation_fee (current_beneficiary_id,
 		first_beneficiary_id,city_code,address_number,address_street,rpls,
-		convention,convention_type_id,count,transfer_date,transfer_id,pmr,comment_id,
-		convention_date,elise_ref,area,end_year,loan,charges)
+		convention,convention_type_id,transfer_date,transfer_id,pmr,comment_id,
+		convention_date,elise_ref,area,end_year,loan,charges,typology_id)
 		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
 		RETURNING ID`, r.CurrentBeneficiaryID, r.FirstBeneficiaryID, r.CityCode,
-		r.AddressNumber, r.AddressStreet, r.RPLS, r.Convention, r.ConventionTypeID, r.Count,
+		r.AddressNumber, r.AddressStreet, r.RPLS, r.Convention, r.ConventionTypeID,
 		r.TransferDate, r.TransferID, r.PMR, r.CommentID, r.ConventionDate, r.EliseRef,
-		r.Area, r.EndYear, r.Loan, r.Charges).Scan(&r.ID); err != nil {
+		r.Area, r.EndYear, r.Loan, r.Charges, r.TypologyID).Scan(&r.ID); err != nil {
 		return fmt.Errorf("insert %v", err)
 	}
 	if err := r.getOuterFields(db); err != nil {
@@ -172,13 +171,13 @@ func (r *ReservationFee) Create(db *sql.DB) error {
 func (r *ReservationFee) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE reservation_fee SET current_beneficiary_id=$1,
 		first_beneficiary_id=$2,city_code=$3,address_number=$4,address_street=$5,
-		rpls=$6,convention=$7,convention_type_id=$8,count=$9,transfer_date=$10,
-		transfer_id=$11,comment_id=$12,convention_date=$13,elise_ref=$14,area=$15,
-		end_year=$16,loan=$17,charges=$18,pmr=$19 WHERE ID=$20`, r.CurrentBeneficiaryID,
-		r.FirstBeneficiaryID, r.CityCode, r.AddressNumber, r.AddressStreet, r.RPLS,
-		r.Convention, r.ConventionTypeID, r.Count, r.TransferDate, r.TransferID,
-		r.CommentID, r.ConventionDate, r.EliseRef, r.Area, r.EndYear, r.Loan,
-		r.Charges, r.PMR, r.ID)
+		rpls=$6,convention=$7,convention_type_id=$8,transfer_date=$9,
+		transfer_id=$10,comment_id=$11,convention_date=$12,elise_ref=$13,area=$14,
+		end_year=$15,loan=$16,charges=$17,pmr=$18,typology_id=$19 WHERE ID=$20`,
+		r.CurrentBeneficiaryID, r.FirstBeneficiaryID, r.CityCode, r.AddressNumber,
+		r.AddressStreet, r.RPLS, r.Convention, r.ConventionTypeID,
+		r.TransferDate, r.TransferID, r.CommentID, r.ConventionDate, r.EliseRef,
+		r.Area, r.EndYear, r.Loan, r.Charges, r.PMR, r.TypologyID, r.ID)
 	if err != nil {
 		return fmt.Errorf("update %v", err)
 	}
@@ -228,7 +227,7 @@ func (r *ReservationFeeBatch) Save(test bool, db *sql.DB) (*ReservationFeeBatchR
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_reservation_fee", "current_beneficiary",
 		"first_beneficiary", "city", "address_number", "address_street", "convention",
-		"typology", "rpls", "convention_type", "count", "transfer", "transfer_date",
+		"typology", "rpls", "convention_type", "transfer", "transfer_date",
 		"pmr", "comment", "convention_date", "area", "end_year", "loan", "charges"))
 	if err != nil {
 		return nil, fmt.Errorf("statement prepare %v", err)
@@ -236,20 +235,25 @@ func (r *ReservationFeeBatch) Save(test bool, db *sql.DB) (*ReservationFeeBatchR
 	defer stmt.Close()
 	var (
 		transferDate, conventionDate NullTime
+		typology                     NullString
 		b                            = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
 	)
 	for _, r := range r.Lines {
 		transferDate.Valid = r.TransferDate.Valid
 		conventionDate.Valid = r.ConventionDate.Valid
+		typology.Valid = r.Typology.Valid
 		if r.TransferDate.Valid {
 			transferDate.Time = b.Add(time.Duration(r.TransferDate.Int64*24) * time.Hour)
 		}
 		if r.ConventionDate.Valid {
 			conventionDate.Time = b.Add(time.Duration(r.ConventionDate.Int64*24) * time.Hour)
 		}
+		if r.Typology.Valid {
+			typology.String = strings.TrimSpace(r.Typology.String)
+		}
 		if _, err = stmt.Exec(r.CurrentBeneficiary, r.FirstBeneficiary, r.City,
-			r.AddressNumber, r.AddressStreet, r.Convention, r.Typology, r.RPLS,
-			r.ConventionType, r.Count, r.Transfer, transferDate, r.PMR, r.Comment,
+			r.AddressNumber, r.AddressStreet, r.Convention, typology,
+			r.RPLS, r.ConventionType, r.Transfer, transferDate, r.PMR, r.Comment,
 			conventionDate, r.Area, r.EndYear, r.Loan, r.Charges); err != nil {
 			tx.Rollback()
 			return nil, fmt.Errorf("statement exec %v", err)
@@ -289,18 +293,19 @@ func (r *ReservationFeeBatch) Save(test bool, db *sql.DB) (*ReservationFeeBatchR
 		insertQry :=
 			`INSERT INTO reservation_fee (current_beneficiary_id, first_beneficiary_id,
 			city_code,address_number,address_street,rpls,convention,convention_type_id,
-			count,transfer_date,transfer_id,pmr,comment_id,convention_date,elise_ref,
-			area,end_year,loan,charges)
+			transfer_date,transfer_id,pmr,comment_id,convention_date,elise_ref,
+			area,end_year,loan,charges,typology_id)
 		SELECT b1.id,b2.id,c.insee_code,rf.address_number,rf.address_street,rf.rpls,
-			rf.convention,ct.id,rf.count,rf.transfer_date,ht.id,rf.pmr,hc.id,
-			rf.convention_date,NULL,rf.area,rf.end_year,rf.loan,rf.charges
+			rf.convention,ct.id,rf.transfer_date,ht.id,rf.pmr,hc.id,
+			rf.convention_date,NULL,rf.area,rf.end_year,rf.loan,rf.charges,ty.id
 		FROM temp_reservation_fee rf
 		JOIN beneficiary b1 ON b1.name=rf.current_beneficiary
 		LEFT JOIN beneficiary b2 ON b2.name=rf.first_beneficiary
 		JOIN city c ON rf.city=c.name
 		LEFT JOIN convention_type ct ON ct.name=rf.convention_type
 		LEFT JOIN housing_transfer ht ON ht.name=rf.transfer
-		LEFT JOIN housing_comment hc ON hc.name=rf.comment`
+		LEFT JOIN housing_comment hc ON hc.name=rf.comment
+		LEFT JOIN housing_typology ty ON ty.name=rf.typology`
 		res, err := tx.Exec(insertQry)
 		if err != nil {
 			tx.Rollback()
@@ -372,9 +377,11 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	LEFT JOIN convention_type ct ON rf.convention_type_id=ct.id
 	LEFT JOIN housing_comment cmt ON cmt.id=rf.comment_id
 	LEFT JOIN housing_transfer ht ON ht.id=rf.transfer_id
+	LEFT JOIN housing_typology ty ON ty.id=rf.typology_id
 	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
 		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
-		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1)`,
+		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1 OR
+		ty.name ILIKE $1)`,
 		"%"+q.Search+"%").Scan(&count); err != nil {
 		return fmt.Errorf("count query failed %v", err)
 	}
@@ -383,8 +390,9 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	rows, err := db.Query(`SELECT rf.id,rf.current_beneficiary_id,b1.name,
 		rf.first_beneficiary_id,b2.name,rf.city_code,c.name,rf.address_number,
 		rf.address_street,rf.rpls,rf.convention,rf.convention_type_id,ct.name,
-		rf.count,rf.transfer_date,rf.comment_id,cmt.name,rf.transfer_id,ht.name,
-		rf.pmr,rf.convention_date,rf.elise_ref,rf.area,rf.end_year,rf.loan,rf.charges
+		rf.transfer_date,rf.comment_id,cmt.name,rf.transfer_id,ht.name,
+		rf.pmr,rf.convention_date,rf.elise_ref,rf.area,rf.end_year,rf.loan,
+		rf.charges,rf.typology_id,ty.name
 	FROM reservation_fee rf
 	JOIN beneficiary b1 ON b1.id=rf.current_beneficiary_id
 	LEFT JOIN beneficiary b2 ON b2.id=rf.first_beneficiary_id
@@ -392,9 +400,11 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	LEFT JOIN convention_type ct ON rf.convention_type_id=ct.id
 	LEFT JOIN housing_comment cmt ON cmt.id=rf.comment_id
 	LEFT JOIN housing_transfer ht ON ht.id=rf.transfer_id
+	LEFT JOIN housing_typology ty ON ty.id=rf.typology_id
 	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
 		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
-		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1)
+		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1 OR
+		ty.name ILIKE $1)
 	ORDER BY 1 LIMIT $2 OFFSET $3`, "%"+q.Search+"%", PageSize, offset)
 	if err != nil {
 		return err
@@ -405,10 +415,10 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 		if err = rows.Scan(&row.ID, &row.CurrentBeneficiaryID, &row.CurrentBeneficiary,
 			&row.FirstBeneficiaryID, &row.FirstBeneficiary, &row.CityCode, &row.City,
 			&row.AddressNumber, &row.AddressStreet, &row.RPLS, &row.Convention,
-			&row.ConventionTypeID, &row.ConventionType, &row.Count, &row.TransferDate,
+			&row.ConventionTypeID, &row.ConventionType, &row.TransferDate,
 			&row.CommentID, &row.Comment, &row.TransferID, &row.Transfer, &row.PMR,
 			&row.ConventionDate, &row.EliseRef, &row.Area, &row.EndYear, &row.Loan,
-			&row.Charges); err != nil {
+			&row.Charges, &row.TypologyID, &row.Typology); err != nil {
 			return err
 		}
 		p.ReservationFees = append(p.ReservationFees, row)
@@ -427,8 +437,8 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 func (p *ExportedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	rows, err := db.Query(`SELECT b1.name,b2.name,rf.city_code,c.name,
 		rf.address_number,rf.address_street,rf.rpls,rf.convention,ct.name,
-		rf.count,rf.transfer_date,cmt.name,ht.name,rf.pmr,rf.convention_date,
-		rf.elise_ref,rf.area,rf.end_year,rf.loan,rf.charges
+		rf.transfer_date,cmt.name,ht.name,rf.pmr,rf.convention_date,
+		rf.elise_ref,rf.area,rf.end_year,rf.loan,rf.charges,ty.name
 	FROM reservation_fee rf
 	JOIN beneficiary b1 ON b1.id=rf.current_beneficiary_id
 	LEFT JOIN beneficiary b2 ON b2.id=rf.first_beneficiary_id
@@ -436,9 +446,11 @@ func (p *ExportedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	LEFT JOIN convention_type ct ON rf.convention_type_id=ct.id
 	LEFT JOIN housing_comment cmt ON cmt.id=rf.comment_id
 	LEFT JOIN housing_transfer ht ON ht.id=rf.transfer_id
+	LEFT JOIN housing_typology ty ON ty.id=rf.typology_id
 	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
 		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
-		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1)`,
+		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1  OR
+		ty.name ILIKE $1)`,
 		"%"+q.Search+"%")
 	if err != nil {
 		return err
@@ -448,10 +460,9 @@ func (p *ExportedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	for rows.Next() {
 		if err = rows.Scan(&row.CurrentBeneficiary, &row.FirstBeneficiary,
 			&row.CityCode, &row.City, &row.AddressNumber, &row.AddressStreet,
-			&row.RPLS, &row.Convention, &row.ConventionType, &row.Count,
-			&row.TransferDate, &row.Comment, &row.Transfer, &row.PMR,
-			&row.ConventionDate, &row.EliseRef, &row.Area, &row.EndYear, &row.Loan,
-			&row.Charges); err != nil {
+			&row.RPLS, &row.Convention, &row.ConventionType, &row.TransferDate,
+			&row.Comment, &row.Transfer, &row.PMR, &row.ConventionDate, &row.EliseRef,
+			&row.Area, &row.EndYear, &row.Loan, &row.Charges, &row.Typology); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)

@@ -582,7 +582,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 	FOR EACH STATEMENT EXECUTE FUNCTION log_pmt();`, // 61
 	`CREATE TABLE IF NOT EXISTS housing_typology (
 		id SERIAL PRIMARY KEY,
-		name varchar(30)
+		name varchar(30) UNIQUE
 	)`, // 62 housing_typology
 	`CREATE TABLE IF NOT EXISTS housing_convention (
 		id SERIAL PRIMARY KEY,
@@ -620,7 +620,8 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		area double precision,
 		end_year int,
 		loan double precision,
-		charges double precision
+		charges double precision,
+		typology_id int REFERENCES housing_typology(id)
 	)`, // 67 reservation_fee
 	`CREATE TABLE IF NOT EXISTS temp_reservation_fee (
 		current_beneficiary varchar(80),
