@@ -52,23 +52,27 @@ func (p *Placement) Update(db *sql.DB) error {
 
 // Get fetches all placements from database
 func (p *Placements) Get(db *sql.DB) error {
-	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
-		p.comment,MIN(c.creation_date),c.value,b.code,b.name,ba.code,ba.name,bs.name
+	rows, err := db.Query(`SELECT p.id,p.iris_code,c.value,b.code,b.name,p.count,
+	p.contract_year,p.comment,c.creation_date,ba.code,ba.name,bs.name
 	FROM placement p
-	LEFT OUTER JOIN commitment c ON p.iris_code=c.iris_code
+	JOIN (SELECT creation_date,value,iris_code,action_id,beneficiary_id FROM commitment 
+    WHERE (creation_date,iris_code) IN
+     (SELECT min(creation_date) ,iris_code FROM commitment GROUP BY 2))c 
+     ON p.iris_code=c.iris_code
 	JOIN budget_action ba ON c.action_id=ba.id
 	JOIN budget_sector bs ON ba.sector_id=bs.id
 	JOIN beneficiary b ON c.beneficiary_id=b.id
-		GROUP BY 1,2,3,4,5,7,8,9,10,11,12`)
+`)
 	if err != nil {
 		return err
 	}
 	var row Placement
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count, &row.ContractYear,
-			&row.Comment, &row.CreationDate, &row.CommitmentValue, &row.BeneficiaryCode,
-			&row.BeneficiaryName, &row.ActionCode, &row.ActionName, &row.Sector); err != nil {
+		if err = rows.Scan(&row.ID, &row.IrisCode, &row.CommitmentValue,
+			&row.BeneficiaryCode, &row.BeneficiaryName, &row.Count, &row.ContractYear,
+			&row.Comment, &row.CreationDate, &row.ActionCode, &row.ActionName,
+			&row.Sector); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
@@ -82,9 +86,16 @@ func (p *Placements) Get(db *sql.DB) error {
 
 // GetByBeneficiary fetches all placements linked to a beneficiary
 func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
-	rows, err := db.Query(`SELECT p.id,p.iris_code,p.count,p.contract_year,
-	p.comment,c.creation_date FROM placement p
-	JOIN commitment c ON p.iris_code=c.iris_code
+	rows, err := db.Query(`SELECT p.id,p.iris_code,c.value,b.code,b.name,p.count,
+	p.contract_year,p.comment,c.creation_date,ba.code,ba.name,bs.name
+	FROM placement p
+	JOIN (SELECT creation_date,value,iris_code,action_id,beneficiary_id FROM commitment 
+    WHERE (creation_date,iris_code) IN
+     (SELECT min(creation_date) ,iris_code FROM commitment GROUP BY 2))c 
+     ON p.iris_code=c.iris_code
+	JOIN budget_action ba ON c.action_id=ba.id
+	JOIN budget_sector bs ON ba.sector_id=bs.id
+	JOIN beneficiary b ON c.beneficiary_id=b.id
 	WHERE c.beneficiary_id=$1`, bID)
 	if err != nil {
 		return err
@@ -92,8 +103,10 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 	var row Placement
 	defer rows.Close()
 	for rows.Next() {
-		if err = rows.Scan(&row.ID, &row.IrisCode, &row.Count,
-			&row.ContractYear, &row.Comment, &row.CreationDate); err != nil {
+		if err = rows.Scan(&row.ID, &row.IrisCode, &row.CommitmentValue,
+			&row.BeneficiaryCode, &row.BeneficiaryName, &row.Count, &row.ContractYear,
+			&row.Comment, &row.CreationDate, &row.ActionCode, &row.ActionName,
+			&row.Sector); err != nil {
 			return err
 		}
 		p.Lines = append(p.Lines, row)
@@ -109,15 +122,17 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 // belong to a group
 func (p *Placements) GetByBeneficiaryGroup(bID int64, db *sql.DB) error {
 	rows, err := db.Query(`SELECT p.id,p.iris_code,c.value,b.code,b.name,p.count,
-	p.contract_year,p.comment,MIN(c.creation_date),ba.code,ba.name,bs.name
+	p.contract_year,p.comment,c.creation_date,ba.code,ba.name,bs.name
 	FROM placement p
-	JOIN commitment c ON p.iris_code=c.iris_code
+	JOIN (SELECT creation_date,value,iris_code,action_id,beneficiary_id FROM commitment 
+    WHERE (creation_date,iris_code) IN
+     (SELECT min(creation_date) ,iris_code FROM commitment GROUP BY 2))c 
+     ON p.iris_code=c.iris_code
 	JOIN budget_action ba ON c.action_id=ba.id
 	JOIN budget_sector bs ON ba.sector_id=bs.id
 	JOIN beneficiary b ON c.beneficiary_id=b.id
 	WHERE c.beneficiary_id IN 
-		(SELECT beneficiary_id FROM beneficiary_belong WHERE group_id=$1)
-	GROUP BY 1,2,3,4,5,6,7,8,10,11,12`, bID)
+		(SELECT beneficiary_id FROM beneficiary_belong WHERE group_id=$1)`, bID)
 	if err != nil {
 		return err
 	}
