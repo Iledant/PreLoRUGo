@@ -158,6 +158,7 @@ type initialPaginatedReservationFeesResp struct {
 	models.HousingComments
 	models.HousingTransfers
 	models.ConventionTypes
+	models.ReservationReports
 }
 
 // GetInitialPaginatedReservationFees handle the get request for reservations fees that
@@ -207,6 +208,11 @@ func GetInitialPaginatedReservationFees(ctx iris.Context) {
 	if err := resp.ConventionTypes.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête conventions types : " + err.Error()})
+		return
+	}
+	if err := resp.ReservationReports.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Page initiale de réservation de logements, requête report de réservations : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
