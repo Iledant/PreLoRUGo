@@ -648,6 +648,14 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		iris_code varchar(20),
 		housing_type_short_name varchar(10)
 	)`, // 69 temp_iris_housing_type
+	`CREATE TABLE IF NOT EXISTS reservation_report(
+		id SERIAL PRIMARY KEY,
+		beneficiary_id int NOT NULL REFERENCES beneficiary(id),
+		area double precision NOT NULL,
+		source_iris_code varchar(20) NOT NULL,
+		dest_iris_code varchar(20),
+		dest_date date
+	)`, // 70 reservation_report
 }
 
 // createTablesAndViews launches the queries against the database to create all

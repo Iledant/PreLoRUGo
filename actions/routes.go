@@ -208,6 +208,11 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	reservationUserParty.Put("/reservation_fee", UpdateReservationFee)
 	reservationUserParty.Delete("/reservation_fee/{ID}", DeleteReservationFee)
 
+	reservationUserParty.Post("/reservation_report", CreateReservationReport)
+	reservationUserParty.Put("/reservation_report", UpdateReservationReport)
+	reservationUserParty.Delete("/reservation_report/{ID}", DeleteReservationReport)
+	reservationUserParty.Get("/reservation_reports", GetReservationReports)
+
 	userParty := api.Party("", RightsMiddleWare(&userHandler))
 	userParty.Post("/user/password", ChangeUserPwd)
 	userParty.Post("/user/logout", Logout)
