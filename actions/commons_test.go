@@ -121,6 +121,7 @@ func TestAll(t *testing.T) {
 	testReservationFee(t, cfg)
 	testGetDifActionPaymentPrevisions(t, cfg)
 	testReservationReport(t, cfg)
+	testSoldCommitment(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {

@@ -140,6 +140,9 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 
 	adminParty.Post("/iris_housing_type", BatchIRISHousingType)
 
+	adminParty.Get("/commitments/eldest", GetEldestCommitments)
+	adminParty.Get("/commitments/unpaid", GetUnpaidCommitments)
+
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
