@@ -55,7 +55,7 @@ func (r *HousingTypology) Update(db *sql.DB) (err error) {
 
 // GetAll fetches all HousingTypology from database
 func (r *HousingTypologies) GetAll(db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT id,name FROM housing_typology`)
+	rows, err := db.Query(`SELECT id,name FROM housing_typology ORDER BY 2`)
 	if err != nil {
 		return err
 	}
