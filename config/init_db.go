@@ -271,6 +271,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 			modification_date date NOT NULL,
 			number int NOT NULL,
 			value bigint NOT NULL,
+			receipt_date date,
 			FOREIGN KEY (commitment_id) REFERENCES commitment (id) MATCH SIMPLE
 			ON UPDATE NO ACTION ON DELETE NO ACTION DEFERRABLE
 		);`, // 19 : payment
@@ -283,7 +284,8 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 	    creation_date date NOT NULL,
 			modification_date date NOT NULL,
 			number int NOT NULL,
-	    value bigint NOT NULL
+			value bigint NOT NULL,
+			receipt_date date
 		);`, // 20 : temp_payment
 	`CREATE TABLE IF NOT EXISTS commission (
 	    id SERIAL PRIMARY KEY,
