@@ -16,6 +16,7 @@ type homeResp struct {
 	models.ImportLogs
 	models.PaymentCreditSum
 	models.HomeMessage `json:"HomeMessage"`
+	models.AvgPmtTimes
 }
 
 // GetHome handle the get request for the home page
@@ -49,7 +50,12 @@ func GetHome(ctx iris.Context) {
 	}
 	if err := resp.HomeMessage.Get(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Home requête home message sum : " + err.Error()})
+		ctx.JSON(jsonError{"Home requête home message : " + err.Error()})
+		return
+	}
+	if err := resp.AvgPmtTimes.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Home requête délais moyens paiements : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
