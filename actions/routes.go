@@ -143,6 +143,9 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	adminParty.Get("/commitments/eldest", GetEldestCommitments)
 	adminParty.Get("/commitments/unpaid", GetUnpaidCommitments)
 
+	adminParty.Put("/payment_demands", UpdatePaymentDemand)
+	adminParty.Post("/payment_demands", BatchPaymentDemands)
+
 	coproUserParty := api.Party("", RightsMiddleWare(&coproHandler))
 	coproUserParty.Post("/copro_forecast", CreateCoproForecast)
 	coproUserParty.Put("/copro_forecast", UpdateCoproForecast)
@@ -350,4 +353,6 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/dif_action_pmt_prev", GetDifActionPaymentPrevisions)
 
 	userParty.Get("/avg_pmt_times", GetAvgPmtTimes)
+	userParty.Get("/payment_demands", GetAllPaymentDemands)
+	userParty.Get("/payment_demand_counts", GetPaymentDemandCounts)
 }

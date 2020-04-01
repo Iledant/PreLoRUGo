@@ -658,6 +658,43 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		dest_iris_code varchar(20),
 		dest_date date
 	)`, // 70 reservation_report
+	`CREATE TABLE IF NOT EXISTS temp_payment_demands (
+		iris_code varchar(32) NOT NULL,
+		iris_name varchar(200) NOT NULL,
+		commitment_date date NOT NULL,
+		beneficiary_code int NOT NULL,
+		demand_number int NOT NULL,
+		demand_date	date NOT NULL,
+		receipt_date date NOT NULL,
+		demand_value bigint NOT NULL,
+		csf_date date,
+		csf_comment text,
+		demand_status varchar(15),
+		status_comment text
+	)`, // 71 temp_payment_demands
+	`CREATE OR REPLACE VIEW imported_payment_demands AS
+		SELECT iris_code,iris_name,MAX(commitment_date),beneficiary_code,
+			demand_number,demand_date,receipt_date,demand_value,csf_date,csf_comment,
+			demand_status,status_comment FROM temp_payment_demands
+			GROUP BY 1,2,4,5,6,7,8,9,10,11,12`, // 72 imported_payment_demands
+	`CREATE TABLE IF NOT EXISTS payment_demands (
+		id SERIAL PRIMARY KEY,
+		import_date date NOT NULL,
+		iris_code varchar(32) NOT NULL,
+		iris_name varchar(200) NOT NULL,
+		beneficiary_id int NOT NULL REFERENCES beneficiary(id),
+		demand_number int NOT NULL,
+		demand_date	date NOT NULL,
+		receipt_date date NOT NULL,
+		demand_value bigint NOT NULL,
+		csf_date date,
+		csf_comment text,
+		demand_status varchar(15),
+		status_comment text,
+		excluded boolean,
+		excluded_comment varchar(150),
+		processed_date date
+	)`, // 73 payment_demands
 }
 
 // createTablesAndViews launches the queries against the database to create all
