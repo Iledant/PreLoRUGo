@@ -124,6 +124,7 @@ func TestAll(t *testing.T) {
 	testSoldCommitment(t, cfg)
 	testAvgPmtTime(t, cfg)
 	testPaymentDemands(t, cfg)
+	testPaymentDelays(t, cfg)
 }
 
 func initializeTests(t *testing.T) *TestContext {
