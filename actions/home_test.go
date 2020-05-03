@@ -22,7 +22,8 @@ func testGetHome(t *testing.T, c *TestContext) {
 			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"Commitment":`, `"Payment":`, `"ImportLog":[`,
 				`"Programmation":[`, `"PaymentCreditSum":`, `"PaymentDemandCount"`,
-				`"HomeMessage":{"Title":"Message du jour","Body":"Corps du message"}`},
+				`"HomeMessage":{"Title":"Message du jour","Body":"Corps du message"}`,
+				`"PaymentDemandsStock"`},
 			Count:         0,
 			CountItemName: `"Month"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
