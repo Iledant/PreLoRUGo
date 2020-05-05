@@ -211,7 +211,7 @@ func (p *PaymentDemandBatch) Save(db *sql.DB) error {
 			processed_date)
 		SELECT $1,t.iris_code,t.iris_name,b.id,t.demand_number,t.demand_date,
 			t.receipt_date,t.demand_value,t.csf_date,t.csf_comment,t.demand_status,
-			t.status_comment,NULL::boolean,NULL::text,NULL::date
+			t.status_comment,FALSE,NULL::text,NULL::date
 		FROM imported_payment_demands t
 		JOIN beneficiary b ON b.code=t.beneficiary_code
 		WHERE (t.iris_code,t.beneficiary_code,t.demand_number) NOT IN 

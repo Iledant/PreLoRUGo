@@ -62,8 +62,9 @@ var migrations = []string{`ALTER TABLE copro ALTER COLUMN reference TYPE varchar
 		ADD UNIQUE (code)`, // 19
 	`ALTER TABLE housing 
 		ADD COLUMN housing_type_id int REFERENCES housing_type(id)`, // 20
-	`ALTER TABLE payment ADD COLUMN receipt_date date`,      // 21
-	`ALTER TABLE temp_payment ADD COLUMN receipt_date date`, // 22
+	`ALTER TABLE payment ADD COLUMN receipt_date date`,                                          // 21
+	`ALTER TABLE temp_payment ADD COLUMN receipt_date date`,                                     // 22
+	`ALTER TABLE payment_demands ALTER excluded SET NOT NULL, ALTER excluded SET DEFAULT FALSE`, //23
 }
 
 // handleMigrations check if new migrations have been created and launches them

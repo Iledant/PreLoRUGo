@@ -691,7 +691,7 @@ var initQueries = []string{`CREATE EXTENSION IF NOT EXISTS tablefunc`, // 0 tabl
 		csf_comment text,
 		demand_status varchar(15),
 		status_comment text,
-		excluded boolean,
+		excluded boolean NOT NULL DEFAULT FALSE,
 		excluded_comment varchar(150),
 		processed_date date
 	)`, // 73 payment_demands

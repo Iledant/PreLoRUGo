@@ -21,7 +21,7 @@ func testGetHome(t *testing.T, c *TestContext) {
 		{
 			Token: c.Config.Users.User.Token,
 			RespContains: []string{`"Commitment":`, `"Payment":`, `"ImportLog":[`,
-				`"Programmation":[`, `"PaymentCreditSum":`, `"PaymentDemandCount"`,
+				`"Programmation":[`, `"PaymentCreditSum":`,
 				`"HomeMessage":{"Title":"Message du jour","Body":"Corps du message"}`,
 				`"PaymentDemandsStock"`},
 			Count:         0,
