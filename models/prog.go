@@ -234,7 +234,7 @@ func (p *ProgBatch) Save(year int64, db *sql.DB) error {
 		return fmt.Errorf("delete query %v", err)
 	}
 	queries := []string{`INSERT INTO prog (commission_id,year,value,kind,kind_id,
-		comment,action_id) SELECT commission_id,year,value,kind,kind_id,
+		comment,action_id) SELECT DISTINCT commission_id,year,value,kind,kind_id,
 		comment,action_id FROM temp_prog `,
 		`DELETE from temp_prog`,
 	}

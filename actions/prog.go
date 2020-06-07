@@ -96,8 +96,14 @@ func SetProg(ctx iris.Context) {
 		ctx.JSON(jsonError{"Fixation de la programmation d'une année, requête : " + err.Error()})
 		return
 	}
+	var resp models.Progs
+	if err := resp.GetAll(year, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Fixation de la programmation d'une année, requête programmation : " + err.Error()})
+		return
+	}
 	ctx.StatusCode(http.StatusOK)
-	ctx.JSON(jsonMessage{"Batch importé"})
+	ctx.JSON(resp)
 }
 
 // GetProgYears handles the get request to fetch all programmation years from the

@@ -83,7 +83,7 @@ func testBatchProg(t *testing.T, c *TestContext) {
 			{"CommissionID":2,"Value":2000000,"KindID":null,"Comment":null,"ActionID":3,"Kind":1},
 			{"CommissionID":2,"Value":3000000,"KindID":3,"Comment":"commentaire RU","ActionID":4,"Kind":3}]}`),
 			Params:       "Year=2019",
-			RespContains: []string{"Batch importé"},
+			RespContains: []string{`"Prog":[`},
 			StatusCode:   http.StatusOK}, // 9 : OK
 	}
 	f := func(tc TestCase) *httpexpect.Response {
