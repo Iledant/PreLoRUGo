@@ -107,7 +107,8 @@ JOIN budget_action b ON b.id=rf.action_id
 JOIN renew_project rp ON rf.renew_project_id=rp.id
 WHERE EXTRACT(year FROM c.date)=$1) rf
 ON pp.commission_id=rf.commission_id AND pp.action_id=rf.action_id
-	AND pp.kind_id=rf.renew_project_id AND pp.value=rf.value`
+	AND pp.kind_id=rf.renew_project_id AND pp.value=rf.value
+	AND pp.project=rf.project`
 
 const preProgQry = preProgHousingQry + " UNION ALL " + preProgCoproQry +
 	" UNION ALL " + preProgRPQry
@@ -307,7 +308,7 @@ func (p *PreProgBatch) Save(kind int64, year int64, db *sql.DB) error {
 		return fmt.Errorf("delete query %v", err)
 	}
 	queries := []string{`INSERT INTO pre_prog (commission_id,year,value,kind,kind_id,
-		project,comment,action_id) SELECT commission_id,year,value,kind,kind_id,
+		project,comment,action_id) SELECT DISTINCT commission_id,year,value,kind,kind_id,
 		project,comment,action_id FROM temp_pre_prog `,
 		`DELETE from temp_pre_prog`,
 	}
