@@ -18,6 +18,7 @@ type homeResp struct {
 	models.HomeMessage `json:"HomeMessage"`
 	models.AvgPmtTimes
 	models.PaymentDemandsStocks
+	models.AveragePayments
 }
 
 // GetHome handle the get request for the home page
@@ -62,6 +63,11 @@ func GetHome(ctx iris.Context) {
 	if err := resp.PaymentDemandsStocks.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Home requête stock de DVS : " + err.Error()})
+		return
+	}
+	if err := resp.AveragePayments.GetAll(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Home requête payments moyens : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)
