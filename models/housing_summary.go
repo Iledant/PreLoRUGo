@@ -130,7 +130,7 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 	rows, err := tx.Query(`SELECT reference_code,insee_code,max(address),SUM(pls),
 		SUM(plai),SUM(plus),bool_or(anru) FROM temp_housing_summary 
 	WHERE reference_code NOT IN
-		(SELECT reference_code FROM housing_summary WHERE year=$1)
+		(SELECT import_ref FROM housing_summary WHERE year=$1)
 		GROUP BY 1,2`, year)
 	if err != nil {
 		tx.Rollback()
