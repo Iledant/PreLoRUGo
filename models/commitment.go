@@ -291,7 +291,7 @@ func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error 
 		WHERE year >= $1 AND housing_id IS NULL AND renew_project_id IS NULL AND
 			copro_id IS NULL AND
 			(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
-				OR b.name ILIKE $2 OR a.name ILIKE $2)`, c.Year, "%"+c.Search+"%").
+				OR b.name ILIKE $2 OR a.name ILIKE $2 OR iris_code ILIKE $2)`, c.Year, "%"+c.Search+"%").
 		Scan(&count); err != nil {
 		return fmt.Errorf("count query failed %v", err)
 	}
@@ -305,7 +305,7 @@ func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error 
 	JOIN budget_sector s ON s.id=a.sector_id 
 	WHERE year >= $1 AND housing_id IS NULL AND renew_project_id IS NULL AND
 	copro_id IS NULL AND (c.name ILIKE $2  OR c.number::varchar ILIKE $2 OR 
-		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
+		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2 OR iris_code ILIKE $2)
 	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		c.Year, "%"+c.Search+"%", offset)
 	if err != nil {
