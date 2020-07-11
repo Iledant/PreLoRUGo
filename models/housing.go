@@ -224,8 +224,10 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 // pattern
 func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 	var count int64
-	if err := db.QueryRow(`SELECT count(1) FROM housing
-		WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1`,
+	if err := db.QueryRow(`SELECT count(1) FROM housing h
+		LEFT JOIN city c ON h.zip_code=c.insee_code
+		WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1
+			OR c.name ILIKE $1`,
 		"%"+q.Search+"%").Scan(&count); err != nil {
 		return errors.New("count query failed " + err.Error())
 	}
@@ -237,6 +239,7 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 	LEFT JOIN city c ON h.zip_code=c.insee_code
 	LEFT JOIN housing_type ht ON h.housing_type_id=ht.id
 	WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1
+		OR c.name ILIKE $1
 	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
 		"%"+q.Search+"%", offset)
 	if err != nil {
