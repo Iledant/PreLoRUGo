@@ -19,6 +19,7 @@ type homeResp struct {
 	models.AvgPmtTimes
 	models.PaymentDemandsStocks
 	models.AveragePayments
+	models.CsfWeekTrend `json:"CsfWeekTrend"`
 }
 
 // GetHome handle the get request for the home page
