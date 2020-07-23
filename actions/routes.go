@@ -347,6 +347,8 @@ func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
 	userParty.Get("/avg_pmt_times", GetAvgPmtTimes)
 	userParty.Get("/payment_demands", GetAllPaymentDemands)
 	userParty.Get("/payment_demand_counts", GetPaymentDemandCounts)
+	userParty.Get("/payment_demand_stocks", GetPaymentDemandStocks)
 
 	userParty.Get("/payment_delays", GetPaymentDelays)
+	userParty.Get("/average_payment_time", GetAvgPmtTimes)
 }

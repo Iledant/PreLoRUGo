@@ -13,6 +13,7 @@ func testPaymentDemands(t *testing.T, c *TestContext) {
 		updatePaymentDemandsTest(t, c)
 		getAllPaymentDemandsTest(t, c)
 		getPaymentDemandCountsTest(t, c)
+		getPaymentDemandStocksTest(t, c)
 	})
 }
 
@@ -125,6 +126,25 @@ func getPaymentDemandCountsTest(t *testing.T, c *TestContext) {
 			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
 	}
 	for _, r := range chkFactory(TestCases, f, "GetPaymentDemandCounts") {
+		t.Error(r)
+	}
+}
+
+// getPaymentDemandStocksTest check route is protected and payment demands correctly sent.
+func getPaymentDemandStocksTest(t *testing.T, c *TestContext) {
+	TestCases := []TestCase{
+		*c.UserCheckTestCase,
+		{
+			Token:        c.Config.Users.User.Token,
+			StatusCode:   http.StatusOK,
+			RespContains: []string{`"PaymentDemandsStock"`},
+		},
+	}
+	f := func(tc TestCase) *httpexpect.Response {
+		return c.E.GET("/api/payment_demand_stocks").
+			WithHeader("Authorization", "Bearer "+tc.Token).Expect()
+	}
+	for _, r := range chkFactory(TestCases, f, "GetPaymentDemandStocks") {
 		t.Error(r)
 	}
 }
