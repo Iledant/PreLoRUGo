@@ -16,8 +16,6 @@ type homeResp struct {
 	models.ImportLogs
 	models.PaymentCreditSum
 	models.HomeMessage `json:"HomeMessage"`
-	models.AvgPmtTimes
-	models.PaymentDemandsStocks
 	models.AveragePayments
 	models.CsfWeekTrend    `json:"CsfWeekTrend"`
 	models.FlowStockDelays `json:"FlowStockDelays"`
@@ -58,19 +56,24 @@ func GetHome(ctx iris.Context) {
 		ctx.JSON(jsonError{"Home requête home message : " + err.Error()})
 		return
 	}
-	if err := resp.AvgPmtTimes.GetAll(db); err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Home requête délais moyens paiements : " + err.Error()})
-		return
-	}
-	if err := resp.PaymentDemandsStocks.GetAll(db); err != nil {
-		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Home requête stock de DVS : " + err.Error()})
-		return
-	}
 	if err := resp.AveragePayments.GetAll(db); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
 		ctx.JSON(jsonError{"Home requête payments moyens : " + err.Error()})
+		return
+	}
+	if err := resp.CsfWeekTrend.Get(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Home requête stock CSF : " + err.Error()})
+		return
+	}
+	if err := resp.FlowStockDelays.Get(90, db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Home requête délai de paiement : " + err.Error()})
+		return
+	}
+	if err := resp.PaymentRate.Get(db); err != nil {
+		ctx.StatusCode(http.StatusInternalServerError)
+		ctx.JSON(jsonError{"Home requête taux de paiement : " + err.Error()})
 		return
 	}
 	ctx.StatusCode(http.StatusOK)

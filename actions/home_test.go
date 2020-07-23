@@ -23,7 +23,7 @@ func testGetHome(t *testing.T, c *TestContext) {
 			RespContains: []string{`"Commitment":`, `"Payment":`, `"ImportLog":[`,
 				`"Programmation":[`, `"PaymentCreditSum":`,
 				`"HomeMessage":{"Title":"Message du jour","Body":"Corps du message"}`,
-				`"PaymentDemandsStock"`, `"AveragePayment":[`, `"CsfWeekTrend":`,
+				`"AveragePayment":[`, `"CsfWeekTrend":`,
 				`"FlowStockDelays":`, `"PaymentRate":`},
 			Count:         4,
 			CountItemName: `"Month"`,
