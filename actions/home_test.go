@@ -23,7 +23,8 @@ func testGetHome(t *testing.T, c *TestContext) {
 			RespContains: []string{`"Commitment":`, `"Payment":`, `"ImportLog":[`,
 				`"Programmation":[`, `"PaymentCreditSum":`,
 				`"HomeMessage":{"Title":"Message du jour","Body":"Corps du message"}`,
-				`"PaymentDemandsStock"`, `"AveragePayment":[`, `"CsfWeekTrend":`},
+				`"PaymentDemandsStock"`, `"AveragePayment":[`, `"CsfWeekTrend":`,
+				`"FlowStockDelays"`},
 			Count:         4,
 			CountItemName: `"Month"`,
 			StatusCode:    http.StatusOK}, // 1 : ok
