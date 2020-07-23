@@ -3,24 +3,16 @@ package actions
 import (
 	"database/sql"
 
-	"github.com/iris-contrib/middleware/cors"
 	"github.com/kataras/iris"
 )
 
 // SetRoutes initialize all routes for the application
 func SetRoutes(app *iris.Application, superAdminEmail string, db *sql.DB) {
-	crs := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
-		AllowCredentials: true,
-	})
 
-	crsParty := app.Party("/api", crs).AllowMethods(iris.MethodOptions)
+	api := app.Party("/api", setDBMiddleware(db, superAdminEmail))
 
-	crsParty.Post("/user/sign_up", setDBMiddleware(db, superAdminEmail), SignUp)
-	crsParty.Post("/user/login", setDBMiddleware(db, superAdminEmail), Login)
-	api := crsParty.Party("", setDBMiddleware(db, superAdminEmail))
+	api.Post("/user/sign_up", setDBMiddleware(db, superAdminEmail), SignUp)
+	api.Post("/user/login", setDBMiddleware(db, superAdminEmail), Login)
 
 	adminParty := api.Party("", RightsMiddleWare(&admHandler))
 	adminParty.Post("/user", CreateUser)
