@@ -24,7 +24,7 @@ func testGetHome(t *testing.T, c *TestContext) {
 				`"Programmation":[`, `"PaymentCreditSum":`,
 				`"HomeMessage":{"Title":"Message du jour","Body":"Corps du message"}`,
 				`"PaymentDemandsStock"`, `"AveragePayment":[`, `"CsfWeekTrend":`,
-				`"FlowStockDelays"`},
+				`"FlowStockDelays":`, `"PaymentRate":`},
 			Count:         4,
 			CountItemName: `"Month"`,
 			StatusCode:    http.StatusOK}, // 1 : ok

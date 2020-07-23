@@ -21,6 +21,7 @@ type homeResp struct {
 	models.AveragePayments
 	models.CsfWeekTrend    `json:"CsfWeekTrend"`
 	models.FlowStockDelays `json:"FlowStockDelays"`
+	models.PaymentRate     `json:"PaymentRate"`
 }
 
 // GetHome handle the get request for the home page
