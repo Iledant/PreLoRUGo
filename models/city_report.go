@@ -22,52 +22,57 @@ type CityReport struct {
 // GetAll fetches commitments and payments per policy and year in a city
 func (c *CityReport) GetAll(db *sql.DB, inseeCode, firstYear, lastYear int64) (err error) {
 	qry := fmt.Sprintf(`WITH
-	hcmt AS (SELECT cmt.year,SUM(cmt.value) as cmt
+	housingCmt AS (SELECT cmt.year,SUM(cmt.value) cmt
 		FROM cumulated_commitment cmt
 		JOIN housing h ON cmt.housing_id=h.id
 		WHERE h.zip_code=$1
 		GROUP BY 1),
-  hpmt AS (SELECT p.year,SUM(p.value) as pmt FROM payment p
+  housingPmt AS (SELECT p.year,SUM(p.value) pmt FROM payment p
 		JOIN cumulated_commitment c ON p.commitment_id=c.id
 		JOIN housing h ON c.housing_id=h.id
 		WHERE h.zip_code=$1
 		GROUP BY 1),
-  hfig AS (SELECT hcmt.year,hcmt.cmt,hpmt.pmt FROM hcmt
-  	FULL OUTER JOIN hpmt ON hcmt.year=hpmt.year),
-	ccmt AS (SELECT cmt.year,SUM(cmt.value) as cmt 
+	housingFig AS (SELECT housingCmt.year,housingCmt.cmt,housingPmt.pmt
+		FROM housingCmt
+  	FULL OUTER JOIN housingPmt ON housingCmt.year=housingPmt.year),
+	coproCmt AS (SELECT cmt.year,SUM(cmt.value) cmt 
 		FROM cumulated_commitment cmt
 		JOIN copro co ON cmt.copro_id=co.id
 		WHERE co.zip_code=$1
 		GROUP BY 1),
-  cpmt AS (SELECT p.year,SUM(p.value) as pmt FROM payment p
+  coproPmt AS (SELECT p.year,SUM(p.value) pmt FROM payment p
 		JOIN cumulated_commitment c ON p.commitment_id=c.id
 		JOIN copro co ON c.copro_id=co.id
 		WHERE co.zip_code=$1
 		GROUP BY 1),
-  cfig AS (SELECT ccmt.year,ccmt.cmt,cpmt.pmt FROM ccmt
-		FULL OUTER JOIN cpmt ON ccmt.year=cpmt.year),
-	rcmt AS (SELECT cmt.year,SUM(cmt.value) as cmt 
+	coproFig AS (SELECT coproCmt.year,coproCmt.cmt,coproPmt.pmt
+		FROM coproCmt
+		FULL OUTER JOIN coproPmt ON coproCmt.year=coproPmt.year),
+	renewProjectCmt AS (SELECT cmt.year,SUM(cmt.value) cmt 
 		FROM cumulated_commitment cmt
 		JOIN rp_cmt_city_join rp ON cmt.id=rp.commitment_id
 		WHERE rp.city_code=$1
 		GROUP BY 1),
-  rpmt AS (SELECT p.year,SUM(p.value) as pmt FROM payment p
+  renewProjectPmt AS (SELECT p.year,SUM(p.value) pmt FROM payment p
 		JOIN cumulated_commitment c ON p.commitment_id=c.id
 		JOIN rp_cmt_city_join rp ON c.id=rp.commitment_id
 		WHERE rp.city_code=$1
 		GROUP BY 1),
-  rfig AS (SELECT rcmt.year,rcmt.cmt,rpmt.pmt FROM rcmt
-    FULL OUTER JOIN rpmt ON rpmt.year=rcmt.year)
-	SELECT y.year,p.kind,COALESCE(q.cmt,0),COALESCE(q.pmt,0)
-   FROM (SELECT generate_series(%d,%d) as year) y
-   CROSS JOIN (SELECT * FROM (VALUES (1),(2),(3)) AS t(kind)) p
-	LEFT OUTER JOIN (
-		SELECT 1 as kind,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM hfig UNION ALL 
-			SELECT 2 as kind,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM cfig UNION ALL 
-			SELECT 3 as kind,year,COALESCE(cmt,0) AS cmt,COALESCE(pmt,0) AS pmt FROM rfig
-	) q
-		ON q.year=y.year AND q.kind=p.kind
-		ORDER BY 1,2;`, firstYear, lastYear)
+	renewProjectFig AS (SELECT renewProjectCmt.year,renewProjectCmt.cmt,renewProjectPmt.pmt 
+		FROM renewProjectCmt
+    FULL OUTER JOIN renewProjectPmt ON renewProjectPmt.year=renewProjectCmt.year)
+	SELECT y,k,COALESCE(q.cmt,0),COALESCE(q.pmt,0)
+		FROM generate_series(%d,%d) y
+		CROSS JOIN generate_series(1,3) k
+		LEFT OUTER JOIN (
+			SELECT 1 kind,year,COALESCE(cmt,0) cmt,COALESCE(pmt,0) pmt FROM housingFig
+			UNION ALL 
+			SELECT 2 kind,year,COALESCE(cmt,0) cmt,COALESCE(pmt,0) pmt FROM coproFig
+			UNION ALL 
+			SELECT 3 kind,year,COALESCE(cmt,0) cmt,COALESCE(pmt,0) pmt FROM renewProjectFig
+		) q
+			ON q.year=y AND q.kind=k
+	ORDER BY 1,2;`, firstYear, lastYear)
 	rows, err := db.Query(qry, inseeCode)
 	if err != nil {
 		return err
