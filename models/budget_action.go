@@ -20,8 +20,11 @@ type BudgetActions struct {
 
 // Validate checks if the fields of a budget action are correctly filled
 func (b *BudgetAction) Validate() error {
-	if b.Code == 0 || b.Name == "" {
-		return errors.New("Champ code ou name incorrect")
+	if b.Code == 0 {
+		return errors.New("Champ code incorrect")
+	}
+	if b.Name == "" {
+		return errors.New("Champ name incorrect")
 	}
 	return nil
 }
