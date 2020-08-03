@@ -21,12 +21,13 @@ type AveragePayments struct {
 // GetAll fetches the cumulated payment rates of each month of the past years
 func (a *AveragePayments) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`WITH 
-		q as (SELECT m,sum(v) OVER (ORDER by m) FROM
-    	(SELECT extract(month FROM creation_date)::int m,sum(value)::bigint v
-			FROM payment WHERE creation_date<date (extract(year FROM current_date)||'-01-01')
-			GROUP by 1) q),
+		q as (SELECT m,SUM(v) OVER (ORDER BY m) FROM
+    	(SELECT EXTRACT(month FROM creation_date)::int m,SUM(value)::bigint v
+			FROM payment
+			WHERE creation_date<date(EXTRACT(year FROM current_date)||'-01-01')
+			GROUP BY 1) q),
   	ma as (SELECT max(sum) FROM q)
-	SELECT m,q.sum/ma.max FROM q,ma ORDER by 1`)
+	SELECT m,q.sum/ma.max FROM q,ma ORDER BY 1`)
 	if err != nil {
 		return fmt.Errorf("select %v", err)
 	}
