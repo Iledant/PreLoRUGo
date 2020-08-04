@@ -35,8 +35,11 @@ type CommunityBatch struct {
 
 // Validate checks if Community's fields are correctly filled
 func (c *Community) Validate() error {
-	if c.Code == "" || c.Name == "" {
-		return errors.New("Champ code ou name incorrect")
+	if c.Code == "" {
+		return errors.New("Champ code incorrect")
+	}
+	if c.Name == "" {
+		return errors.New("Champ name incorrect")
 	}
 	return nil
 }
@@ -52,10 +55,7 @@ func (c *Community) Create(db *sql.DB) (err error) {
 func (c *Community) Get(db *sql.DB) (err error) {
 	err = db.QueryRow(`SELECT code, name,department_id FROM community WHERE ID=$1`,
 		c.ID).Scan(&c.Code, &c.Name, &c.DepartmentID)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Update modifies a community in database
@@ -63,29 +63,29 @@ func (c *Community) Update(db *sql.DB) (err error) {
 	res, err := db.Exec(`UPDATE community SET code=$1,name=$2,department_id=$3 
 	WHERE id=$4`, c.Code, c.Name, c.DepartmentID, c.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %d", err)
 	}
 	if count != 1 {
 		return errors.New("Interco introuvable")
 	}
-	return err
+	return nil
 }
 
 // GetAll fetches all Communities from database
 func (c *Communities) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,code,name,department_id FROM community`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Community
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Code, &row.Name, &row.DepartmentID); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		c.Communities = append(c.Communities, row)
 	}
@@ -102,20 +102,20 @@ func (c *Community) Delete(db *sql.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	if _, err := tx.Exec("UPDATE city SET community_id=NULL where community_id = $1",
+	if _, err := tx.Exec("UPDATE city SET community_id=NULL where community_id=$1",
 		c.ID); err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("update %v", err)
 	}
-	res, err := tx.Exec("DELETE FROM community WHERE id = $1", c.ID)
+	res, err := tx.Exec("DELETE FROM community WHERE id=$1", c.ID)
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		tx.Rollback()
@@ -134,11 +134,11 @@ func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_community", "code", "name", "department_code"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {

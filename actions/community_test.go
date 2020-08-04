@@ -38,12 +38,12 @@ func testCreateCommunity(t *testing.T, c *TestContext) (ID int) {
 		{
 			Sent:         []byte(`{"Community":{"Code":"","Name":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création d'interco : Champ code ou name incorrect`},
+			RespContains: []string{`Création d'interco : Champ code incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
 		{
 			Sent:         []byte(`{"Community":{"Code":"Essai","Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création d'interco : Champ code ou name incorrect`},
+			RespContains: []string{`Création d'interco : Champ name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{
 			Sent:         []byte(`{"Community":{"Code":"Essai","Name":"Essai"}}`),
@@ -75,12 +75,12 @@ func testUpdateCommunity(t *testing.T, c *TestContext, ID int) {
 
 		{Sent: []byte(`{"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"","Name":"Essai2"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Modification d'interco : Champ code ou name incorrect`},
+			RespContains: []string{`Modification d'interco : Champ code incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
 		{
 			Sent:         []byte(`{"Community":{"ID":` + strconv.Itoa(ID) + `,"Code":"Essai2","Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Modification d'interco : Champ code ou name incorrect`},
+			RespContains: []string{`Modification d'interco : Champ name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{
 			Sent:         []byte(`{"Community":{"ID":0,"Code":"Essai2","Name":"Essai2"}}`),
