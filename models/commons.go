@@ -1,10 +1,10 @@
 package models
 
 import (
+	"bytes"
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -13,6 +13,8 @@ var b = time.Date(1899, 12, 30, 0, 0, 0, 0, time.UTC)
 
 // PageSize defines the number of row of a paginated query
 const PageSize = 10
+
+var nullBytes []byte = []byte("null")
 
 // GetPaginateParams returns the correct offset and page according to the total number of rows.
 func GetPaginateParams(page int64, count int64) (offset int64, newPage int64) {
@@ -32,17 +34,6 @@ func GetPaginateParams(page int64, count int64) (offset int64, newPage int64) {
 
 type jsonError struct {
 	Erreur string `json:"error"`
-}
-
-// ExcelDate is used for batch imports to decode an integer and transform it
-// into a SQL date using toSQL function. 0 value is coded to "null" by toSQL
-type ExcelDate int64
-
-// NullExcelDate is used for batch import to decde an nullable integer and
-// transfort it into en nullable SQL date using toSQL function
-type NullExcelDate struct {
-	Valid bool
-	Date  int64
 }
 
 // NullTime is used for nullable time column
@@ -79,23 +70,12 @@ func (nt NullTime) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implents the unmarshal interface
 func (nt *NullTime) UnmarshalJSON(b []byte) error {
-	if len(b) == 4 && b[0] == 110 && b[1] == 117 && b[2] == 108 && b[3] == 108 {
+	if bytes.Equal(b, nullBytes) {
 		nt.Valid = false
 		return nil
 	}
 	err := json.Unmarshal(b, &nt.Time)
 	nt.Valid = (err == nil)
-	return err
-}
-
-// UnmarshalJSON implements the unmarshal interface
-func (ne *NullExcelDate) UnmarshalJSON(b []byte) error {
-	if len(b) == 4 && b[0] == 110 && b[1] == 117 && b[2] == 108 && b[3] == 108 {
-		ne.Valid = false
-		return nil
-	}
-	err := json.Unmarshal(b, &ne.Date)
-	ne.Valid = (err == nil)
 	return err
 }
 
@@ -107,13 +87,12 @@ func (nb NullBool) MarshalJSON() ([]byte, error) {
 	if nb.Valid == false {
 		return []byte("null"), nil
 	}
-
 	return json.Marshal(nb.Bool)
 }
 
 // UnmarshalJSON implents the unmarshal interface
 func (nb *NullBool) UnmarshalJSON(b []byte) error {
-	if len(b) == 4 && b[0] == 110 && b[1] == 117 && b[2] == 108 && b[3] == 108 {
+	if bytes.Equal(b, nullBytes) {
 		nb.Valid = false
 		return nil
 	}
@@ -158,7 +137,7 @@ func (ni NullInt64) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implents the unmarshal interface
 func (ni *NullInt64) UnmarshalJSON(b []byte) error {
-	if len(b) == 4 && b[0] == 110 && b[1] == 117 && b[2] == 108 && b[3] == 108 {
+	if bytes.Equal(b, nullBytes) {
 		ni.Valid = false
 		return nil
 	}
@@ -203,7 +182,7 @@ func (ns NullString) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implents the unmarshal interface
 func (ns *NullString) UnmarshalJSON(b []byte) error {
-	if len(b) == 4 && b[0] == 110 && b[1] == 117 && b[2] == 108 && b[3] == 108 {
+	if bytes.Equal(b, nullBytes) {
 		ns.Valid = false
 		return nil
 	}
@@ -256,7 +235,7 @@ func (nf NullFloat64) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implents the unmarshal interface
 func (nf *NullFloat64) UnmarshalJSON(b []byte) error {
-	if len(b) == 4 && b[0] == 110 && b[1] == 117 && b[2] == 108 && b[3] == 108 {
+	if bytes.Equal(b, nullBytes) {
 		nf.Valid = false
 		return nil
 	}
@@ -285,64 +264,4 @@ func (nf NullFloat64) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return nf.Float64, nil
-}
-
-// toSQL convert i to a string used for INSERT VALUES statement.
-func toSQL(i interface{}) string {
-	switch v := i.(type) {
-	case int64:
-		return strconv.FormatInt(v, 10)
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case string:
-		return "$$" + v + "$$"
-	case time.Time:
-		return "'" + v.Format("2006-01-02") + "'"
-	case ExcelDate:
-		if v == 0 {
-			return "null"
-		}
-		return "'" + b.Add(time.Duration(v*24)*time.Hour).Format("2006-01-02") + "'"
-	case int:
-		return strconv.Itoa(v)
-	case bool:
-		if v {
-			return "TRUE"
-		}
-		return "FALSE"
-	case NullInt64:
-		if !v.Valid {
-			return "null"
-		}
-		return strconv.FormatInt(v.Int64, 10)
-	case NullString:
-		if !v.Valid {
-			return "null"
-		}
-		return "$$" + v.String + "$$"
-	case NullFloat64:
-		if !v.Valid {
-			return "null"
-		}
-		return strconv.FormatFloat(v.Float64, 'f', -1, 64)
-	case NullBool:
-		if !v.Valid {
-			return "null"
-		}
-		if v.Bool {
-			return "TRUE"
-		}
-		return "FALSE"
-	case NullTime:
-		if !v.Valid {
-			return "null"
-		}
-		return "'" + v.Time.Format("2006-01-02") + "'"
-	case NullExcelDate:
-		if !v.Valid {
-			return "null"
-		}
-		return "'" + b.Add(time.Duration(v.Date*24)*time.Hour).Format("2006-01-02") + "'"
-	}
-	return ""
 }
