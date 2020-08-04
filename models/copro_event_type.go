@@ -43,9 +43,12 @@ func (r *CoproEventType) Get(db *sql.DB) (err error) {
 func (r *CoproEventType) Update(db *sql.DB) (err error) {
 	res, err := db.Exec(`UPDATE copro_event_type SET name=$1 WHERE id=$2`,
 		r.Name, r.ID)
+	if err != nil {
+		return fmt.Errorf("update %v", err)
+	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Type d'événement introuvable")
@@ -57,17 +60,20 @@ func (r *CoproEventType) Update(db *sql.DB) (err error) {
 func (r *CoproEventTypes) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,name FROM copro_event_type`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row CoproEventType
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Name); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.CoproEventTypes = append(r.CoproEventTypes, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.CoproEventTypes) == 0 {
 		r.CoproEventTypes = []CoproEventType{}
 	}
@@ -78,11 +84,11 @@ func (r *CoproEventTypes) GetAll(db *sql.DB) (err error) {
 func (r *CoproEventType) Delete(db *sql.DB) (err error) {
 	res, err := db.Exec("DELETE FROM copro_event_type WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Type d'événement introuvable")
