@@ -43,7 +43,7 @@ func (r *CoproEvent) Create(db *sql.DB) (err error) {
 		comment) VALUES($1,$2,$3,$4) RETURNING id`, r.CoproID, r.CoproEventTypeID,
 		r.Date, r.Comment).Scan(&r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("insert %v", err)
 	}
 	err = db.QueryRow(`SELECT name FROM copro_event_type WHERE id=$1`,
 		r.CoproEventTypeID).Scan(&r.Name)
@@ -79,7 +79,7 @@ func (r *CoproEvent) Update(db *sql.DB) (err error) {
 		r.Comment, r.ID)
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Événement introuvable")
@@ -95,18 +95,21 @@ func (r *CoproEvents) GetAll(db *sql.DB) (err error) {
 	 rt.name,r.date,r.comment
 	 FROM copro_event r JOIN copro_event_type rt ON rt.id=r.copro_event_type_id`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row CoproEvent
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.CoproID, &row.CoproEventTypeID,
 			&row.Name, &row.Date, &row.Comment); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.CoproEvents = append(r.CoproEvents, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.CoproEvents) == 0 {
 		r.CoproEvents = []CoproEvent{}
 	}
@@ -117,11 +120,11 @@ func (r *CoproEvents) GetAll(db *sql.DB) (err error) {
 func (r *CoproEvent) Delete(db *sql.DB) (err error) {
 	res, err := db.Exec("DELETE FROM copro_event WHERE id=$1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Événement introuvable")
@@ -136,18 +139,21 @@ func (f *FullCoproEvents) GetLinked(db *sql.DB, rpID int64) error {
 	 JOIN copro_event_type rt ON r.copro_event_type_id=rt.id
 	  WHERE copro_id=$1`, rpID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row FullCoproEvent
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.CoproEventTypeID, &row.Name, &row.Date,
 			&row.Comment); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		f.FullCoproEvents = append(f.FullCoproEvents, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(f.FullCoproEvents) == 0 {
 		f.FullCoproEvents = []FullCoproEvent{}
 	}
