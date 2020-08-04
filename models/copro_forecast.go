@@ -59,7 +59,8 @@ func (r *CoproForecast) Create(db *sql.DB) (err error) {
  VALUES($1,$2,$3,$4,$5,$6) RETURNING id`, &r.CommissionID, &r.Value, &r.Project,
 		&r.Comment, &r.CoproID, &r.ActionID).Scan(&r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("insert %v", err)
+
 	}
 	err = db.QueryRow(`SELECT c.name, c.date, b.code, b.name 
 	FROM commission c, budget_action b WHERE c.id=$1 AND b.id=$2`,
@@ -78,7 +79,8 @@ func (r *CoproForecast) Get(db *sql.DB) (err error) {
 		Scan(&r.CommissionID, &r.CommissionDate, &r.CommissionName,
 			&r.Value, &r.Project, &r.Comment, &r.CoproID, &r.ActionCode, &r.ActionName)
 	if err != nil {
-		return err
+		return fmt.Errorf("scan %v", err)
+
 	}
 	return nil
 }
@@ -89,11 +91,11 @@ func (r *CoproForecast) Update(db *sql.DB) (err error) {
 	project=$3,comment=$4,copro_id=$5,action_id=$6 WHERE id=$7`, r.CommissionID,
 		r.Value, r.Project, r.Comment, r.CoproID, r.ActionID, r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Prévision copro introuvable")
@@ -112,7 +114,7 @@ func (r *CoproForecasts) GetAll(db *sql.DB) (err error) {
 	JOIN commission c ON c.id=cf.commission_id
 	JOIN budget_action b ON b.id = cf.action_id`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row CoproForecast
 	defer rows.Close()
@@ -120,11 +122,14 @@ func (r *CoproForecasts) GetAll(db *sql.DB) (err error) {
 		if err = rows.Scan(&row.ID, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Project, &row.Comment, &row.CoproID,
 			&row.ActionCode, &row.ActionName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.CoproForecasts = append(r.CoproForecasts, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.CoproForecasts) == 0 {
 		r.CoproForecasts = []CoproForecast{}
 	}
@@ -140,7 +145,7 @@ func (r *CoproForecasts) Get(ID int64, db *sql.DB) (err error) {
 	JOIN budget_action b ON b.id = cf.action_id
 	WHERE cf.copro_id=$1`, ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row CoproForecast
 	defer rows.Close()
@@ -148,26 +153,29 @@ func (r *CoproForecasts) Get(ID int64, db *sql.DB) (err error) {
 		if err = rows.Scan(&row.ID, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Project, &row.Comment, &row.CoproID,
 			&row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.CoproForecasts = append(r.CoproForecasts, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.CoproForecasts) == 0 {
 		r.CoproForecasts = []CoproForecast{}
 	}
-	return err
+	return nil
 }
 
 // Delete removes CoproForecast whose ID is given from database
 func (r *CoproForecast) Delete(db *sql.DB) (err error) {
 	res, err := db.Exec("DELETE FROM copro_forecast WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Prévision copro introuvable")
@@ -184,19 +192,19 @@ func (r *CoproForecastBatch) Save(db *sql.DB) (err error) {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_copro_forecast", "id", "commission_id",
 		"value", "project", "comment", "copro_id", "action_code"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for _, r := range r.Lines {
 		if _, err = stmt.Exec(r.ID, r.CommissionID, r.Value, r.Project, r.Comment, r.CoproID,
 			r.ActionCode); err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("exec %v", err)
 		}
 	}
 	if _, err = stmt.Exec(); err != nil {
