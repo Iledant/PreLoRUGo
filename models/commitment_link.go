@@ -3,7 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
-	"strconv"
+	"fmt"
 
 	"github.com/lib/pq"
 )
@@ -37,27 +37,27 @@ func (c *CommitmentLink) Set(db *sql.DB) error {
 	var commitmentField string
 	switch c.Type {
 	case "Housing":
-		commitmentField = "housing_id="
+		commitmentField = "housing_id"
 	case "Copro":
-		commitmentField = "copro_id="
+		commitmentField = "copro_id"
 	case "RenewProject":
-		commitmentField = "renew_project_id="
+		commitmentField = "renew_project_id"
 	}
-	commitmentField += strconv.Itoa(c.DestID)
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	res, err := tx.Exec("UPDATE commitment SET "+commitmentField+
-		" WHERE id = ANY($1)", pq.Array(c.IDs))
+	qry := fmt.Sprintf("UPDATE commitment SET %s=%d WHERE id=ANY($1)",
+		commitmentField, c.DestID)
+	res, err := tx.Exec(qry, pq.Array(c.IDs))
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if int(count) != len(c.IDs) {
 		tx.Rollback()
@@ -74,21 +74,21 @@ func (c *CommitmentUnlink) Set(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	res, err := tx.Exec(`UPDATE commitment SET renew_project_id=NULL, housing_id=NULL,
-	copro_id=NULL WHERE id = ANY($1)`, pq.Array(c.IDs))
+	res, err := tx.Exec(`UPDATE commitment SET renew_project_id=NULL,
+		housing_id=NULL,copro_id=NULL WHERE id=ANY($1)`, pq.Array(c.IDs))
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if int(count) != len(c.IDs) {
 		tx.Rollback()
 		return errors.New("Impossible de supprimer tous les liens")
 	}
 	tx.Commit()
-	return err
+	return nil
 }
