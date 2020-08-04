@@ -59,7 +59,7 @@ func (c *Copro) Create(db *sql.DB) (err error) {
 		zip_code,label_date,budget) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`,
 		c.Reference, c.Name, c.Address, c.ZipCode, c.LabelDate, c.Budget).Scan(&c.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("insert %V", err)
 	}
 	if c.ZipCode.Valid {
 		err = db.QueryRow(`SELECT city.name FROM copro 
@@ -75,11 +75,11 @@ func (c *Copro) Update(db *sql.DB) (err error) {
 	address=$3, zip_code=$4, label_date=$5, budget=$6 WHERE id = $7`,
 		c.Reference, c.Name, c.Address, c.ZipCode, c.LabelDate, c.Budget, c.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Copro introuvable")
@@ -96,11 +96,11 @@ func (c *Copro) Update(db *sql.DB) (err error) {
 func (c *Copro) Delete(db *sql.DB) (err error) {
 	res, err := db.Exec("DELETE FROM copro WHERE id = $1", c.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Copro introuvable")
@@ -113,9 +113,8 @@ func (c *Copro) Get(db *sql.DB) (err error) {
 	err = db.QueryRow(`SELECT co.id,co.reference,co.name,co.address,co.zip_code,
 	ci.name,co.label_date,co.budget FROM copro co
 	LEFT OUTER JOIN city ci ON co.zip_code=ci.insee_code
-	WHERE id = $1`, c.ID).
-		Scan(&c.ID, &c.Reference, &c.Name, &c.Address, &c.ZipCode, &c.CityName,
-			&c.LabelDate, &c.Budget)
+	WHERE id = $1`, c.ID).Scan(&c.ID, &c.Reference, &c.Name, &c.Address,
+		&c.ZipCode, &c.CityName, &c.LabelDate, &c.Budget)
 	return err
 }
 
@@ -125,18 +124,21 @@ func (c *Copros) GetAll(db *sql.DB) (err error) {
 	ci.name,co.label_date,co.budget FROM copro co
 	LEFT OUTER JOIN city ci ON co.zip_code=ci.insee_code`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var r Copro
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&r.ID, &r.Reference, &r.Name, &r.Address, &r.ZipCode,
 			&r.CityName, &r.LabelDate, &r.Budget); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		c.Copros = append(c.Copros, r)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(c.Copros) == 0 {
 		c.Copros = []Copro{}
 	}
@@ -165,12 +167,12 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_copro", "reference", "name", "address",
 		"zip_code", "label_date", "budget"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for _, r := range c.Lines {
