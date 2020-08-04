@@ -43,9 +43,12 @@ func (r *ConventionType) Get(db *sql.DB) (err error) {
 func (r *ConventionType) Update(db *sql.DB) (err error) {
 	res, err := db.Exec(`UPDATE convention_type SET name=$1 WHERE id=$2`,
 		r.Name, r.ID)
+	if err != nil {
+		return fmt.Errorf("update %v", err)
+	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Type de convention introuvable")
@@ -57,32 +60,35 @@ func (r *ConventionType) Update(db *sql.DB) (err error) {
 func (r *ConventionTypes) GetAll(db *sql.DB) (err error) {
 	rows, err := db.Query(`SELECT id,name FROM convention_type`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row ConventionType
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Name); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.ConventionTypes = append(r.ConventionTypes, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows %v", err)
+	}
 	if len(r.ConventionTypes) == 0 {
 		r.ConventionTypes = []ConventionType{}
 	}
-	return err
+	return nil
 }
 
 // Delete removes housing transfer whose ID is given from database
 func (r *ConventionType) Delete(db *sql.DB) (err error) {
 	res, err := db.Exec("DELETE FROM convention_type WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Type de convention introuvable")
