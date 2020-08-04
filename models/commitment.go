@@ -233,13 +233,14 @@ type HousingLinkedCommitments struct {
 // Get fetches the results of a paginated commitment query
 func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	var count int64
-	if err := db.QueryRow(`SELECT count(1) FROM commitment c 
-		JOIN beneficiary b on c.beneficiary_id=b.id
-		JOIN budget_action a ON a.id = c.action_id
-		JOIN budget_sector s ON s.id=a.sector_id 
-		WHERE year >= $1 AND
-			(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
-				OR b.name ILIKE $2 OR a.name ILIKE $2 OR iris_code ILIKE $2)`, c.Year, "%"+c.Search+"%").
+	commonQryPart := `FROM commitment c 
+	JOIN beneficiary b on c.beneficiary_id=b.id
+	JOIN budget_action a ON a.id = c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id 
+	WHERE year >= $1 AND
+		(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
+			OR b.name ILIKE $2 OR a.name ILIKE $2 OR iris_code ILIKE $2)`
+	if err := db.QueryRow("SELECT count(1) "+commonQryPart, c.Year, "%"+c.Search+"%").
 		Scan(&count); err != nil {
 		return fmt.Errorf("count query failed %v", err)
 	}
@@ -247,14 +248,8 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
 	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value,c.sold_out,
 	c.beneficiary_id,b.name,c.iris_code,a.name,s.name,c.housing_id,
-	c.renew_project_id,c.copro_id 
-	FROM commitment c
-	JOIN beneficiary b ON c.beneficiary_id = b.id
-	JOIN budget_action a ON a.id = c.action_id
-	JOIN budget_sector s ON s.id=a.sector_id 
-	WHERE year >= $1 AND (c.name ILIKE $2  OR c.number::varchar ILIKE $2 OR 
-		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2  OR iris_code ILIKE $2)
-	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+	c.renew_project_id,c.copro_id `+commonQryPart+
+		`ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		c.Year, "%"+c.Search+"%", offset)
 	if err != nil {
 		return err
@@ -284,29 +279,23 @@ func (p *PaginatedCommitments) Get(db *sql.DB, c *PaginatedQuery) error {
 // renew_project_id are null and that matches the query using paginated format
 func (p *PaginatedCommitments) GetUnlinked(db *sql.DB, c *PaginatedQuery) error {
 	var count int64
-	if err := db.QueryRow(`SELECT count(1) FROM commitment c 
-		JOIN beneficiary b on c.beneficiary_id=b.id
-		JOIN budget_action a ON a.id = c.action_id
-		JOIN budget_sector s ON s.id=a.sector_id 
-		WHERE year >= $1 AND housing_id IS NULL AND renew_project_id IS NULL AND
-			copro_id IS NULL AND
-			(c.name ILIKE $2 OR c.code ILIKE $2 OR c.number::varchar ILIKE $2 
-				OR b.name ILIKE $2 OR a.name ILIKE $2 OR iris_code ILIKE $2)`, c.Year, "%"+c.Search+"%").
+	commonQryPart := `FROM commitment c
+	JOIN beneficiary b on c.beneficiary_id=b.id
+	JOIN budget_action a ON a.id=c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id 
+	WHERE year>=$1 AND housing_id IS NULL AND renew_project_id IS NULL AND
+		copro_id IS NULL AND (c.name ILIKE $2 OR c.code ILIKE $2 OR
+			c.number::varchar ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2 OR 
+			iris_code ILIKE $2) `
+	if err := db.QueryRow(`SELECT count(1) `+commonQryPart, c.Year, "%"+c.Search+"%").
 		Scan(&count); err != nil {
 		return fmt.Errorf("count query failed %v", err)
 	}
 	offset, newPage := GetPaginateParams(c.Page, count)
 	rows, err := db.Query(`SELECT c.id,c.year,c.code,c.number,c.line,
 	c.creation_date,c.modification_date,c.caducity_date,c.name,c.value,c.sold_out,
-	c.beneficiary_id,b.name,c.iris_code,a.name,s.name
-	FROM commitment c
-	JOIN beneficiary b ON c.beneficiary_id = b.id
-	JOIN budget_action a ON a.id = c.action_id
-	JOIN budget_sector s ON s.id=a.sector_id 
-	WHERE year >= $1 AND housing_id IS NULL AND renew_project_id IS NULL AND
-	copro_id IS NULL AND (c.name ILIKE $2  OR c.number::varchar ILIKE $2 OR 
-		c.code ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2 OR iris_code ILIKE $2)
-	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+	c.beneficiary_id,b.name,c.iris_code,a.name,s.name `+commonQryPart+
+		`ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		c.Year, "%"+c.Search+"%", offset)
 	if err != nil {
 		return err
@@ -564,17 +553,16 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 
 // Get fetches all commitments per year for the current and the previous years
 func (t *TwoYearsCommitments) Get(db *sql.DB) error {
-	query := `WITH cmt_month as (
-		select max(extract(month from creation_date))::int as max_month
-		from commitment where year=$1)
-	select cmt.m,sum(0.01 * cmt.v) OVER (ORDER BY m) from
-	(select q.m as m,COALESCE(sum_cmt.v,0) as v FROM
-	(select generate_series(1,max_month) AS m from cmt_month) q
-	LEFT OUTER JOIN
-	(select extract(month from creation_date)::int as m,sum(value)::bigint as v
-	FROM commitment WHERE year=$1
-	GROUP BY 1) sum_cmt
-	ON sum_cmt.m=q.m) cmt;`
+	query := `WITH cmt_month as 
+	(SELECT MAX(EXTRACT(month FROM creation_date))::int max_month
+  	FROM commitment WHERE year=$1)
+	SELECT cmt.m,SUM(0.01 * cmt.v) OVER (ORDER BY m) FROM
+		(SELECT q.m as m,COALESCE(sum_cmt.v,0) v FROM
+			(SELECT GENERATE_SERIES(1,max_month) m FROM cmt_month) q
+			LEFT OUTER JOIN
+			(SELECT EXTRACT(month FROM creation_date)::int m,SUM(value)::bigint v
+			FROM commitment WHERE year=$1 GROUP BY 1) sum_cmt
+		ON sum_cmt.m=q.m) cmt;`
 	actualYear := time.Now().Year()
 	rows, err := db.Query(query, actualYear)
 	if err != nil {
