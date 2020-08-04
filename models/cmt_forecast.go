@@ -33,49 +33,47 @@ func (c *CmtForecasts) GetAll(db *sql.DB) error {
 		greatest(t.y1,0),greatest(t.y2,0),greatest(t.y3,0),greatest(t.y4,0)
 	FROM
 	(SELECT * FROM 
-		crosstab('SELECT action_id, year, SUM(cmt)::bigint FROM
-							(
-							(SELECT h.action_id, extract(year FROM c.date)::int as year, 
-								SUM(h.value) AS cmt
-							FROM housing_forecast h, commission c 
-							WHERE h.commission_id=c.id 
-								AND c.date>(select max(creation_date) FROM cumulated_commitment)
-							GROUP BY 1,2)
-							UNION ALL
-							(SELECT r.action_id, extract(year FROM c.date)::int as year, 
-								SUM(r.value) AS cmt 
-							FROM renew_project_forecast r, commission c 
-							WHERE r.commission_id=c.id 
-								AND c.date>(select max(creation_date) FROM cumulated_commitment)
-							GROUP BY 1,2)
-							UNION ALL
-							(SELECT co.action_id, extract(year FROM c.date)::int as year, 
-								SUM(co.value) AS cmt 
-							FROM copro_forecast co, commission c 
-							WHERE co.commission_id=c.id 
-								AND c.date>(select max(creation_date) FROM cumulated_commitment)
-							GROUP BY 1,2)
-              UNION ALL
-              (SELECT action_id, year, SUM(value) FROM cumulated_commitment 
-              WHERE EXTRACT(year FROM creation_date)>=%d GROUP BY 1,2)
-							) qry
-							WHERE qry.year>=%d AND qry.year<%d GROUP BY 1,2 ORDER BY 1,2',
-              'SELECT m FROM GENERATE_SERIES(%d,%d) m')
-				AS (action_id int,y0 bigint,y1 bigint,y2 bigint,y3 bigint,y4 bigint)
+		crosstab(
+			'SELECT action_id, y, SUM(cmt)::bigint FROM
+				(
+				SELECT h.action_id,extract(year FROM c.date)::int y,SUM(h.value) cmt
+					FROM housing_forecast h, commission c 
+					WHERE h.commission_id=c.id 
+						AND c.date>(select max(creation_date) FROM cumulated_commitment)
+					GROUP BY 1,2
+				UNION ALL
+				SELECT r.action_id,extract(year FROM c.date)::int y,SUM(r.value) cmt 
+					FROM renew_project_forecast r, commission c 
+					WHERE r.commission_id=c.id 
+						AND c.date>(select max(creation_date) FROM cumulated_commitment)
+					GROUP BY 1,2
+				UNION ALL
+				SELECT co.action_id,extract(year FROM c.date)::int y,SUM(co.value) cmt 
+					FROM copro_forecast co, commission c 
+					WHERE co.commission_id=c.id 
+						AND c.date>(select max(creation_date) FROM cumulated_commitment)
+					GROUP BY 1,2
+				UNION ALL
+				SELECT action_id,year y,SUM(value) FROM cumulated_commitment 
+					WHERE EXTRACT(year FROM creation_date)>=%d GROUP BY 1,2
+				) qry
+				WHERE qry.y>=%d AND qry.y<%d GROUP BY 1,2 ORDER BY 1,2',
+			'SELECT m FROM GENERATE_SERIES(%d,%d) m')
+		AS (action_id int,y0 bigint,y1 bigint,y2 bigint,y3 bigint,y4 bigint)
 	) t
 	JOIN budget_action b ON t.action_id=b.id`, actualYear, actualYear,
 		actualYear+4, actualYear, actualYear+4)
 
 	rows, err := db.Query(qry)
 	if err != nil {
-		return fmt.Errorf("get request %v", err)
+		return fmt.Errorf("select %v", err)
 	}
 	var r CmtForecast
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&r.ActionID, &r.ActionCode, &r.ActionName, &r.Y0, &r.Y1,
 			&r.Y2, &r.Y3, &r.Y4); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		c.CmtForecasts = append(c.CmtForecasts, r)
 	}
