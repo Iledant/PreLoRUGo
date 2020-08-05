@@ -41,20 +41,20 @@ func testCreateHousingForecast(t *testing.T, c *TestContext) (ID int) {
 			Sent: []byte(`{"HousingForecast":{"CommissionID":0,"Value":1000000,"Comment":"Essai","HousingID":` +
 				strconv.Itoa(int(c.HousingID)) + "}}"),
 			Token:        c.Config.Users.HousingUser.Token,
-			RespContains: []string{`Création de prévision logement : Champ incorrect`},
+			RespContains: []string{`Création de prévision logement : Champ CommissionID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : commission ID nul
 		{
 			Sent: []byte(`{"HousingForecast":{"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","HousingID":0}}`),
 			Token:        c.Config.Users.HousingUser.Token,
-			RespContains: []string{`Création de prévision logement : Champ incorrect`},
+			RespContains: []string{`Création de prévision logement : Champ ActionID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : renew project ID nul
 		{
 			Sent: []byte(`{"HousingForecast":{"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai","HousingID":` +
 				strconv.Itoa(int(c.HousingID)) + "}}"),
 			Token:        c.Config.Users.HousingUser.Token,
-			RespContains: []string{`Création de prévision logement : Champ incorrect`},
+			RespContains: []string{`Création de prévision logement : Champ Value incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : value nul
 		{
 			Sent: []byte(`{"HousingForecast":{"CommissionID":` +
@@ -100,19 +100,19 @@ func testUpdateHousingForecast(t *testing.T, c *TestContext, ID int) {
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","HousingID":` +
 				strconv.Itoa(int(c.HousingID)) + "}}"),
 			Token:        c.Config.Users.HousingUser.Token,
-			RespContains: []string{`Modification de prévision logement : Champ incorrect`},
+			RespContains: []string{`Modification de prévision logement : Champ Value incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : value nul
 		{
 			Sent: []byte(`{"HousingForecast":{"CommissionID":0,"Value":0,"Comment":"Essai2","HousingID":` +
 				strconv.Itoa(int(c.HousingID)) + "}}"),
 			Token:        c.Config.Users.HousingUser.Token,
-			RespContains: []string{`Modification de prévision logement : Champ incorrect`},
+			RespContains: []string{`Modification de prévision logement : Champ CommissionID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : commission ID nul
 		{
 			Sent: []byte(`{"HousingForecast":{"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","HousingID":0}}`),
 			Token:        c.Config.Users.HousingUser.Token,
-			RespContains: []string{`Modification de prévision logement : Champ incorrect`},
+			RespContains: []string{`Modification de prévision logement : Champ Value incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : renew project ID nul
 		{
 			Sent: []byte(`{"HousingForecast":{"ID":0,"CommissionID":2000000,` +

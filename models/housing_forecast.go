@@ -41,30 +41,35 @@ type HousingForecastBatch struct {
 
 // Validate checks if HousingForecast's fields are correctly filled
 func (r *HousingForecast) Validate() error {
-	if r.CommissionID == 0 || r.Value == 0 || r.ActionID == 0 {
-		return errors.New("Champ incorrect")
+	if r.CommissionID == 0 {
+		return errors.New("Champ CommissionID incorrect")
+	}
+	if r.Value == 0 {
+		return errors.New("Champ Value incorrect")
+	}
+	if r.ActionID == 0 {
+		return errors.New("Champ ActionID incorrect")
 	}
 	return nil
 }
 
 // Create insert a new HousingForecast into database
-func (r *HousingForecast) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO housing_forecast 
+func (r *HousingForecast) Create(db *sql.DB) error {
+	err := db.QueryRow(`INSERT INTO housing_forecast 
 	(commission_id,value,comment,action_id)
  VALUES($1,$2,$3,$4) RETURNING id`, &r.CommissionID, &r.Value, &r.Comment,
 		&r.ActionID).Scan(&r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("insert %v", err)
 	}
-	err = db.QueryRow(`SELECT c.name,c.date,b.name FROM housing_forecast h
+	return db.QueryRow(`SELECT c.name,c.date,b.name FROM housing_forecast h
 	JOIN commission c ON c.id=h.commission_id
 	JOIN budget_action b ON b.id=h.action_id
 	WHERE h.id=$1`, r.ID).Scan(&r.CommissionName, &r.CommissionDate, &r.ActionName)
-	return err
 }
 
 // Get fetches a HousingForecast from database using ID field
-func (r *HousingForecast) Get(db *sql.DB) (err error) {
+func (r *HousingForecast) Get(db *sql.DB) error {
 	return db.QueryRow(`SELECT hf.commission_id,c.date,c.name, 
 		hf.value,hf.comment,hf.action_id,b.name
 	FROM housing_forecast hf
@@ -75,36 +80,35 @@ func (r *HousingForecast) Get(db *sql.DB) (err error) {
 }
 
 // Update modifies a HousingForecast in database
-func (r *HousingForecast) Update(db *sql.DB) (err error) {
+func (r *HousingForecast) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE housing_forecast SET commission_id=$1,value=$2,
 	comment=$3,action_id=$4 WHERE id=$5`, r.CommissionID, r.Value, r.Comment,
 		r.ActionID, r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Prévision housing introuvable")
 	}
-	err = db.QueryRow(`SELECT c.name,c.date,b.name FROM housing_forecast h
+	return db.QueryRow(`SELECT c.name,c.date,b.name FROM housing_forecast h
 	JOIN commission c ON c.id=h.commission_id
 	JOIN budget_action b ON b.id=h.action_id
 	WHERE h.id=$1`, r.ID).Scan(&r.CommissionName, &r.CommissionDate, &r.ActionName)
-	return err
 }
 
 // GetAll fetches all HousingForecasts from database
-func (r *HousingForecasts) GetAll(db *sql.DB) (err error) {
+func (r *HousingForecasts) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT hf.ID, hf.commission_id,c.date,c.name, 
 		hf.value,hf.comment,hf.action_id,b.name 
 	FROM housing_forecast hf
 	JOIN commission c ON c.id=hf.commission_id
 	JOIN budget_action b ON b.id=hf.action_id`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row HousingForecast
 	defer rows.Close()
@@ -112,11 +116,14 @@ func (r *HousingForecasts) GetAll(db *sql.DB) (err error) {
 		if err = rows.Scan(&row.ID, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Comment, &row.ActionID,
 			&row.ActionName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.HousingForecasts = append(r.HousingForecasts, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.HousingForecasts) == 0 {
 		r.HousingForecasts = []HousingForecast{}
 	}
@@ -124,7 +131,7 @@ func (r *HousingForecasts) GetAll(db *sql.DB) (err error) {
 }
 
 // Get fetches all housing linked HousingForecasts from database
-func (r *HousingForecasts) Get(ID int64, db *sql.DB) (err error) {
+func (r *HousingForecasts) Get(ID int64, db *sql.DB) error {
 	rows, err := db.Query(`SELECT hf.ID, hf.commission_id,c.date,c.name, 
 		hf.value,hf.comment,hf.action_id,b.name 
 	FROM housing_forecast hf
@@ -132,7 +139,7 @@ func (r *HousingForecasts) Get(ID int64, db *sql.DB) (err error) {
 	JOIN budget_action b ON b.id=hf.action_id
 	WHERE hf.action_id=$1`, ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row HousingForecast
 	defer rows.Close()
@@ -140,26 +147,29 @@ func (r *HousingForecasts) Get(ID int64, db *sql.DB) (err error) {
 		if err = rows.Scan(&row.ID, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Comment, &row.ActionID,
 			&row.ActionName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.HousingForecasts = append(r.HousingForecasts, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.HousingForecasts) == 0 {
 		r.HousingForecasts = []HousingForecast{}
 	}
-	return err
+	return nil
 }
 
 // Delete removes HousingForecast whose ID is given from database
-func (r *HousingForecast) Delete(db *sql.DB) (err error) {
+func (r *HousingForecast) Delete(db *sql.DB) error {
 	res, err := db.Exec("DELETE FROM housing_forecast WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Prévision housing introuvable")
@@ -168,7 +178,7 @@ func (r *HousingForecast) Delete(db *sql.DB) (err error) {
 }
 
 // Save insert a batch of HousingForecastLine into database
-func (r *HousingForecastBatch) Save(db *sql.DB) (err error) {
+func (r *HousingForecastBatch) Save(db *sql.DB) error {
 	for i, r := range r.Lines {
 		if r.CommissionID == 0 {
 			return fmt.Errorf("ligne %d, CommissionID nul", i+1)
@@ -215,6 +225,5 @@ func (r *HousingForecastBatch) Save(db *sql.DB) (err error) {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
