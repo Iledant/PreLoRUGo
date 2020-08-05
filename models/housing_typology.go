@@ -18,10 +18,9 @@ type HousingTypologies struct {
 }
 
 // Create insert a new housing typology into database
-func (r *HousingTypology) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO housing_typology(name) VALUES($1) RETURNING id`,
+func (r *HousingTypology) Create(db *sql.DB) error {
+	return db.QueryRow(`INSERT INTO housing_typology(name) VALUES($1) RETURNING id`,
 		&r.Name).Scan(&r.ID)
-	return err
 }
 
 // Valid checks if fields complies with database constraints
@@ -33,19 +32,21 @@ func (r *HousingTypology) Valid() error {
 }
 
 // Get fetches a HousingTypology from database using ID field
-func (r *HousingTypology) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT name FROM housing_typology WHERE ID=$1`, r.ID).
+func (r *HousingTypology) Get(db *sql.DB) error {
+	return db.QueryRow(`SELECT name FROM housing_typology WHERE ID=$1`, r.ID).
 		Scan(&r.Name)
-	return err
 }
 
 // Update modifies a HousingTypology in database
-func (r *HousingTypology) Update(db *sql.DB) (err error) {
+func (r *HousingTypology) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE housing_typology SET name=$1 WHERE id=$2`,
 		r.Name, r.ID)
+	if err != nil {
+		return fmt.Errorf("update %v", err)
+	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Typologie introuvable")
@@ -54,20 +55,23 @@ func (r *HousingTypology) Update(db *sql.DB) (err error) {
 }
 
 // GetAll fetches all HousingTypology from database
-func (r *HousingTypologies) GetAll(db *sql.DB) (err error) {
+func (r *HousingTypologies) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT id,name FROM housing_typology ORDER BY 2`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row HousingTypology
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Name); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.HousingTypologies = append(r.HousingTypologies, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.HousingTypologies) == 0 {
 		r.HousingTypologies = []HousingTypology{}
 	}
@@ -75,14 +79,14 @@ func (r *HousingTypologies) GetAll(db *sql.DB) (err error) {
 }
 
 // Delete removes RPEvenType whose ID is given from database
-func (r *HousingTypology) Delete(db *sql.DB) (err error) {
+func (r *HousingTypology) Delete(db *sql.DB) error {
 	res, err := db.Exec("DELETE FROM housing_typology WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Typologie introuvable")
