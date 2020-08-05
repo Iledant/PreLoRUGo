@@ -13,7 +13,7 @@ type CsfWeekTrend struct {
 	ThisWeekCount NullInt64
 }
 
-var cwt CsfWeekTrend
+var cachedCWT CsfWeekTrend
 
 func (c *CsfWeekTrend) copy(src *CsfWeekTrend) {
 	c.LastWeekCount.Valid = src.LastWeekCount.Valid
@@ -26,22 +26,22 @@ func (c *CsfWeekTrend) copy(src *CsfWeekTrend) {
 // from database
 func (c *CsfWeekTrend) Get(db *sql.DB) error {
 	if !needUpdate(csfWeekTrendUpdate, paymentDemandsUpdate) {
-		c.copy(&cwt)
+		c.copy(&cachedCWT)
 		return nil
 	}
 	if err := db.QueryRow(`SELECT last_week.c,this_week.c
 	 FROM (SELECT count(1) c FROM payment_demands 
-	WHERE receipt_date<= CURRENT_DATE-7 AND excluded!=TRUE
-		AND (csf_date ISNULL OR csf_date>= CURRENT_DATE-7) ) last_week,
-(SELECT count(1) c FROM payment_demands 
-	WHERE excluded!=TRUE AND csf_date ISNULL) this_week`).Scan(&c.LastWeekCount,
+		WHERE receipt_date<= CURRENT_DATE-7 AND excluded!=TRUE
+			AND (csf_date ISNULL OR csf_date>=CURRENT_DATE-7)) last_week,
+		(SELECT count(1) c FROM payment_demands 
+			WHERE excluded!=TRUE AND csf_date ISNULL) this_week`).Scan(&c.LastWeekCount,
 		&c.ThisWeekCount); err != nil {
 		return fmt.Errorf("select %v", err)
 	}
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
 	defer mutex.Unlock()
-	cwt.copy(c)
+	cachedCWT.copy(c)
 	update(csfWeekTrendUpdate)
 	return nil
 }
