@@ -18,10 +18,9 @@ type HousingTransfers struct {
 }
 
 // Create insert a new housing typology into database
-func (r *HousingTransfer) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO housing_transfer(name) VALUES($1) RETURNING id`,
+func (r *HousingTransfer) Create(db *sql.DB) error {
+	return db.QueryRow(`INSERT INTO housing_transfer(name) VALUES($1) RETURNING id`,
 		&r.Name).Scan(&r.ID)
-	return err
 }
 
 // Valid checks if fields complies with database constraints
@@ -33,19 +32,22 @@ func (r *HousingTransfer) Valid() error {
 }
 
 // Get fetches a HousingTransfer from database using ID field
-func (r *HousingTransfer) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT name FROM housing_transfer WHERE ID=$1`, r.ID).
+func (r *HousingTransfer) Get(db *sql.DB) error {
+	return db.QueryRow(`SELECT name FROM housing_transfer WHERE ID=$1`, r.ID).
 		Scan(&r.Name)
-	return err
 }
 
 // Update modifies a HousingTransfer in database
-func (r *HousingTransfer) Update(db *sql.DB) (err error) {
+func (r *HousingTransfer) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE housing_transfer SET name=$1 WHERE id=$2`,
 		r.Name, r.ID)
+	if err != nil {
+		return fmt.Errorf("update %v", err)
+
+	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Transfert introuvable")
@@ -54,35 +56,38 @@ func (r *HousingTransfer) Update(db *sql.DB) (err error) {
 }
 
 // GetAll fetches all housing transfers from database
-func (r *HousingTransfers) GetAll(db *sql.DB) (err error) {
+func (r *HousingTransfers) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT id,name FROM housing_transfer`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row HousingTransfer
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Name); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.HousingTransfers = append(r.HousingTransfers, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.HousingTransfers) == 0 {
 		r.HousingTransfers = []HousingTransfer{}
 	}
-	return err
+	return nil
 }
 
 // Delete removes housing transfer whose ID is given from database
-func (r *HousingTransfer) Delete(db *sql.DB) (err error) {
+func (r *HousingTransfer) Delete(db *sql.DB) error {
 	res, err := db.Exec("DELETE FROM housing_transfer WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Transfert introuvable")
