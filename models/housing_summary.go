@@ -101,12 +101,12 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_housing_summary", "insee_code",
 		"address", "pls", "plai", "plus", "iris_code", "reference_code", "anru"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for i, l := range h.Lines {
@@ -180,6 +180,5 @@ func (h *HousingSummary) Save(db *sql.DB) error {
 			return fmt.Errorf("query %d commitment query %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
