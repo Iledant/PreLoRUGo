@@ -37,12 +37,12 @@ func testCreateDepartment(t *testing.T, c *TestContext) (ID int) {
 		{
 			Sent:         []byte(`{"Department":{"Code":0,"Name":"Essai"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création de département : Champ code ou name incorrect`},
+			RespContains: []string{`Création de département : Champ code incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
 		{
 			Sent:         []byte(`{"Department":{"Code":78,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création de département : Champ code ou name incorrect`},
+			RespContains: []string{`Création de département : Champ name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{
 			Sent:         []byte(`{"Department":{"Code":78,"Name":"Essai"}}`),
@@ -74,12 +74,12 @@ func testUpdateDepartment(t *testing.T, c *TestContext, ID int) {
 		{
 			Sent:         []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":0,"Name":"Essai2"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Modification de département : Champ code ou name incorrect`},
+			RespContains: []string{`Modification de département : Champ code incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : code empty
 		{
 			Sent:         []byte(`{"Department":{"ID":` + strconv.Itoa(ID) + `,"Code":77,"Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Modification de département : Champ code ou name incorrect`},
+			RespContains: []string{`Modification de département : Champ name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{
 			Sent:         []byte(`{"Department":{"ID":0,"Code":77,"Name":"Essai2"}}`),
