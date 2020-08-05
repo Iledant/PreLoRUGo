@@ -18,10 +18,9 @@ type HousingConventions struct {
 }
 
 // Create insert a new housing typology into database
-func (r *HousingConvention) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO housing_convention(name) VALUES($1) RETURNING id`,
+func (r *HousingConvention) Create(db *sql.DB) error {
+	return db.QueryRow(`INSERT INTO housing_convention(name) VALUES($1) RETURNING id`,
 		&r.Name).Scan(&r.ID)
-	return err
 }
 
 // Valid checks if fields complies with database constraints
@@ -33,19 +32,18 @@ func (r *HousingConvention) Valid() error {
 }
 
 // Get fetches a HousingConvention from database using ID field
-func (r *HousingConvention) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT name FROM housing_convention WHERE ID=$1`, r.ID).
+func (r *HousingConvention) Get(db *sql.DB) error {
+	return db.QueryRow(`SELECT name FROM housing_convention WHERE ID=$1`, r.ID).
 		Scan(&r.Name)
-	return err
 }
 
 // Update modifies a HousingConvention in database
-func (r *HousingConvention) Update(db *sql.DB) (err error) {
+func (r *HousingConvention) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE housing_convention SET name=$1 WHERE id=$2`,
 		r.Name, r.ID)
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	if count != 1 {
 		return errors.New("Convention introuvable")
@@ -54,35 +52,38 @@ func (r *HousingConvention) Update(db *sql.DB) (err error) {
 }
 
 // GetAll fetches all housing conventions from database
-func (r *HousingConventions) GetAll(db *sql.DB) (err error) {
+func (r *HousingConventions) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT id,name FROM housing_convention`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row HousingConvention
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Name); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.HousingConventions = append(r.HousingConventions, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.HousingConventions) == 0 {
 		r.HousingConventions = []HousingConvention{}
 	}
-	return err
+	return nil
 }
 
 // Delete removes RPEvenType whose ID is given from database
-func (r *HousingConvention) Delete(db *sql.DB) (err error) {
+func (r *HousingConvention) Delete(db *sql.DB) error {
 	res, err := db.Exec("DELETE FROM housing_convention WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Convention introuvable")
