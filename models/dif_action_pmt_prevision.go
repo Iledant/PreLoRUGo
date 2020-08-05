@@ -49,43 +49,42 @@ type actionItems struct {
 func getActionRAM(db *sql.DB) ([]yearActionVal, error) {
 	q := `
 	WITH
-		cmt AS (SELECT extract(year FROM creation_date) y,action_id,sum(value)::bigint v 
+		cmt AS (SELECT EXTRACT(year FROM creation_date) y,action_id,sum(value)::bigint v 
 			FROM commitment
-			WHERE extract (year FROM creation_date)>=2009
-			AND extract(year FROM creation_date)<extract(year FROM CURRENT_DATE)
-				AND value > 0
+			WHERE EXTRACT(year FROM creation_date)>=2009 AND value > 0
+			AND EXTRACT(year FROM creation_date)<EXTRACT(year FROM CURRENT_DATE)
 			GROUP BY 1,2),
-		pmt AS (SELECT extract(year FROM f.creation_date) y,f.action_id,sum(p.value) v
+		pmt AS (SELECT EXTRACT(year FROM f.creation_date) y,f.action_id,sum(p.value) v
 			FROM payment p
 			JOIN commitment f ON p.commitment_id=f.id
-			WHERE extract(year FROM f.creation_date)>=2009
-				AND extract(year FROM p.creation_date)-extract(year FROM f.creation_date)>=0
-				AND extract(year FROM p.creation_date)<extract(year FROM CURRENT_DATE)
+			WHERE EXTRACT(year FROM f.creation_date)>=2009
+				AND EXTRACT(year FROM p.creation_date)>=EXTRACT(year FROM f.creation_date)
+				AND EXTRACT(year FROM p.creation_date)<EXTRACT(year FROM CURRENT_DATE)
 			GROUP BY 1,2),
 		prg AS (SELECT p.year y,p.action_id,sum(p.value)::bigint v
 			FROM prog p
-			WHERE year=extract(year FROM CURRENT_DATE)
+			WHERE year=EXTRACT(year FROM CURRENT_DATE)
 			GROUP BY 1,2),
 		prev AS (SELECT year y,action_id,v FROM
 			(SELECT EXTRACT(year FROM c.date) AS year,hf.action_id,sum(hf.value)::bigint v
         FROM housing_forecast hf
         JOIN commission c on hf.commission_id=c.id
-        WHERE extract(year FROM c.date)>extract(year FROM CURRENT_DATE)
-          AND extract(year FROM c.date)<extract(year FROM CURRENT_DATE)+5
+        WHERE EXTRACT(year FROM c.date)>EXTRACT(year FROM CURRENT_DATE)
+          AND EXTRACT(year FROM c.date)<EXTRACT(year FROM CURRENT_DATE)+5
         GROUP BY 1,2
       UNION ALL
       SELECT EXTRACT(year FROM c.date) AS year,cf.action_id,sum(cf.value)::bigint v
         FROM copro_forecast cf
         JOIN commission c on cf.commission_id=c.id
-        WHERE extract(year FROM c.date)>extract(year FROM CURRENT_DATE)
-          AND extract(year FROM c.date)<extract(year FROM CURRENT_DATE)+5
+        WHERE EXTRACT(year FROM c.date)>EXTRACT(year FROM CURRENT_DATE)
+          AND EXTRACT(year FROM c.date)<EXTRACT(year FROM CURRENT_DATE)+5
         GROUP BY 1,2          
       UNION ALL
       SELECT EXTRACT(year FROM c.date) AS year,rf.action_id,sum(rf.value)::bigint v
         FROM renew_project_forecast rf
         JOIN commission c on rf.commission_id=c.id
-        WHERE extract(year FROM c.date)>extract(year FROM CURRENT_DATE)
-          AND extract(year FROM c.date)<extract(year FROM CURRENT_DATE)+5
+        WHERE EXTRACT(year FROM c.date)>EXTRACT(year FROM CURRENT_DATE)
+          AND EXTRACT(year FROM c.date)<EXTRACT(year FROM CURRENT_DATE)+5
         GROUP BY 1,2                    
       ) q),
 		ram AS (SELECT cmt.y,cmt.action_id,(cmt.v-COALESCE(pmt.v,0)::bigint) v FROM cmt
@@ -97,7 +96,7 @@ func getActionRAM(db *sql.DB) ([]yearActionVal, error) {
 		),
 		action_id AS (SELECT distinct action_id FROM ram),
 		years AS (SELECT generate_series(2009,
-			extract(year FROM current_date)::int+4)::int y)
+			EXTRACT(year FROM current_date)::int+4)::int y)
 	SELECT years.y,action_id.action_id,COALESCE(ram.v,0)::double precision*0.00000001
 	FROM action_id
 	CROSS JOIN years
@@ -276,7 +275,7 @@ func (m *DifActionPmtPrevisions) Get(db *sql.DB) error {
 	for x := 0; x < len(m.Lines); x++ {
 		i = 0
 		j = actionLen - 1
-		for {
+		for i < j {
 			if m.Lines[x].ActionID == actions.Lines[i].ActionID {
 				break
 			}
