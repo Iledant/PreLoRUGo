@@ -38,8 +38,11 @@ func (a *AvgPmtTimes) GetAll(db *sql.DB) error {
 		a.Lines = append(a.Lines, line)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(a.Lines) == 0 {
 		a.Lines = []AvgPmtTime{}
 	}
-	return err
+	return nil
 }
