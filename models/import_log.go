@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -20,19 +21,22 @@ type ImportLogs struct {
 func (i *ImportLogs) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT kind,date FROM import_logs`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	defer rows.Close()
 	var row ImportLog
 	for rows.Next() {
 		if err = rows.Scan(&row.Kind, &row.Date); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		i.Logs = append(i.Logs, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(i.Logs) == 0 {
 		i.Logs = []ImportLog{}
 	}
-	return err
+	return nil
 }
