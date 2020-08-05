@@ -59,8 +59,8 @@ func (h *HousingCommitmentBach) Save(db *sql.DB) error {
 	}
 	queries := []string{`UPDATE commitment SET housing_id=q.housing_id, 
 	copro_id=NULL, renew_project_id=NULL FROM
-		(SELECT c.id AS commitment_id, h.id AS housing_id FROM housing h 
-			JOIN housing_commitment hc ON h.reference = hc.reference
+		(SELECT c.id AS commitment_id,h.id AS housing_id FROM housing h 
+			JOIN housing_commitment hc ON h.reference=hc.reference
 			JOIN commitment c ON hc.iris_code=c.iris_code) q 
 	WHERE commitment.id=q.commitment_id`,
 		`DELETE FROM housing_commitment`}
@@ -70,6 +70,5 @@ func (h *HousingCommitmentBach) Save(db *sql.DB) error {
 			return fmt.Errorf("query %d %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
