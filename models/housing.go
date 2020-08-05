@@ -80,7 +80,7 @@ func (h *Housing) Create(db *sql.DB) (err error) {
 	 VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`, &h.Reference, &h.Address,
 		&h.ZipCode, &h.PLAI, &h.PLUS, &h.PLS, &h.ANRU, &h.HousingTypeID).Scan(&h.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("insert %v", err)
 	}
 	err = db.QueryRow(`SELECT name FROM city WHERE insee_code=$1`, h.ZipCode).
 		Scan(&h.CityName)
@@ -103,11 +103,11 @@ func (h *Housing) Update(db *sql.DB) (err error) {
 	plai=$4,plus=$5,pls=$6,anru=$7,housing_type_id=$8 WHERE id=$9`, h.Reference,
 		h.Address, h.ZipCode, h.PLAI, h.PLUS, h.PLS, h.ANRU, h.HousingTypeID, h.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Logement introuvable")
@@ -117,6 +117,9 @@ func (h *Housing) Update(db *sql.DB) (err error) {
 	if err == sql.ErrNoRows {
 		h.CityName.Valid = false
 		err = nil
+	}
+	if err != nil {
+		return fmt.Errorf("select %v", err)
 	}
 	err = db.QueryRow(`SELECT short_name,long_name FROM housing_type
 		WHERE id=$1`, h.HousingTypeID).
@@ -137,7 +140,7 @@ func (h *Housings) GetAll(db *sql.DB) (err error) {
 	LEFT JOIN city c ON h.zip_code=c.insee_code
 	LEFT JOIN housing_type ht ON h.housing_type_id=ht.id`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Housing
 	defer rows.Close()
@@ -145,11 +148,14 @@ func (h *Housings) GetAll(db *sql.DB) (err error) {
 		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
 			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU,
 			&row.HousingTypeID, &row.HousingTypeShortName, &row.HousingTypeLongName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		h.Housings = append(h.Housings, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(h.Housings) == 0 {
 		h.Housings = []Housing{}
 	}
@@ -160,11 +166,11 @@ func (h *Housings) GetAll(db *sql.DB) (err error) {
 func (h *Housing) Delete(db *sql.DB) (err error) {
 	res, err := db.Exec("DELETE FROM housing WHERE id = $1", h.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Logement introuvable")
@@ -181,12 +187,12 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_housing", "reference", "address",
 		"zip_code", "plai", "plus", "pls", "anru"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for _, r := range h.Lines {
@@ -216,8 +222,7 @@ func (h *HousingBatch) Save(db *sql.DB) (err error) {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // Get fetches a bath of paginated housings form database that fetch a search
@@ -229,7 +234,7 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 		WHERE reference ILIKE $1 OR address ILIKE $1 OR zip_code::varchar ILIKE $1
 			OR c.name ILIKE $1`,
 		"%"+q.Search+"%").Scan(&count); err != nil {
-		return errors.New("count query failed " + err.Error())
+		return fmt.Errorf("select count %v", err)
 	}
 	offset, newPage := GetPaginateParams(q.Page, count)
 
@@ -243,7 +248,7 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 	ORDER BY 1 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $2`,
 		"%"+q.Search+"%", offset)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Housing
 	defer rows.Close()
@@ -251,15 +256,18 @@ func (p *PaginatedHousings) Get(db *sql.DB, q *PaginatedQuery) error {
 		if err = rows.Scan(&row.ID, &row.Reference, &row.Address, &row.ZipCode,
 			&row.CityName, &row.PLAI, &row.PLUS, &row.PLS, &row.ANRU,
 			&row.HousingTypeID, &row.HousingTypeShortName, &row.HousingTypeLongName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Housings = append(p.Housings, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Housings) == 0 {
 		p.Housings = []Housing{}
 	}
 	p.Page = newPage
 	p.ItemsCount = count
-	return err
+	return nil
 }
