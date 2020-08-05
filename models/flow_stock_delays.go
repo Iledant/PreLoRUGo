@@ -18,7 +18,7 @@ type FlowStockDelays struct {
 	FormerFlowAverageDelay  NullFloat64 `json:"FormerFlowAverageDelay"`
 }
 
-var fsd FlowStockDelays
+var cachedFSD FlowStockDelays
 
 func (f *FlowStockDelays) copy(src *FlowStockDelays) {
 	f.ActualStockCount.Valid = src.ActualStockCount.Valid
@@ -43,7 +43,7 @@ func (f *FlowStockDelays) copy(src *FlowStockDelays) {
 func (f *FlowStockDelays) Get(days int64, db *sql.DB) error {
 	if !needUpdate(flowStockDelaysUpdate, paymentDemandsUpdate, paymentUpdate,
 		everyDayUpdate) {
-		f.copy(&fsd)
+		f.copy(&cachedFSD)
 		return nil
 	}
 
@@ -57,16 +57,18 @@ func (f *FlowStockDelays) Get(days int64, db *sql.DB) error {
 	FROM payment_demands WHERE excluded=FALSE AND 
 		(processed_date ISNULL OR processed_date>= CURRENT_DATE-7)) former_stock,
 	(SELECT count(1) c,avg(creation_date-receipt_date) 
-	FROM payment WHERE creation_date>CURRENT_DATE-%d-7 AND creation_date<=CURRENT_DATE-7) former_flow;`, days, days)
-	if err := db.QueryRow(query).Scan(&f.ActualStockCount, &f.ActualStockAverageDelay, &f.ActualFlowCount,
-		&f.ActualFlowAverageDelay, &f.FormerStockCount, &f.FormerStockAverageDelay,
-		&f.FormerFlowCount, &f.FormerFlowAverageDelay); err != nil {
+	FROM payment WHERE creation_date>CURRENT_DATE-%d-7
+		AND creation_date<=CURRENT_DATE-7) former_flow;`, days, days)
+	if err := db.QueryRow(query).Scan(&f.ActualStockCount,
+		&f.ActualStockAverageDelay, &f.ActualFlowCount, &f.ActualFlowAverageDelay,
+		&f.FormerStockCount, &f.FormerStockAverageDelay, &f.FormerFlowCount,
+		&f.FormerFlowAverageDelay); err != nil {
 		return fmt.Errorf("select %v ", err)
 	}
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
 	defer mutex.Unlock()
-	fsd.copy(f)
+	cachedFSD.copy(f)
 	update(csfWeekTrendUpdate)
 	return nil
 }
