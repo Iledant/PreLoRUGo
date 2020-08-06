@@ -29,20 +29,22 @@ type RPMultiAnnualReports struct {
 // GetAll fetches all lines of the copro report from database
 func (c *RPMultiAnnualReports) GetAll(db *sql.DB) error {
 	qry := `
-  WITH max_cmt_dat AS (SELECT max(creation_date) AS d FROM commitment)
+  WITH max_cmt_dat AS (SELECT MAX(creation_date) AS d FROM commitment)
   SELECT ci.insee_code,ci.name,rp.name,rp.budget,cmt.value,prg.value,
     q.y1,q.y2,q.y3,q.y4,q.y5 FROM
   (SELECT * FROM
-    crosstab('SELECT rf.id,EXTRACT(year FROM c.date),rf.value FROM renew_project_forecast rf
+		crosstab('SELECT rf.id,EXTRACT(year FROM c.date),rf.value
+			FROM renew_project_forecast rf
       JOIN commission c ON rf.commission_id=c.id ORDER BY 1',
-      'SELECT * FROM generate_series(extract(year FROM CURRENT_DATE)::bigint+1,
-      extract(year FROM CURRENT_DATE)::bigint+5)')
+      'SELECT * FROM generate_series(EXTRACT(year FROM CURRENT_DATE)::bigint+1,
+      EXTRACT(year FROM CURRENT_DATE)::bigint+5)')
     AS (id int, y1 BIGINT, y2 BIGINT, y3 BIGINT, y4 BIGINT, y5 BIGINT)) q
   JOIN renew_project_forecast rf ON q.id=rf.id
   JOIN renew_project rp ON rf.renew_project_id=rp.id
-  JOIN (SELECT sum(value)::bigint AS value,renew_project_id FROM commitment 
+  JOIN (SELECT SUM(value)::bigint AS value,renew_project_id FROM commitment 
     WHERE renew_project_id NOTNULL GROUP BY 2) cmt ON cmt.renew_project_id=rp.id
-  LEFT OUTER JOIN (SELECT sum(value)::bigint AS value,kind_id AS renew_project_id FROM prog 
+	LEFT OUTER JOIN (SELECT SUM(value)::bigint AS value,kind_id AS renew_project_id
+		FROM prog 
     JOIN commission rp ON prog.commission_id=rp.id
     WHERE kind=2 AND rp.date>(SELECT d FROM max_cmt_dat) GROUP BY 2) prg 
     ON prg.renew_project_id=rp.id
