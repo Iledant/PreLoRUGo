@@ -42,8 +42,7 @@ func (s *SoldCommitments) GetOld(db *sql.DB) error {
 	JOIN budget_action a ON c.action_id=a.id
 	JOIN budget_sector s ON a.sector_id=s.id
 	WHERE EXTRACT(year FROM creation_date) <= EXTRACT(year FROM current_date)-9
-	ORDER BY creation_date, value DESC;
-	`)
+	ORDER BY creation_date, value DESC;`)
 	if err != nil {
 		return fmt.Errorf("select %d", err)
 	}

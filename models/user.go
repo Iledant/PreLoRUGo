@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -84,7 +85,7 @@ func (u *User) GetByID(db *sql.DB) error {
 }
 
 // CryptPwd crypt not codded password field.
-func (u *User) CryptPwd() (err error) {
+func (u *User) CryptPwd() error {
 	cryptPwd, err := bcrypt.GenerateFromPassword([]byte(u.Password), 10)
 	if err != nil {
 		return err
@@ -99,33 +100,35 @@ func (u *User) ValidatePwd(pwd string) error {
 }
 
 // GetAll fetches all users from database except super admins.
-func (users *Users) GetAll(db *sql.DB) (err error) {
+func (users *Users) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT id, name, email, rights FROM users 
 	WHERE rights & $1 = 0`, SuperAdminBit)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var r User
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&r.ID, &r.Name, &r.Email, &r.Rights); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		users.Users = append(users.Users, r)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(users.Users) == 0 {
 		users.Users = []User{}
 	}
-	return err
+	return nil
 }
 
 // GetByEmail fetches an user by email.
-func (u *User) GetByEmail(email string, db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT id, name, email, password, rights 
+func (u *User) GetByEmail(email string, db *sql.DB) error {
+	return db.QueryRow(`SELECT id, name, email, password, rights 
 	FROM users WHERE email = $1 LIMIT 1`, email).Scan(&u.ID,
 		&u.Name, &u.Email, &u.Password, &u.Rights)
-	return err
 }
 
 // Exists checks if name or email is already in database.
@@ -149,31 +152,31 @@ func (u *User) Create(db *sql.DB) error {
 }
 
 // Update modifies a user into database.
-func (u *User) Update(db *sql.DB) (err error) {
+func (u *User) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE users SET name=$1, email=$2, password=$3, 
 	rights=$4 WHERE id=$5 `, u.Name, u.Email, u.Password, u.Rights, u.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Utilisateur introuvable")
 	}
-	return err
+	return nil
 }
 
 // Delete removes a user from database.
-func (u *User) Delete(db *sql.DB) (err error) {
+func (u *User) Delete(db *sql.DB) error {
 	res, err := db.Exec("DELETE FROM users WHERE id = $1", u.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Utilisateur introuvable")
