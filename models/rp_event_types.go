@@ -18,10 +18,9 @@ type RPEventTypes struct {
 }
 
 // Create insert a new RPEventType into database
-func (r *RPEventType) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO rp_event_type (name) VALUES($1) RETURNING id`,
+func (r *RPEventType) Create(db *sql.DB) error {
+	return db.QueryRow(`INSERT INTO rp_event_type (name) VALUES($1) RETURNING id`,
 		&r.Name).Scan(&r.ID)
-	return err
 }
 
 // Validate check if fields complies with database constraints
@@ -33,19 +32,21 @@ func (r *RPEventType) Validate() error {
 }
 
 // Get fetches a RPEventType from database using ID field
-func (r *RPEventType) Get(db *sql.DB) (err error) {
-	err = db.QueryRow(`SELECT name FROM rp_event_type WHERE ID=$1`, r.ID).
+func (r *RPEventType) Get(db *sql.DB) error {
+	return db.QueryRow(`SELECT name FROM rp_event_type WHERE ID=$1`, r.ID).
 		Scan(&r.Name)
-	return err
 }
 
 // Update modifies a RPEventType in database
-func (r *RPEventType) Update(db *sql.DB) (err error) {
+func (r *RPEventType) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE rp_event_type SET name=$1 WHERE id=$2`,
 		r.Name, r.ID)
+	if err != nil {
+		return fmt.Errorf("update %v", err)
+	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Type d'événement introuvable")
@@ -54,35 +55,38 @@ func (r *RPEventType) Update(db *sql.DB) (err error) {
 }
 
 // GetAll fetches all RPEventType from database
-func (r *RPEventTypes) GetAll(db *sql.DB) (err error) {
+func (r *RPEventTypes) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT id,name FROM rp_event_type`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row RPEventType
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.ID, &row.Name); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.RPEventTypes = append(r.RPEventTypes, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.RPEventTypes) == 0 {
 		r.RPEventTypes = []RPEventType{}
 	}
-	return err
+	return nil
 }
 
 // Delete removes RPEvenType whose ID is given from database
-func (r *RPEventType) Delete(db *sql.DB) (err error) {
+func (r *RPEventType) Delete(db *sql.DB) error {
 	res, err := db.Exec("DELETE FROM rp_event_type WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Type d'événement introuvable")
