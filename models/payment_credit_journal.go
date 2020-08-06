@@ -40,8 +40,8 @@ type PaymentCreditJournalBatch struct {
 
 // GetAll fetches all payment credits journal entries of a given year
 func (p *PaymentCreditJournals) GetAll(year int, db *sql.DB) error {
-	rows, err := db.Query(`SELECT pcj.id,pcj.chapter,pcj.function,pcj.creation_date,
-	pcj.modification_date,pcj.name,pcj.value FROM payment_credit_journal pcj
+	rows, err := db.Query(`SELECT id,chapter,function,creation_date,
+	modification_date,name,value FROM payment_credit_journal
 	WHERE extract(year FROM creation_date)=$1`, year)
 	if err != nil {
 		return fmt.Errorf("select %v", err)
@@ -96,10 +96,10 @@ func (p *PaymentCreditJournalBatch) Save(db *sql.DB) error {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	if _, err = tx.Exec(`DELETE FROM payment_credit_journal 
-		WHERE extract(year FROM creation_date)=extract(year FROM CURRENT_DATE)`); err != nil {
+		WHERE EXTRACT(year FROM creation_date)=EXTRACT(year FROM CURRENT_DATE)`); err != nil {
 		tx.Rollback()
 		return fmt.Errorf("initial delete %v", err)
 	}
@@ -117,6 +117,5 @@ func (p *PaymentCreditJournalBatch) Save(db *sql.DB) error {
 			return fmt.Errorf("insert %d %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
