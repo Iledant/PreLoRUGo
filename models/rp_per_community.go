@@ -1,6 +1,9 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 // RPPerCommunityLine is used to decode one line of the report query to get
 // a report on commitment and payment of a renew projects
@@ -52,17 +55,20 @@ func (r *RPPerCommunityReport) Get(db *sql.DB) (err error) {
 	ON c.id=q.id
 	`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var l RPPerCommunityLine
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&l.CommunityID, &l.CommunityName, &l.CommunityBudget,
 			&l.Commitment, &l.Payment); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.Lines = append(r.Lines, l)
 	}
 	err = rows.Err()
-	return err
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
+	return nil
 }
