@@ -46,8 +46,17 @@ type RenewProjectForecastBatch struct {
 
 // Validate checks if RenewProjectForecast's fields are correctly filled
 func (r *RenewProjectForecast) Validate() error {
-	if r.CommissionID == 0 || r.Value == 0 || r.RenewProjectID == 0 || r.ActionID == 0 {
-		return errors.New("Champ incorrect")
+	if r.CommissionID == 0 {
+		return errors.New("Champ commissionID incorrect")
+	}
+	if r.Value == 0 {
+		return errors.New("Champ value incorrect")
+	}
+	if r.RenewProjectID == 0 {
+		return errors.New("Champ renewprojectID incorrect")
+	}
+	if r.ActionID == 0 {
+		return errors.New("Champ actionID incorrect")
 	}
 	return nil
 }

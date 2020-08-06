@@ -40,27 +40,27 @@ func testCreateRenewProjectForecast(t *testing.T, c *TestContext) (ID int) {
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":0,"Value":1000000,"Comment":"Essai","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création de prévision RU : Champ incorrect`},
+			RespContains: []string{`Création de prévision RU : Champ commissionID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : commission ID null
 		{
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","RenewProjectID":0}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création de prévision RU : Champ incorrect`},
+			RespContains: []string{`Création de prévision RU : Champ renewprojectID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : renew project ID null
 		{
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création de prévision RU : Champ incorrect`},
+			RespContains: []string{`Création de prévision RU : Champ value incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : value null
 		{
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":1000000,"Comment":"Essai","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":0}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création de prévision RU : Champ incorrect`},
+			RespContains: []string{`Création de prévision RU : Champ actionID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : actionID null
 		{
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
@@ -99,25 +99,25 @@ func testUpdateRenewProjectForecast(t *testing.T, c *TestContext, ID int) {
 				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification de prévision RU : Champ incorrect`},
+			RespContains: []string{`Modification de prévision RU : Champ value incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : value nul
 		{
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":0,"Value":0,"Comment":"Essai2","RenewProjectID":` +
 				strconv.Itoa(int(c.RenewProjectID)) + "}}"),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification de prévision RU : Champ incorrect`},
+			RespContains: []string{`Modification de prévision RU : Champ commissionID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : commission ID nul
 		{
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","RenewProjectID":0}}`),
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":10,"Comment":"Essai2","RenewProjectID":0}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification de prévision RU : Champ incorrect`},
+			RespContains: []string{`Modification de prévision RU : Champ renewprojectID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : renew project ID nul
 		{
 			Sent: []byte(`{"RenewProjectForecast":{"CommissionID":` +
-				strconv.Itoa(int(c.CommissionID)) + `,"Value":0,"Comment":"Essai2","RenewProjectID":` + strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":0}}`),
+				strconv.Itoa(int(c.CommissionID)) + `,"Value":10,"Comment":"Essai2","RenewProjectID":` + strconv.Itoa(int(c.RenewProjectID)) + `,"ActionID":0}}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification de prévision RU : Champ incorrect`},
+			RespContains: []string{`Modification de prévision RU : Champ actionID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : action ID nul
 		{
 			Sent:         []byte(`{"RenewProjectForecast":{"ID":0,"CommissionID":2000000,"Value":2000000,"Comment":null,"RenewProjectID":2000000,"ActionID":3}}`),
