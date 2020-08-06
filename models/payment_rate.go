@@ -13,7 +13,7 @@ type PaymentRate struct {
 	ActualRate NullFloat64 `json:"ActualRate"`
 }
 
-var pr PaymentRate
+var cachedPR PaymentRate
 
 func (p *PaymentRate) copy(src *PaymentRate) {
 	p.PastRate = src.PastRate
@@ -24,7 +24,7 @@ func (p *PaymentRate) copy(src *PaymentRate) {
 // launching unnecessary queries
 func (p *PaymentRate) Get(db *sql.DB) error {
 	if !needUpdate(paymentRateUpdate, paymentDemandsUpdate, everyDayUpdate) {
-		p.copy(&pr)
+		p.copy(&cachedPR)
 		return nil
 	}
 	query := `SELECT past_dow_payment.s/past_payment.s,actual_payment.s/available_credits.s
@@ -44,7 +44,7 @@ func (p *PaymentRate) Get(db *sql.DB) error {
 	var mutex = &sync.Mutex{}
 	mutex.Lock()
 	defer mutex.Unlock()
-	pr.copy(p)
+	cachedPR.copy(p)
 	update(paymentRateUpdate)
 	return nil
 }
