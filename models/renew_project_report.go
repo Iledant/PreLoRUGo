@@ -1,6 +1,9 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 // RenewProjectReportLine is used to decode the renew project query line
 type RenewProjectReportLine struct {
@@ -36,27 +39,23 @@ func (r *RenewProjectReport) Get(db *sql.DB) error {
 	rows, err := db.Query(`WITH city_state AS (SELECT city.name,
 		co.name AS community_name,city.insee_code,SUM(c.value) AS cmt,
 		SUM(p.value) AS pmt FROM city
-	LEFT OUTER JOIN community co
-		ON city.community_id = co.id
-	LEFT OUTER JOIN rp_cmt_city_join r
-	ON r.city_code=city.insee_code
-	LEFT OUTER JOIN cumulated_commitment c
-	ON r.commitment_id = c.id
-	LEFT OUTER JOIN payment p
-	ON c.id=p.commitment_id GROUP BY 1,2,3)
+	LEFT OUTER JOIN community co ON city.community_id=co.id
+	LEFT OUTER JOIN rp_cmt_city_join r ON r.city_code=city.insee_code
+	LEFT OUTER JOIN cumulated_commitment c ON r.commitment_id=c.id
+	LEFT OUTER JOIN payment p ON c.id=p.commitment_id GROUP BY 1,2,3)
 	SELECT r.id,r.reference,r.name,r.budget,c.value,p.value,e.name,e.date,c1.name,
 		c1.community_name,c1.cmt,c1.pmt,c2.name,c2.community_name,c2.cmt,c2.pmt,
 		c3.name,c3.community_name,c3.cmt,c3.pmt
 	FROM renew_project r
-	LEFT JOIN city_state c1 ON r.city_code1 = c1.insee_code
-	LEFT OUTER JOIN city_state c2 ON r.city_code2 = c2.insee_code
-	LEFT OUTER JOIN city_state c3 ON r.city_code3 = c3.insee_code
+	LEFT JOIN city_state c1 ON r.city_code1=c1.insee_code
+	LEFT OUTER JOIN city_state c2 ON r.city_code2=c2.insee_code
+	LEFT OUTER JOIN city_state c3 ON r.city_code3=c3.insee_code
 	LEFT OUTER JOIN 
-	(SELECT renew_project_id AS renew_project_id, sum(value) AS value 
+	(SELECT renew_project_id AS renew_project_id,SUM(value) AS value 
 		FROM cumulated_commitment WHERE renew_project_id NOTNULL GROUP BY 1)c
 	ON c.renew_project_id=r.id
 	LEFT OUTER JOIN 
-	(SELECT c.renew_project_id, sum(p.value) AS value 
+	(SELECT c.renew_project_id, SUM(p.value) AS value 
 		FROM payment p, commitment c 
 		WHERE p.commitment_id=c.id AND c.renew_project_id NOTNULL GROUP BY 1) p
 	ON p.renew_project_id=r.id
@@ -65,7 +64,7 @@ func (r *RenewProjectReport) Get(db *sql.DB) error {
 		JOIN rp_event_type rpt ON rp.rp_event_type_id=rpt.id GROUP BY 2,3) e
 	ON e.renew_project_id=r.id`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var l RenewProjectReportLine
 	defer rows.Close()
@@ -75,10 +74,16 @@ func (r *RenewProjectReport) Get(db *sql.DB) error {
 			&l.City1CommunityName, &l.City1Cmt, &l.City1Pmt, &l.City2Name,
 			&l.City2CommunityName, &l.City2Cmt, &l.City2Pmt, &l.City3Name,
 			&l.City3CommunityName, &l.City3Cmt, &l.City3Pmt); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.Lines = append(r.Lines, l)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
+	if len(r.Lines) == 0 {
+		r.Lines = []RenewProjectReportLine{}
+	}
 	return err
 }
