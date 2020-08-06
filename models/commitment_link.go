@@ -63,8 +63,7 @@ func (c *CommitmentLink) Set(db *sql.DB) error {
 		tx.Rollback()
 		return errors.New("Impossible de lier tous les engagements")
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // Set updates the commitment table to set all copro, renew projects and housings
@@ -89,6 +88,5 @@ func (c *CommitmentUnlink) Set(db *sql.DB) error {
 		tx.Rollback()
 		return errors.New("Impossible de supprimer tous les liens")
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }

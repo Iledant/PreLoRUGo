@@ -122,8 +122,7 @@ func (b *BeneficiaryGroup) Set(IDs []int64, db *sql.DB) error {
 		tx.Rollback()
 		return fmt.Errorf("statement flush exec %v", err)
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // GroupGet fetches the beneficiaries linked to a beneficiary group

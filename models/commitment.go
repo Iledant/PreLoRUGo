@@ -547,8 +547,7 @@ func (c *CommitmentBatch) Save(db *sql.DB) (err error) {
 			return fmt.Errorf("requête %d : %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // Get fetches all commitments per year for the current and the previous years

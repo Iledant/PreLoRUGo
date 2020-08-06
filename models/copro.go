@@ -200,6 +200,5 @@ func (c *CoproBatch) Save(db *sql.DB) (err error) {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }

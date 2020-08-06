@@ -710,8 +710,7 @@ func createTablesAndViews(db *sql.DB) error {
 			return fmt.Errorf("Query %d %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // createSuperAdmin check if the users table creates a super admin user if not exists

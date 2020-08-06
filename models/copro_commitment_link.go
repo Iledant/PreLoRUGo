@@ -70,6 +70,5 @@ func (h *CoproCommitmentBatch) Save(db *sql.DB) error {
 			return fmt.Errorf("query %d %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }

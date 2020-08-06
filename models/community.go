@@ -121,8 +121,7 @@ func (c *Community) Delete(db *sql.DB) (err error) {
 		tx.Rollback()
 		return errors.New("Interco introuvable")
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // Save insert a batch of CommunityLine into database
@@ -167,6 +166,5 @@ func (c *CommunityBatch) Save(db *sql.DB) (err error) {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }

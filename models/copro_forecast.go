@@ -228,6 +228,5 @@ func (r *CoproForecastBatch) Save(db *sql.DB) (err error) {
 			return fmt.Errorf("requête %d, %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
