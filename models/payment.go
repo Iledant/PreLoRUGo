@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -115,12 +114,12 @@ type TwoYearsPayments struct {
 }
 
 // GetAll fetches all Payments FROM database
-func (p *Payments) GetAll(db *sql.DB) (err error) {
+func (p *Payments) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT id,commitment_id,commitment_year,commitment_code,
 	commitment_number,commitment_line,year,creation_date,modification_date,
 	number, value, receipt_date FROM payment`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Payment
 	defer rows.Close()
@@ -129,25 +128,31 @@ func (p *Payments) GetAll(db *sql.DB) (err error) {
 			&row.CommitmentCode, &row.CommitmentNumber, &row.CommitmentLine, &row.Year,
 			&row.CreationDate, &row.ModificationDate, &row.Number, &row.Value,
 			&row.ReceiptDate); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Payments = append(p.Payments, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Payments) == 0 {
 		p.Payments = []Payment{}
 	}
-	return err
+	return nil
 }
 
+const commonLinkedQuery = `SELECT p.id,p.commitment_id,p.commitment_year,
+	p.commitment_code,p.commitment_number,p.commitment_line,p.year,
+	p.creation_date,p.modification_date,p.number,p.value,p.receipt_date
+FROM payment p
+JOIN commitment c ON p.commitment_id = c.id WHERE `
+
 // GetLinkedToRenewProject fetches all Payments FROM database
-func (p *Payments) GetLinkedToRenewProject(ID int64, db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT p.id,p.commitment_id,p.commitment_year,p.commitment_code,
-	p.commitment_number,p.commitment_line,p.year,p.creation_date,p.modification_date,
-	p.number,p.value,p.receipt_date FROM payment p
-	JOIN commitment c ON p.commitment_id = c.id WHERE c.renew_project_id=$1`, ID)
+func (p *Payments) GetLinkedToRenewProject(ID int64, db *sql.DB) error {
+	rows, err := db.Query(commonLinkedQuery+"c.renew_project_id=$1", ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Payment
 	defer rows.Close()
@@ -156,25 +161,25 @@ func (p *Payments) GetLinkedToRenewProject(ID int64, db *sql.DB) (err error) {
 			&row.CommitmentCode, &row.CommitmentNumber, &row.CommitmentLine, &row.Year,
 			&row.CreationDate, &row.ModificationDate, &row.Number, &row.Value,
 			&row.ReceiptDate); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Payments = append(p.Payments, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Payments) == 0 {
 		p.Payments = []Payment{}
 	}
-	return err
+	return nil
 }
 
 // GetLinkedToCopro fetches all Payments FROM database
-func (p *Payments) GetLinkedToCopro(ID int64, db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT p.id,p.commitment_id,p.commitment_year,p.commitment_code,
-	p.commitment_number,p.commitment_line,p.year,p.creation_date,p.modification_date,
-	p.number,p.value,p.receipt_date FROM payment p
-	JOIN commitment c ON p.commitment_id = c.id WHERE c.copro_id=$1`, ID)
+func (p *Payments) GetLinkedToCopro(ID int64, db *sql.DB) error {
+	rows, err := db.Query(commonLinkedQuery+"c.copro_id=$1", ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Payment
 	defer rows.Close()
@@ -183,25 +188,25 @@ func (p *Payments) GetLinkedToCopro(ID int64, db *sql.DB) (err error) {
 			&row.CommitmentCode, &row.CommitmentNumber, &row.CommitmentLine, &row.Year,
 			&row.CreationDate, &row.ModificationDate, &row.Number, &row.Value,
 			&row.ReceiptDate); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Payments = append(p.Payments, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Payments) == 0 {
 		p.Payments = []Payment{}
 	}
-	return err
+	return nil
 }
 
 // GetLinkedToHousing fetches all Payments FROM database
-func (p *Payments) GetLinkedToHousing(ID int64, db *sql.DB) (err error) {
-	rows, err := db.Query(`SELECT p.id,p.commitment_id,p.commitment_year,p.commitment_code,
-	p.commitment_number,p.commitment_line,p.year,p.creation_date,p.modification_date,
-	p.number,p.value,p.receipt_date FROM payment p
-	JOIN commitment c ON p.commitment_id = c.id WHERE c.housing_id=$1`, ID)
+func (p *Payments) GetLinkedToHousing(ID int64, db *sql.DB) error {
+	rows, err := db.Query(commonLinkedQuery+"c.housing_id=$1", ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Payment
 	defer rows.Close()
@@ -210,19 +215,22 @@ func (p *Payments) GetLinkedToHousing(ID int64, db *sql.DB) (err error) {
 			&row.CommitmentCode, &row.CommitmentNumber, &row.CommitmentLine, &row.Year,
 			&row.CreationDate, &row.ModificationDate, &row.Number, &row.Value,
 			&row.ReceiptDate); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Payments = append(p.Payments, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Payments) == 0 {
 		p.Payments = []Payment{}
 	}
-	return err
+	return nil
 }
 
 // Save insert a batch of PaymentLine into database
-func (p *PaymentBatch) Save(db *sql.DB) (err error) {
+func (p *PaymentBatch) Save(db *sql.DB) error {
 	for _, r := range p.Lines {
 		if r.CommitmentYear == 0 || r.CommitmentCode == "" || r.CommitmentNumber == 0 ||
 			r.CommitmentLine == 0 || r.Year == 0 || r.CreationDate < 20090101 ||
@@ -232,13 +240,13 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_payment", "commitment_year",
 		"commitment_code", "commitment_number", "commitment_line", "year",
 		"creation_date", "modification_date", "number", "value", "receipt_date"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	var (
@@ -262,7 +270,7 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 		if _, err = stmt.Exec(r.CommitmentYear, r.CommitmentCode, r.CommitmentNumber,
 			r.CommitmentLine, r.Year, cd, md, r.Number, r.Value, rd); err != nil {
 			tx.Rollback()
-			return err
+			return fmt.Errorf("statement exec %v", err)
 		}
 	}
 	if _, err = stmt.Exec(); err != nil {
@@ -300,37 +308,32 @@ func (p *PaymentBatch) Save(db *sql.DB) (err error) {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // Get fetches all paginated payments FROM database that match the paginated query
 func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
 	var count int64
-	if err := db.QueryRow(`SELECT count(1) FROM payment p 
-		LEFT JOIN cumulated_commitment c on p.commitment_id=c.id
-		JOIN budget_action a ON a.id = c.action_id
-		JOIN budget_sector s ON s.id=a.sector_id 
-		JOIN beneficiary b ON c.beneficiary_id = b.id
-		WHERE p.year >= $1 AND
-			(c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)`, q.Year, "%"+q.Search+"%").
+	const commonPmtQry = ` FROM payment p 
+	LEFT JOIN cumulated_commitment c on p.commitment_id=c.id
+	JOIN budget_action a ON a.id = c.action_id
+	JOIN budget_sector s ON s.id=a.sector_id 
+	JOIN beneficiary b ON c.beneficiary_id = b.id
+	WHERE p.year >= $1 AND
+		(c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)`
+
+	if err := db.QueryRow(`SELECT count(1)`+commonPmtQry, q.Year, "%"+q.Search+"%").
 		Scan(&count); err != nil {
-		return errors.New("count query failed " + err.Error())
+		return fmt.Errorf("select count %v", err)
 	}
 	offset, newPage := GetPaginateParams(q.Page, count)
 
 	rows, err := db.Query(`SELECT p.id,p.year,p.creation_date,p.value,p.number,
-	c.creation_date,c.name,c.value,b.name,s.name,a.name,p.receipt_date
-	FROM payment p
-	LEFT JOIN cumulated_commitment c ON p.commitment_id = c.id
-	JOIN beneficiary b ON c.beneficiary_id = b.id
-	JOIN budget_action a ON a.id = c.action_id
-	JOIN budget_sector s ON s.id=a.sector_id 
-	WHERE p.year >= $1 AND (c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
-	ORDER BY 2,5,3 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
+	c.creation_date,c.name,c.value,b.name,s.name,a.name,p.receipt_date`+
+		commonPmtQry+` ORDER BY 2,5,3 LIMIT `+strconv.Itoa(PageSize)+` OFFSET $3`,
 		q.Year, "%"+q.Search+"%", offset)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row PaginatedPayment
 	defer rows.Close()
@@ -338,17 +341,20 @@ func (p *PaginatedPayments) Get(db *sql.DB, q *PaginatedQuery) error {
 		if err = rows.Scan(&row.ID, &row.Year, &row.CreationDate, &row.Value,
 			&row.Number, &row.CommitmentDate, &row.CommitmentName, &row.CommitmentValue,
 			&row.Beneficiary, &row.Sector, &row.ActionName, &row.ReceiptDate); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Payments = append(p.Payments, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Payments) == 0 {
 		p.Payments = []PaginatedPayment{}
 	}
 	p.Page = newPage
 	p.ItemsCount = count
-	return err
+	return nil
 }
 
 // Get fetches all exported payments FROM database that match the export query
@@ -364,7 +370,7 @@ func (p *ExportedPayments) Get(db *sql.DB, q *ExportQuery) error {
 	WHERE p.year >= $1 AND (c.name ILIKE $2 OR b.name ILIKE $2 OR a.name ILIKE $2)
 	ORDER BY 1 `, q.Year, "%"+q.Search+"%")
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row ExportedPayment
 	defer rows.Close()
@@ -374,27 +380,30 @@ func (p *ExportedPayments) Get(db *sql.DB, q *ExportQuery) error {
 			&row.CommitmentNumber, &row.CommitmentCreationDate, &row.CommitmentValue,
 			&row.CommitmentName, &row.BeneficiaryName, &row.Sector, &row.ActionName,
 			&row.ReceiptDate); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.ExportedPayments = append(p.ExportedPayments, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.ExportedPayments) == 0 {
 		p.ExportedPayments = []ExportedPayment{}
 	}
-	return err
+	return nil
 }
 
 // Get fetches all payments per year for the current and the previous years
 func (t *TwoYearsPayments) Get(db *sql.DB) error {
 	query := `WITH pmt_month as (
-		SELECT max(extract(month FROM creation_date))::int as max_month
-		FROM payment where year=$1)
+		SELECT max(extract(month FROM creation_date))::int max_month
+		FROM payment WHERE year=$1)
 	SELECT pmt.m,name,sum(pmt.v) OVER (PARTITION BY name ORDER BY m) FROM
-	(SELECT q.m as m,sum_pmt.name,COALESCE(sum_pmt.v,0)*0.00000001 as v FROM
-	(SELECT generate_series(1,max_month) AS m FROM pmt_month) q
+	(SELECT q.m as m,sum_pmt.name,COALESCE(sum_pmt.v,0)*0.00000001 v FROM
+	(SELECT generate_series(1,max_month) m FROM pmt_month) q
 	LEFT OUTER JOIN
-	(SELECT extract(month FROM p.creation_date)::int as m,s.name,sum(p.value)::bigint as v
+	(SELECT EXTRACT(month FROM p.creation_date)::int m,s.name,SUM(p.value)::bigint v
 	FROM payment p
 	JOIN commitment c on p.commitment_id=c.id
 	JOIN budget_action ba ON c.action_id=ba.id
@@ -406,36 +415,39 @@ func (t *TwoYearsPayments) Get(db *sql.DB) error {
 	var row SectorPayment
 	rows, err := db.Query(query, actualYear)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.Month, &row.Sector, &row.Value); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		t.CurrentYear = append(t.CurrentYear, row)
 	}
 	err = rows.Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows err %v", err)
 	}
 	if len(t.CurrentYear) == 0 {
 		t.CurrentYear = []SectorPayment{}
 	}
 	rows, err = db.Query(query, actualYear-1)
 	if err != nil {
-		return err
+		return fmt.Errorf("select last year %v", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.Month, &row.Sector, &row.Value); err != nil {
-			return err
+			return fmt.Errorf("scan last year %v", err)
 		}
 		t.PreviousYear = append(t.PreviousYear, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(t.PreviousYear) == 0 {
 		t.PreviousYear = []SectorPayment{}
 	}
-	return err
+	return nil
 }
