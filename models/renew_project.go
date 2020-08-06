@@ -56,8 +56,17 @@ type RenewProjectBatch struct {
 
 // Validate checks if the fields of a renew project are correctly filled
 func (r *RenewProject) Validate() error {
-	if r.Reference == "" || r.Name == "" || r.Budget == 0 || r.CityCode1 == 0 {
-		return errors.New("Champ reference, name ou budget incorrect")
+	if r.Reference == "" {
+		return errors.New("Champ reference incorrect")
+	}
+	if r.Name == "" {
+		return errors.New("Champ name incorrect")
+	}
+	if r.Budget == 0 {
+		return errors.New("Champ budget incorrect")
+	}
+	if r.CityCode1 == 0 {
+		return errors.New("Champ citycode1 incorrect")
 	}
 	return nil
 }
@@ -78,8 +87,8 @@ func (r *RenewProject) GetByID(db *sql.DB) error {
 }
 
 // Create insert a renew project into database returning it's ID
-func (r *RenewProject) Create(db *sql.DB) (err error) {
-	err = db.QueryRow(`INSERT INTO renew_project (reference,name,budget,prin,
+func (r *RenewProject) Create(db *sql.DB) error {
+	err := db.QueryRow(`INSERT INTO renew_project (reference,name,budget,prin,
 		city_code1,city_code2,city_code3,population,composite_index,budget_city_1,
 		budget_city_2,budget_city_3) 
 		VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`, r.Reference,
@@ -89,16 +98,15 @@ func (r *RenewProject) Create(db *sql.DB) (err error) {
 	if err != nil {
 		return fmt.Errorf("insert query %v", err)
 	}
-	err = db.QueryRow(`SELECT c1.name,c2.name,c3.name FROM renew_project r
+	return db.QueryRow(`SELECT c1.name,c2.name,c3.name FROM renew_project r
 	JOIN city c1 ON r.city_code1=c1.insee_code
 	LEFT JOIN city c2 ON r.city_code2=c2.insee_code
 	LEFT JOIN city c3 ON r.city_code3=c3.insee_code
 	WHERE r.id=$1`, r.ID).Scan(&r.CityName1, &r.CityName2, &r.CityName3)
-	return err
 }
 
 // Update modifies a renew program into database
-func (r *RenewProject) Update(db *sql.DB) (err error) {
+func (r *RenewProject) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE renew_project SET reference=$1, name=$2, budget=$3,
 	prin=$4,city_code1=$5,city_code2=$6,city_code3=$7,population=$8,
 	composite_index=$9,budget_city_1=$10,budget_city_2=$11,budget_city_3=$12
@@ -106,25 +114,24 @@ func (r *RenewProject) Update(db *sql.DB) (err error) {
 		r.CityCode2, r.CityCode3, r.Population, r.CompositeIndex, r.BudgetCity1,
 		r.BudgetCity2, r.BudgetCity3, r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Projet de renouvellement introuvable")
 	}
-	err = db.QueryRow(`SELECT c1.name,c2.name,c3.name FROM renew_project r
+	return db.QueryRow(`SELECT c1.name,c2.name,c3.name FROM renew_project r
 	JOIN city c1 ON r.city_code1=c1.insee_code
 	LEFT JOIN city c2 ON r.city_code2=c2.insee_code
 	LEFT JOIN city c3 ON r.city_code3=c3.insee_code
 	WHERE r.id=$1`, r.ID).Scan(&r.CityName1, &r.CityName2, &r.CityName3)
-	return err
 }
 
 // GetAll fetches all renew projects from database
-func (r *RenewProjects) GetAll(db *sql.DB) (err error) {
+func (r *RenewProjects) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT r.id,r.reference,r.name,r.budget,r.prin,
 	r.city_code1,c1.name,r.city_code2,c2.name,r.city_code3,c3.name,
 	r.population,r.composite_index,r.budget_city_1,r.budget_city_2,r.budget_city_3
@@ -133,7 +140,7 @@ func (r *RenewProjects) GetAll(db *sql.DB) (err error) {
 	LEFT JOIN city c2 ON c2.insee_code= r.city_code2
 	LEFT JOIN city c3 ON c3.insee_code= r.city_code3`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row RenewProject
 	defer rows.Close()
@@ -142,26 +149,29 @@ func (r *RenewProjects) GetAll(db *sql.DB) (err error) {
 			&row.PRIN, &row.CityCode1, &row.CityName1, &row.CityCode2, &row.CityName2,
 			&row.CityCode3, &row.CityName3, &row.Population, &row.CompositeIndex,
 			&row.BudgetCity1, &row.BudgetCity2, &row.BudgetCity3); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.RenewProjects = append(r.RenewProjects, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.RenewProjects) == 0 {
 		r.RenewProjects = []RenewProject{}
 	}
-	return err
+	return nil
 }
 
 // Delete removes a renew project whose ID is given from database
-func (r *RenewProject) Delete(db *sql.DB) (err error) {
+func (r *RenewProject) Delete(db *sql.DB) error {
 	res, err := db.Exec("DELETE FROM renew_project WHERE id = $1", r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return errors.New("Projet de renouvellement introuvable")
@@ -179,13 +189,13 @@ func (r *RenewProjectBatch) Save(db *sql.DB) error {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_renew_project", "reference", "name",
 		"budget", "prin", "city_code1", "city_code2", "city_code3", "population",
 		"composite_index", "budget_city_1", "budget_city_2", "budget_city_3"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for _, l := range r.Lines {
@@ -223,6 +233,5 @@ func (r *RenewProjectBatch) Save(db *sql.DB) error {
 		}
 
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }

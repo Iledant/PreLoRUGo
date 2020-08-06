@@ -38,22 +38,22 @@ func testCreateRenewProject(t *testing.T, c *TestContext) (ID int) {
 		{
 			Sent:         []byte(`{"RenewProject":{"Reference":"","Name":"PRU"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			RespContains: []string{`Création de projet de renouvellement : Champ reference incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : reference empty
 		{
 			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			RespContains: []string{`Création de projet de renouvellement : Champ name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{
 			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":0}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			RespContains: []string{`Création de projet de renouvellement : Champ budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : budget null
 		{
 			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":250000000,"CityCode1":0}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Création de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			RespContains: []string{`Création de projet de renouvellement : Champ citycode1 incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 5 : CityCode1 null
 		{
 			Sent: []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU",` +
@@ -90,17 +90,17 @@ func testUpdateRenewProject(t *testing.T, c *TestContext, ID int) {
 		{
 			Sent:         []byte(`{"RenewProject":{"Reference":"","Name":"PRU"}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Modification de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			RespContains: []string{`Modification de projet de renouvellement : Champ reference incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : reference empty
 		{
 			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":""}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Modification de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			RespContains: []string{`Modification de projet de renouvellement : Champ name incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : name empty
 		{
 			Sent:         []byte(`{"RenewProject":{"Reference":"PRU001","Name":"PRU","Budget":0}}`),
 			Token:        c.Config.Users.Admin.Token,
-			RespContains: []string{`Modification de projet de renouvellement : Champ reference, name ou budget incorrect`},
+			RespContains: []string{`Modification de projet de renouvellement : Champ budget incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 4 : budget null
 		{
 			Sent:         []byte(`{"RenewProject":{"ID":0,"Reference":"PRU001","Name":"PRU","Budget":250000000,"PRIN":false,"CityCode1":75101,"CityCode2":null,"CityCode3":null,"Population":null,"CompositeIndex":null}}`),
