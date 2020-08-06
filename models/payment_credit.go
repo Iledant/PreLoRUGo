@@ -50,19 +50,19 @@ func (p *PaymentCredits) GetAll(year int, db *sql.DB) error {
 		modified,movement
 	 FROM payment_credit WHERE year=$1`, year)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	defer rows.Close()
 	var row PaymentCredit
 	for rows.Next() {
 		if err = rows.Scan(&row.Year, &row.Chapter, &row.Function, &row.Primitive,
 			&row.Reported, &row.Added, &row.Modified, &row.Movement); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Lines = append(p.Lines, row)
 	}
 	if err = rows.Err(); err != nil {
-		return err
+		return fmt.Errorf("rows err %v", err)
 	}
 	if len(p.Lines) == 0 {
 		p.Lines = []PaymentCredit{}
@@ -74,11 +74,11 @@ func (p *PaymentCredits) GetAll(year int, db *sql.DB) error {
 func (p *PaymentCreditBatch) Save(year int64, db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	if _, err = tx.Exec(`DELETE FROM payment_credit WHERE year=$1`, year); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("final delete %v", err)
+		return fmt.Errorf("delete %v", err)
 	}
 	for i, l := range p.Lines {
 		if _, err = tx.Exec(`INSERT INTO payment_credit (year,chapter,function,
@@ -89,8 +89,7 @@ func (p *PaymentCreditBatch) Save(year int64, db *sql.DB) error {
 			return fmt.Errorf("insert %d %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // Get fetches the payment credit sum of the current year
