@@ -25,17 +25,15 @@ func (p *PaymentDemandsStocks) GetAll(db *sql.DB) error {
 	FROM
 	(SELECT d.d,count(p) dc
 		FROM payment_demands p,(SELECT CURRENT_DATE-generate_series(0,30) d) d
-		WHERE p.receipt_date<=d.d
-			AND (p.processed_date ISNULL OR p.processed_date>d)
+		WHERE p.receipt_date<=d.d AND (p.processed_date ISNULL OR p.processed_date>d)
 			AND p.excluded<>TRUE GROUP BY 1) q1
 	JOIN
 	(SELECT d.d,count(p) csf
 		FROM payment_demands p,(SELECT CURRENT_DATE-generate_series(0,30) d) d
-		WHERE p.receipt_date<=d.d
-			AND (p.csf_date ISNULL OR p.csf_date>d)
+		WHERE p.receipt_date<=d.d AND (p.csf_date ISNULL OR p.csf_date>d)
 			AND p.excluded<>TRUE GROUP BY 1) q2
-		ON q1.d=q2.d
-	 ORDER BY 1;`)
+	ON q1.d=q2.d
+	ORDER BY 1;`)
 	if err != nil {
 		return fmt.Errorf("select %v", err)
 	}
@@ -45,6 +43,10 @@ func (p *PaymentDemandsStocks) GetAll(db *sql.DB) error {
 			return fmt.Errorf("scan %v", err)
 		}
 		p.Lines = append(p.Lines, line)
+	}
+	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
 	}
 	if len(p.Lines) == 0 {
 		p.Lines = []PaymentDemandsStock{}
