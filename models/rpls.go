@@ -56,7 +56,7 @@ func (r *RPLS) Create(db *sql.DB) error {
 	}
 	if err := db.QueryRow(`INSERT INTO rpls (insee_code,year,ratio) 
 	VALUES ($1,$2,$3) RETURNING id`, r.InseeCode, r.Year, r.Ratio).Scan(&r.ID); err != nil {
-		return err
+		return fmt.Errorf("insert %v", err)
 	}
 	return db.QueryRow(`SELECT name FROM city WHERE insee_code=$1`, r.InseeCode).
 		Scan(&r.CityName)
@@ -73,11 +73,11 @@ func (r *RPLS) Update(db *sql.DB) error {
 	res, err := db.Exec(`UPDATE rpls SET insee_code=$1, year=$2, ratio=$3
 	WHERE id=$4`, r.InseeCode, r.Year, r.Ratio, r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("update %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return fmt.Errorf("RPLS introuvable")
@@ -90,11 +90,11 @@ func (r *RPLS) Update(db *sql.DB) error {
 func (r *RPLS) Delete(db *sql.DB) error {
 	res, err := db.Exec(`DELETE FROM rpls WHERE id=$1`, r.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return fmt.Errorf("RPLS introuvable")
@@ -114,11 +114,11 @@ func (r *RPLSBatch) Save(db *sql.DB) error {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_rpls", "insee_code", "year", "ratio"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for i, l := range r.Lines {
@@ -145,8 +145,7 @@ func (r *RPLSBatch) Save(db *sql.DB) error {
 			return fmt.Errorf("requête %d : %v", i, err)
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // GetAll fetches all RPLS from database and add CityName
@@ -154,20 +153,20 @@ func (r *RPLSArray) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT r.id,r.insee_code,c.name,r.year,r.ratio FROM rpls r
 		JOIN city c ON r.insee_code=c.insee_code`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var l RPLS
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&l.ID, &l.InseeCode, &l.CityName, &l.Year,
 			&l.Ratio); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.Lines = append(r.Lines, l)
 	}
 	err = rows.Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows err %v", err)
 	}
 	if len(r.Lines) == 0 {
 		r.Lines = []RPLS{}
@@ -179,19 +178,19 @@ func (r *RPLSArray) GetAll(db *sql.DB) error {
 func (r *RPLSYears) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT DISTINCT year FROM rpls`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var y int64
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&y); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.Lines = append(r.Lines, y)
 	}
 	err = rows.Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows err %v", err)
 	}
 	if len(r.Lines) == 0 {
 		r.Lines = []int64{}
