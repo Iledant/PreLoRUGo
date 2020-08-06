@@ -183,7 +183,7 @@ func (r *ReservationFee) Update(db *sql.DB) error {
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		return fmt.Errorf("count %v", err)
+		return fmt.Errorf("rows affected %v", err)
 	}
 	if count != 1 {
 		return fmt.Errorf("réservation non trouvée")
@@ -223,7 +223,7 @@ func (r *ReservationFeeBatch) Save(test bool, db *sql.DB) (*ReservationFeeBatchR
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_reservation_fee", "current_beneficiary",
 		"first_beneficiary", "city", "address_number", "address_street", "convention",
@@ -362,15 +362,14 @@ func (r *ReservationFeeBatch) Save(test bool, db *sql.DB) (*ReservationFeeBatchR
 		tx.Rollback()
 		return nil, fmt.Errorf("delete %v", err)
 	}
-	tx.Commit()
-	return &results, nil
+	return &results, tx.Commit()
 }
 
 // Get fetches all paginated reservation fees from database that match the
 // paginated query
 func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	var count int64
-	if err := db.QueryRow(`SELECT count(1) FROM reservation_fee rf
+	const commonQryPart = ` FROM reservation_fee rf
 	JOIN beneficiary b1 ON b1.id=rf.current_beneficiary_id
 	LEFT JOIN beneficiary b2 ON b2.id=rf.first_beneficiary_id
 	JOIN city c ON rf.city_code=c.insee_code
@@ -381,9 +380,10 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
 		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
 		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1 OR
-		ty.name ILIKE $1)`,
-		"%"+q.Search+"%").Scan(&count); err != nil {
-		return fmt.Errorf("count query failed %v", err)
+		ty.name ILIKE $1)`
+	if err := db.QueryRow(`SELECT count(1)`+commonQryPart, "%"+q.Search+"%").
+		Scan(&count); err != nil {
+		return fmt.Errorf("count query %v", err)
 	}
 	offset, newPage := GetPaginateParams(q.Page, count)
 
@@ -392,22 +392,10 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 		rf.address_street,rf.rpls,rf.convention,rf.convention_type_id,ct.name,
 		rf.transfer_date,rf.comment_id,cmt.name,rf.transfer_id,ht.name,
 		rf.pmr,rf.convention_date,rf.elise_ref,rf.area,rf.end_year,rf.loan,
-		rf.charges,rf.typology_id,ty.name
-	FROM reservation_fee rf
-	JOIN beneficiary b1 ON b1.id=rf.current_beneficiary_id
-	LEFT JOIN beneficiary b2 ON b2.id=rf.first_beneficiary_id
-	JOIN city c ON rf.city_code=c.insee_code
-	LEFT JOIN convention_type ct ON rf.convention_type_id=ct.id
-	LEFT JOIN housing_comment cmt ON cmt.id=rf.comment_id
-	LEFT JOIN housing_transfer ht ON ht.id=rf.transfer_id
-	LEFT JOIN housing_typology ty ON ty.id=rf.typology_id
-	WHERE (b1.name ILIKE $1 OR b2.name ILIKE $1 OR c.name ILIKE $1 OR 
-		rf.convention ILIKE $1 OR cmt.name ILIKE $1 OR rf.address_street ILIKE $1 OR
-		rf.address_number ILIKE $1 OR ht.name ILIKE $1 OR rf.elise_ref ILIKE $1 OR
-		ty.name ILIKE $1)
-	ORDER BY 1 LIMIT $2 OFFSET $3`, "%"+q.Search+"%", PageSize, offset)
+		rf.charges,rf.typology_id,ty.name`+commonQryPart+
+		` ORDER BY 1 LIMIT $2 OFFSET $3`, "%"+q.Search+"%", PageSize, offset)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row ReservationFee
 	defer rows.Close()
@@ -419,17 +407,20 @@ func (p *PaginatedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 			&row.CommentID, &row.Comment, &row.TransferID, &row.Transfer, &row.PMR,
 			&row.ConventionDate, &row.EliseRef, &row.Area, &row.EndYear, &row.Loan,
 			&row.Charges, &row.TypologyID, &row.Typology); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.ReservationFees = append(p.ReservationFees, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.ReservationFees) == 0 {
 		p.ReservationFees = []ReservationFee{}
 	}
 	p.Page = newPage
 	p.ItemsCount = count
-	return err
+	return nil
 }
 
 // Get fetches all exported reservation fees from database that match the
@@ -453,7 +444,7 @@ func (p *ExportedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 		ty.name ILIKE $1)`,
 		"%"+q.Search+"%")
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row ExportedReservationFee
 	defer rows.Close()
@@ -463,13 +454,16 @@ func (p *ExportedReservationFees) Get(db *sql.DB, q *PaginatedQuery) error {
 			&row.RPLS, &row.Convention, &row.ConventionType, &row.TransferDate,
 			&row.Comment, &row.Transfer, &row.PMR, &row.ConventionDate, &row.EliseRef,
 			&row.Area, &row.EndYear, &row.Loan, &row.Charges, &row.Typology); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Lines = append(p.Lines, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Lines) == 0 {
 		p.Lines = []ExportedReservationFee{}
 	}
-	return err
+	return nil
 }
