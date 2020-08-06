@@ -45,12 +45,12 @@ func GetSettings(ctx iris.Context) {
 	}
 	if err := resp.PaginatedPayments.Get(db, &qry); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Administration, villes : " + err.Error()})
+		ctx.JSON(jsonError{"Administration, paiements : " + err.Error()})
 		return
 	}
 	if err := resp.PaginatedCommitments.Get(db, &qry); err != nil {
 		ctx.StatusCode(http.StatusInternalServerError)
-		ctx.JSON(jsonError{"Administration, villes : " + err.Error()})
+		ctx.JSON(jsonError{"Administration, engagements : " + err.Error()})
 		return
 	}
 	if err := resp.Communities.GetAll(db); err != nil {
