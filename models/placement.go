@@ -64,7 +64,7 @@ func (p *Placements) Get(db *sql.DB) error {
 	JOIN beneficiary b ON c.beneficiary_id=b.id
 `)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Placement
 	defer rows.Close()
@@ -73,15 +73,18 @@ func (p *Placements) Get(db *sql.DB) error {
 			&row.BeneficiaryCode, &row.BeneficiaryName, &row.Count, &row.ContractYear,
 			&row.Comment, &row.CreationDate, &row.ActionCode, &row.ActionName,
 			&row.Sector); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Lines = append(p.Lines, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Lines) == 0 {
 		p.Lines = []Placement{}
 	}
-	return err
+	return nil
 }
 
 // GetByBeneficiary fetches all placements linked to a beneficiary
@@ -98,7 +101,7 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 	JOIN beneficiary b ON c.beneficiary_id=b.id
 	WHERE c.beneficiary_id=$1`, bID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Placement
 	defer rows.Close()
@@ -107,15 +110,18 @@ func (p *Placements) GetByBeneficiary(bID int64, db *sql.DB) error {
 			&row.BeneficiaryCode, &row.BeneficiaryName, &row.Count, &row.ContractYear,
 			&row.Comment, &row.CreationDate, &row.ActionCode, &row.ActionName,
 			&row.Sector); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Lines = append(p.Lines, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Lines) == 0 {
 		p.Lines = []Placement{}
 	}
-	return err
+	return nil
 }
 
 // GetByBeneficiaryGroup fetches all placements linked to the beneficiaries that
@@ -134,7 +140,7 @@ func (p *Placements) GetByBeneficiaryGroup(bID int64, db *sql.DB) error {
 	WHERE c.beneficiary_id IN 
 		(SELECT beneficiary_id FROM beneficiary_belong WHERE group_id=$1)`, bID)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Placement
 	defer rows.Close()
@@ -143,15 +149,18 @@ func (p *Placements) GetByBeneficiaryGroup(bID int64, db *sql.DB) error {
 			&row.BeneficiaryCode, &row.BeneficiaryName, &row.Count, &row.ContractYear,
 			&row.Comment, &row.CreationDate, &row.ActionCode, &row.ActionName,
 			&row.Sector); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Lines = append(p.Lines, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Lines) == 0 {
 		p.Lines = []Placement{}
 	}
-	return err
+	return nil
 }
 
 // Save update the database with a set of Placement
@@ -163,12 +172,12 @@ func (p *Placements) Save(db *sql.DB) error {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_placement", "iris_code", "count",
 		"contract_year"))
 	if err != nil {
-		return err
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for _, r := range p.Lines {
@@ -203,6 +212,5 @@ func (p *Placements) Save(db *sql.DB) error {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
