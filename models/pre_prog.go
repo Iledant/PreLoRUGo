@@ -181,7 +181,7 @@ type PreProgBatch struct {
 func (p *PreProgs) GetAll(year int64, db *sql.DB) error {
 	rows, err := db.Query(preProgQry, year)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row PreProg
 	defer rows.Close()
@@ -189,15 +189,18 @@ func (p *PreProgs) GetAll(year int64, db *sql.DB) error {
 		if err = rows.Scan(&row.ID, &row.Year, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Kind, &row.KindID, &row.KindName,
 			&row.KindProject, &row.Comment, &row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.PreProgs = append(p.PreProgs, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.PreProgs) == 0 {
 		p.PreProgs = []PreProg{}
 	}
-	return err
+	return nil
 }
 
 // GetAllOfKind fetches all PreProg of a given year and kind from the database
@@ -213,7 +216,7 @@ func (p *PreProgs) GetAllOfKind(year int64, kind int64, db *sql.DB) error {
 	}
 	rows, err := db.Query(qry, year)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row PreProg
 	defer rows.Close()
@@ -221,15 +224,18 @@ func (p *PreProgs) GetAllOfKind(year int64, kind int64, db *sql.DB) error {
 		if err = rows.Scan(&row.ID, &row.Year, &row.CommissionID, &row.CommissionDate,
 			&row.CommissionName, &row.Value, &row.Kind, &row.KindID, &row.KindName,
 			&row.KindProject, &row.Comment, &row.ActionID, &row.ActionCode, &row.ActionName); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.PreProgs = append(p.PreProgs, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.PreProgs) == 0 {
 		p.PreProgs = []PreProg{}
 	}
-	return err
+	return nil
 }
 
 // GetAllOfKind fetches all FcPreProg of a given year and kind from the database
@@ -245,7 +251,7 @@ func (p *FcPreProgs) GetAllOfKind(year int64, kind int64, db *sql.DB) error {
 	}
 	rows, err := db.Query(qry, year)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row FcPreProg
 	defer rows.Close()
@@ -254,15 +260,18 @@ func (p *FcPreProgs) GetAllOfKind(year int64, kind int64, db *sql.DB) error {
 			&row.ActionID, &row.ActionCode, &row.ActionName, &row.KindID, &row.KindName,
 			&row.ForecastID, &row.ForecastValue, &row.ForecastProject, &row.ForecastComment,
 			&row.PreProgID, &row.PreProgValue, &row.PreProgProject, &row.PreProgComment); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.FcPreProgs = append(p.FcPreProgs, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.FcPreProgs) == 0 {
 		p.FcPreProgs = []FcPreProg{}
 	}
-	return err
+	return nil
 }
 
 // Save insert a batch of PreProgLine into the database. It checks if the
@@ -283,12 +292,12 @@ func (p *PreProgBatch) Save(kind int64, year int64, db *sql.DB) error {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return fmt.Errorf("début de transaction %v", err)
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_pre_prog", "commission_id",
 		"year", "value", "kind", "kind_id", "project", "comment", "action_id"))
 	if err != nil {
-		return fmt.Errorf("insert statement %v", err)
+		return fmt.Errorf("copy in %v", err)
 	}
 	defer stmt.Close()
 	for _, l := range p.Lines {
@@ -319,6 +328,5 @@ func (p *PreProgBatch) Save(kind int64, year int64, db *sql.DB) error {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
