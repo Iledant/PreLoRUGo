@@ -38,13 +38,13 @@ func testCreateRPEvent(t *testing.T, c *TestContext) (ID int) {
 			Sent: []byte(`{"RenewProjectID":0,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
+			RespContains: []string{`Création d'événement RP : Champ RenewProjectID vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : RenewProjectID empty
 		{
 			Sent: []byte(`{"RenewProjectID":` + strconv.FormatInt(c.RenewProjectID, 10) +
 				`,"RPEventTypeID":0,"Date":"2015-04-13T00:00:00Z","Comment":"Commentaire"}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
+			RespContains: []string{`Création d'événement RP : Champ RPEventTypeID vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : RPEventTypeID empty
 		{
 			Sent: []byte(`{"RenewProjectID":` + strconv.FormatInt(c.RenewProjectID, 10) +
@@ -83,13 +83,13 @@ func testUpdateRPEvent(t *testing.T, c *TestContext, ID int) {
 				`,"RPEventTypeID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
+			RespContains: []string{`Modification d'événement RP : Champ RenewProjectID vide`},
 			StatusCode:   http.StatusBadRequest}, // 2 : RenewProjectID null
 		{
 			Sent: []byte(`{"ID":` + strconv.Itoa(ID) + `,"RenewProjectID":` + strconv.FormatInt(c.RPEventTypeID, 10) +
 				`,"RPEventTypeID":0,"Date":"2016-04-13T00:00:00Z","Comment":null}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification d'événement RP : Champ RenewProjectID ou RPEventTypeID vide`},
+			RespContains: []string{`Modification d'événement RP : Champ RPEventTypeID vide`},
 			StatusCode:   http.StatusBadRequest}, // 3 : RenewProjectID null
 		{
 			Sent: []byte(`{"ID":0,"RenewProjectID":` +
