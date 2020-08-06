@@ -55,26 +55,29 @@ func (p *PmtRatios) Get(db *sql.DB, year int) error {
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&r.Index, &r.SectorID, &r.SectorName, &r.Ratio); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.PmtRatios = append(p.PmtRatios, r)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.PmtRatios) == 0 {
 		p.PmtRatios = []PmtRatio{}
 	}
-	return err
+	return nil
 }
 
 // Save updates or inserts the payment ratios of a given year
 func (p *PmtRatioBatch) Save(db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return err
+		return fmt.Errorf("tx begin %v", err)
 	}
 	if _, err = tx.Exec(`DELETE FROM ratio WHERE year=$1`, p.Year); err != nil {
 		tx.Rollback()
-		return fmt.Errorf("DELETE %v", err)
+		return fmt.Errorf("delete %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("ratio", "year", "index", "sector_id",
 		"ratio"))
@@ -93,27 +96,29 @@ func (p *PmtRatioBatch) Save(db *sql.DB) error {
 		tx.Rollback()
 		return fmt.Errorf("statement flush exec %v", err)
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // Get fetches all years from ratio table in the database
 func (p *PmtRatiosYears) Get(db *sql.DB) error {
 	rows, err := db.Query(`SELECT DISTINCT year FROM ratio`)
 	if err != nil {
-		return fmt.Errorf("get request %v", err)
+		return fmt.Errorf("select %v", err)
 	}
 	var y int
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&y); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Years = append(p.Years, y)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Years) == 0 {
 		p.Years = []int{}
 	}
-	return err
+	return nil
 }
