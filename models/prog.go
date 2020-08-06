@@ -169,7 +169,7 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
 	JOIN commission c ON q.commission_id=c.id
 	ORDER BY date,kind,code,kind_id`, year)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var row Prog
 	defer rows.Close()
@@ -178,15 +178,18 @@ func (p *Progs) GetAll(year int64, db *sql.DB) error {
 			&row.ActionID, &row.ActionCode, &row.ActionName, &row.Kind, &row.KindID,
 			&row.KindName, &row.ForecastValue, &row.ForecastComment, &row.PreProgValue,
 			&row.PreProgComment, &row.ID, &row.Value, &row.Comment); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Progs = append(p.Progs, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Progs) == 0 {
 		p.Progs = []Prog{}
 	}
-	return err
+	return nil
 }
 
 // Save insert a batch of ProgLine into the database. It checks if the
@@ -210,7 +213,7 @@ func (p *ProgBatch) Save(year int64, db *sql.DB) error {
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		return fmt.Errorf("début de transaction %v", err)
+		return fmt.Errorf("tx begin %v", err)
 	}
 	stmt, err := tx.Prepare(pq.CopyIn("temp_prog", "commission_id",
 		"year", "value", "kind", "kind_id", "comment", "action_id"))
@@ -245,29 +248,31 @@ func (p *ProgBatch) Save(year int64, db *sql.DB) error {
 			return fmt.Errorf("requête %d : %s", i, err.Error())
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // GetAll fetches all programmation years in the database
 func (p *ProgYears) GetAll(db *sql.DB) error {
 	rows, err := db.Query(`SELECT DISTINCT year from prog`)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	var y int64
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&y); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.Years = append(p.Years, y)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.Years) == 0 {
 		p.Years = []int64{}
 	}
-	return err
+	return nil
 }
 
 // GetAll fetches all cumulated programmation value of the current year
@@ -287,19 +292,19 @@ func (c *CumulatedProgrammation) GetAll(db *sql.DB) error {
 	actualYear := time.Now().Year()
 	rows, err := db.Query(query, actualYear)
 	if err != nil {
-		return err
+		return fmt.Errorf("select %v", err)
 	}
 	defer rows.Close()
 	var row MonthCumulatedValue
 	for rows.Next() {
 		if err = rows.Scan(&row.Month, &row.Value); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		c.Programmation = append(c.Programmation, row)
 	}
 	err = rows.Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("rows err %v", err)
 	}
 	if len(c.Programmation) == 0 {
 		c.Programmation = []MonthCumulatedValue{}
