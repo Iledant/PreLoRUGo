@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -56,21 +57,25 @@ func (r *RPLSReport) GetAll(p *RPLSReportParams, db *sql.DB) error {
 			AND c.housing_id NOTNULL AND r.ratio >=$3 AND r.ratio <=$4 AND r.year=$5
 	GROUP BY 2;`, p.FirstYear, p.LastYear, p.RPLSMin, p.RPLSMax, p.RPLSYear)
 	if err != nil {
-		return nil
+		return fmt.Errorf("select %v", err)
 	}
 	var row RPLSReportLine
 	defer rows.Close()
 	for rows.Next() {
 		if err = rows.Scan(&row.Value, &row.Dpt); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.Lines = append(r.Lines, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+
+	}
 	if len(r.Lines) == 0 {
 		r.Lines = []RPLSReportLine{}
 	}
-	return err
+	return nil
 }
 
 // GetAll fetches all lines of the detailed RPLS report using the query params
@@ -87,7 +92,7 @@ func (r *RPLSDetailedReport) GetAll(p *RPLSReportParams, db *sql.DB) error {
 			AND r.ratio >=$3 AND r.ratio <=$4 AND r.year=$5`, p.FirstYear, p.LastYear,
 		p.RPLSMin, p.RPLSMax, p.RPLSYear)
 	if err != nil {
-		return nil
+		return fmt.Errorf("select %v", err)
 	}
 	var row RPLSDetailedReportLine
 	defer rows.Close()
@@ -95,13 +100,16 @@ func (r *RPLSDetailedReport) GetAll(p *RPLSReportParams, db *sql.DB) error {
 		if err = rows.Scan(&row.CreationDate, &row.IrisCode, &row.Value, &row.Reference,
 			&row.Address, &row.PLAI, &row.PLUS, &row.PLS, &row.InseeCode, &row.CityName,
 			&row.RPLS); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		r.Lines = append(r.Lines, row)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(r.Lines) == 0 {
 		r.Lines = []RPLSDetailedReportLine{}
 	}
-	return err
+	return nil
 }
