@@ -38,12 +38,12 @@ func testCreateRPCmtCityJoin(t *testing.T, c *TestContext) (ID int) {
 		{
 			Sent:         []byte(`{"CommitmentID":0,"CityCode":75101}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
+			RespContains: []string{`Création de lien engagement ville : Champ CommitmentID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : CommitmentID empty
 		{
 			Sent:         []byte(`{"CommitmentID":3,"CityCode":0}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Création de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
+			RespContains: []string{`Création de lien engagement ville : Champ CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : CityCode empty
 		{
 			Sent:         []byte(`{"CommitmentID":3,"CityCode":75000}`),
@@ -80,12 +80,12 @@ func testUpdateRPCmtCityJoin(t *testing.T, c *TestContext, ID int) {
 		{
 			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":0,"CityCode":77001}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
+			RespContains: []string{`Modification de lien engagement ville : Champ CommitmentID incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 2 : commitment ID null
 		{
 			Sent:         []byte(`{"ID":` + strconv.Itoa(ID) + `,"CommitmentID":4,"CityCode":0}`),
 			Token:        c.Config.Users.RenewProjectUser.Token,
-			RespContains: []string{`Modification de lien engagement ville : Champ CommitmentID ou CityCode incorrect`},
+			RespContains: []string{`Modification de lien engagement ville : Champ CityCode incorrect`},
 			StatusCode:   http.StatusBadRequest}, // 3 : city code null
 		{
 			Sent:         []byte(`{"ID":0,"CommitmentID":4,"CityCode":77001}`),
