@@ -72,7 +72,7 @@ type PaymentDemandCounts struct {
 
 // Update set excluded fields in the database
 func (p *PaymentDemand) Update(db *sql.DB) error {
-	res, err := db.Exec(`UPDATE payment_demands SET excluded=$1, excluded_comment=$2
+	res, err := db.Exec(`UPDATE payment_demands SET excluded=$1,excluded_comment=$2
 	WHERE id=$3`, p.Excluded, p.ExcludedComment, p.ID)
 	if err != nil {
 		return fmt.Errorf("update %v", err)
@@ -171,12 +171,12 @@ func excel2Time(i int64) time.Time {
 func (p *PaymentDemandBatch) Save(db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return fmt.Errorf("transaction begin %v", err)
+		return fmt.Errorf("tx begin %v", err)
 	}
 
 	if _, err := tx.Exec("DELETE from temp_payment_demands"); err != nil {
 		tx.Rollback()
-		return err
+		return fmt.Errorf("delete %v", err)
 	}
 
 	stmt, err := tx.Prepare(pq.CopyIn("temp_payment_demands", "iris_code",
