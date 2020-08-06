@@ -69,13 +69,16 @@ func (p *PmtForecasts) Get(db *sql.DB, year int) error {
 	for rows.Next() {
 		if err = rows.Scan(&r.ActionID, &r.ActionCode, &r.ActionName, &r.Y0, &r.Y1,
 			&r.Y2, &r.Y3, &r.Y4); err != nil {
-			return err
+			return fmt.Errorf("scan %v", err)
 		}
 		p.PmtForecasts = append(p.PmtForecasts, r)
 	}
 	err = rows.Err()
+	if err != nil {
+		return fmt.Errorf("rows err %v", err)
+	}
 	if len(p.PmtForecasts) == 0 {
 		p.PmtForecasts = []PmtForecast{}
 	}
-	return err
+	return nil
 }
