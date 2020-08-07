@@ -25,23 +25,18 @@ func testGetBeneficiaryGroupDatas(t *testing.T, c *TestContext) {
 			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Page=2&Year=a&Search=savigny`),
 			RespContains: []string{`Page de données groupe de bénéficiaires, décodage Year :`},
-			Count:        1,
 			ID:           c.BeneficiaryGroupID,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
 		{
 			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Page=2&Year=2010&Search=savigny`),
 			RespContains: []string{`"Datas":[],"Page":1,"ItemsCount":0`},
-			Count:        0,
-			ID:           0,
 			StatusCode:   http.StatusOK}, // 2 : bad ID
 		{
 			Token: c.Config.Users.User.Token,
 			Sent:  []byte(`Page=2&Year=2010&Search=`),
-			//cSpell: disable
 			RespContains: []string{`"Datas":[`, `"Date":`, `"Value":`, `"Name":"`,
 				`"IRISCode"`, `"Page":1`, `"BeneficiaryName":`, `"ItemsCount":3`},
-			//cSpell: enable
 			ID:            c.BeneficiaryGroupID,
 			Count:         3,
 			CountItemName: `"ID"`,
@@ -66,14 +61,12 @@ func testGetExportBeneficiaryGroupDatas(t *testing.T, c *TestContext) {
 			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Year=a&Search=savigny`),
 			RespContains: []string{`Export données groupe de bénéficiaires, décodage Year :`},
-			Count:        1,
 			ID:           c.BeneficiaryGroupID,
 			StatusCode:   http.StatusInternalServerError}, // 1 : bad param query
 		{
 			Token:        c.Config.Users.User.Token,
 			Sent:         []byte(`Year=2010&Search=savigny`),
 			RespContains: []string{`"BeneficiaryGroupData":[]`},
-			Count:        0,
 			ID:           0,
 			StatusCode:   http.StatusOK}, // 2 : bad ID
 		{
